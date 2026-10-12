@@ -271,6 +271,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
 #portal .stats-grid{margin:18px 0 0;}
 @media (max-width:860px){#portal .pt-wrap{padding-top:20px;}.pt-hello{font-size:24px;}}
 #share-link{width:100%;font-family:monospace;font-size:11px;resize:none;word-break:break-all;}
+.rate-chip{display:inline-flex;flex-direction:column;padding:5px 10px;border-radius:7px;background:var(--surface);border:1px solid var(--border2);margin:2px 6px 2px 0;font-size:12px;line-height:1.4;}
+.rate-chip.best{border-color:var(--green);background:#14532d33;}
+.rate-chip small{font-size:10px;color:var(--muted);}
+.link-ico{color:var(--blue);text-decoration:none;font-size:12px;margin-right:8px;}
 </style>
 </head>
 <body>
@@ -340,7 +344,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
   <div class="nav-section">Inventory</div>
   <div class="nav-item" data-page="inventory" onclick="navigate('inventory')"><span class="nav-icon">📦</span> Stock</div>
   <div class="nav-item" data-page="purchases" onclick="navigate('purchases')"><span class="nav-icon">🛒</span> Purchases</div>
+  <div class="nav-item" id="nav-suppliers" data-page="suppliers" onclick="navigate('suppliers')"><span class="nav-icon">🏭</span> Suppliers</div>
   <div class="nav-item" data-page="wishlist" onclick="navigate('wishlist')"><span class="nav-icon">📋</span> Order List <span class="nav-badge" id="wish-badge" style="display:none">0</span></div>
+  <div class="nav-item" data-page="requests" onclick="navigate('requests')"><span class="nav-icon">🙋</span> Part Requests</div>
   <div class="nav-section">Sales</div>
   <div class="nav-item" data-page="billing" onclick="navigate('billing')"><span class="nav-icon">🧾</span> Billing</div>
   <div class="nav-item" id="nav-partners" data-page="partners" onclick="navigate('partners')"><span class="nav-icon">🤝</span> Customers &amp; Referrals</div>
@@ -454,6 +460,39 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
   </table></div>
 </div>
 
+<!-- SUPPLIERS (owner only) -->
+<div id="page-suppliers" class="page">
+  <div class="ph">
+    <div class="ph-left"><h1>Suppliers</h1><p>Contact details and purchase history. Phone &amp; address are optional.</p></div>
+    <button class="btn btn-primary" onclick="openSuppModal(-1)">＋ Add Supplier</button>
+  </div>
+  <div class="toolbar"><input type="text" class="search-box" id="supp-search" placeholder="Search name, phone or address…" oninput="renderSuppliers()"/></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Supplier</th><th>Phone</th><th>Address</th><th>Purchases</th><th>Total Spent</th><th>Parts</th><th>Actions</th></tr></thead>
+    <tbody id="supp-tbody"></tbody>
+  </table></div>
+</div>
+
+<!-- PART REQUESTS -->
+<div id="page-requests" class="page">
+  <div class="ph">
+    <div class="ph-left"><h1>Part Requests</h1><p>Record who asked for a part you didn't have — see which parts are in demand</p></div>
+    <button class="btn btn-primary" onclick="openReqModal()">＋ Record Request</button>
+  </div>
+  <div class="stats-grid" id="req-stats"></div>
+  <div class="tab-bar">
+    <div class="tab active" onclick="setReqTab('part',this)">By Part</div>
+    <div class="tab" onclick="setReqTab('open',this)">Open</div>
+    <div class="tab" onclick="setReqTab('done',this)">Done</div>
+    <div class="tab" onclick="setReqTab('all',this)">All</div>
+  </div>
+  <div class="toolbar"><input type="text" class="search-box" id="req-search" placeholder="Search part, name or phone…" oninput="renderRequests()"/></div>
+  <div class="table-wrap"><table>
+    <thead><tr id="req-thead"></tr></thead>
+    <tbody id="req-tbody"></tbody>
+  </table></div>
+</div>
+
 <!-- CUSTOMERS & REFERRALS (owner only) -->
 <div id="page-partners" class="page">
   <div class="ph">
@@ -480,6 +519,14 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
   <div class="two-col">
     <div class="card"><div class="card-title">💰 Payment Summary</div><div id="rep-payments"></div></div>
     <div class="card"><div class="card-title">📅 Monthly Revenue</div><div id="rep-monthly"></div></div>
+  </div>
+  <div class="card" style="margin-top:18px">
+    <div class="card-title">🏷 Supplier Rates <span style="font-size:11px;color:var(--muted);font-weight:400;margin-left:4px">who sells the same part cheaper</span></div>
+    <div id="rep-suppliers"></div>
+  </div>
+  <div class="card" style="margin-top:18px">
+    <div class="card-title">🙋 Most Requested Parts <span style="font-size:11px;color:var(--muted);font-weight:400;margin-left:4px">asked for by customers</span></div>
+    <div id="rep-demand"></div>
   </div>
 </div>
 
@@ -543,6 +590,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
       <div class="access-row allowed">✅ Record purchases</div>
       <div class="access-row allowed">✅ Add to Order List</div>
       <div class="access-row allowed">✅ Pick referral on invoices</div>
+      <div class="access-row allowed">✅ Record customer part requests</div>
       <div class="access-row blocked">🚫 See buy prices / margins</div>
       <div class="access-row blocked">🚫 Edit or delete any record</div>
       <div class="access-row blocked">🚫 Change sell prices</div>
@@ -551,6 +599,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
       <div class="access-row blocked">🚫 Mark invoices paid/unpaid</div>
       <div class="access-row blocked">🚫 Access settings</div>
       <div class="access-row blocked">🚫 Manage bonus customers & share links</div>
+      <div class="access-row blocked">🚫 Manage suppliers</div>
     </div>
   </div>
 
@@ -587,7 +636,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
       <div class="fg"><label>Buy Price (₹)</label><input type="number" id="pf-buy" min="0" step="0.01" placeholder="0.00" oninput="updateMarginHint()"/></div>
       <div class="fg"><label>Sell Price (₹)</label><input type="number" id="pf-sell" min="0" step="0.01" placeholder="0.00" oninput="updateMarginHint()"/></div>
     </div>
-    <div class="fg"><label>Supplier / Brand</label><input type="text" id="pf-supplier" placeholder="Optional"/></div>
+    <div class="fg"><label>Supplier / Brand</label><input type="text" id="pf-supplier" list="supp-list" placeholder="Optional"/></div>
     <div class="frow">
       <div class="fg"><label>HSN Code</label><input type="text" id="pf-hsn" placeholder="e.g. 87089900"/></div>
       <div class="fg"><label>MRP (₹)</label><input type="number" id="pf-mrp" min="0" step="0.01" placeholder="0.00"/></div>
@@ -620,7 +669,11 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
     </div>
     <div class="frow">
       <div class="fg"><label>Date</label><input type="date" id="purch-date"/></div>
-      <div class="fg"><label>Supplier</label><input type="text" id="purch-supplier" placeholder="Supplier name"/></div>
+      <div class="fg"><label>Supplier</label><input type="text" id="purch-supplier" list="supp-list" placeholder="Supplier name" oninput="purchSupplierFill()" autocomplete="off"/></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Supplier Phone <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(optional)</span></label><input type="text" id="purch-sphone" placeholder="Mobile / landline"/></div>
+      <div class="fg"><label>Supplier Address <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(optional)</span></label><input type="text" id="purch-saddr" placeholder="Shop / city"/></div>
     </div>
     <div class="frow">
       <div class="fg"><label>Qty Purchased</label><input type="number" id="purch-qty" min="1" placeholder="0" oninput="updatePurchTotal()"/></div>
@@ -677,6 +730,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
       <div class="fg"><label>Customer Name</label><input type="text" id="bf-customer" list="cust-list" placeholder="Customer name" oninput="updateBillLinks()" autocomplete="off"/></div>
       <div class="fg"><label>Date</label><input type="date" id="bf-date"/></div>
     </div>
+    <div class="frow">
+      <div class="fg"><label>Phone <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(optional)</span></label><input type="text" id="bf-phone" placeholder="Mobile number" oninput="_autoFilledFor=null"/></div>
+      <div class="fg"><label>Address <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(optional)</span></label><input type="text" id="bf-addr" placeholder="Area / address" oninput="_autoFilledFor=null"/></div>
+    </div>
     <div class="fg">
       <label>🤝 Referred By <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(optional)</span></label>
       <input type="text" id="bf-ref" list="ref-list" placeholder="Search customer name or referral code…" oninput="updateBillLinks()" autocomplete="off" style="width:100%"/>
@@ -717,6 +774,56 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
   </div>
 </div>
 
+<!-- Supplier Modal -->
+<div class="modal-overlay" id="supp-modal">
+  <div class="modal" style="width:440px">
+    <h2 id="supp-modal-title">Add Supplier</h2>
+    <div class="fg"><label>Supplier Name</label><input type="text" id="sf-name" placeholder="Name / shop"/></div>
+    <div class="fg"><label>Phone <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(optional)</span></label><input type="text" id="sf-phone" placeholder="Mobile / landline"/></div>
+    <div class="fg"><label>Address <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(optional)</span></label><textarea id="sf-addr" placeholder="Shop address / city"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('supp-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSupplier()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Part Request Modal -->
+<div class="modal-overlay" id="req-modal">
+  <div class="modal" style="width:480px">
+    <h2>Record Part Request</h2>
+    <div class="fg"><label>Part Asked For</label><input type="text" id="rq-part" list="req-part-list" placeholder="e.g. Brake pad Swift 2018" oninput="updateReqHint()" autocomplete="off"/><datalist id="req-part-list"></datalist></div>
+    <div id="rq-hint" class="hint-box" style="display:none"></div>
+    <div class="frow">
+      <div class="fg"><label>Customer Name</label><input type="text" id="rq-name" placeholder="Optional"/></div>
+      <div class="fg"><label>Phone</label><input type="text" id="rq-phone" placeholder="Optional"/></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Qty</label><input type="number" id="rq-qty" min="1" value="1"/></div>
+      <div class="fg"><label>Date</label><input type="date" id="rq-date"/></div>
+    </div>
+    <div class="fg"><label>Note</label><input type="text" id="rq-note" placeholder="Vehicle / model / urgency (optional)"/></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('req-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRequest()">Save Request</button>
+    </div>
+  </div>
+</div>
+
+<!-- Request Detail Modal -->
+<div class="modal-overlay" id="req-detail-modal">
+  <div class="modal" style="width:580px">
+    <h2 id="rd-title">Requests</h2>
+    <div id="rd-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="demandToOrderList()">→ Add to Order List</button>
+      <button class="btn btn-success" onclick="demandMarkAllDone()">Mark All Done</button>
+      <button class="btn btn-secondary" onclick="closeModal('req-detail-modal')">Close</button>
+    </div>
+  </div>
+</div>
+<datalist id="supp-list"></datalist>
+
 <!-- Customer (bonus partner) Modal -->
 <div class="modal-overlay" id="cust-modal">
   <div class="modal" style="width:460px">
@@ -726,6 +833,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
       <div class="fg"><label>Phone / WhatsApp</label><input type="text" id="cf-phone" placeholder="10-digit mobile"/></div>
       <div class="fg"><label>Bonus %</label><input type="number" id="cf-pct" min="0" max="100" step="0.1" placeholder="e.g. 5"/></div>
     </div>
+    <div class="fg"><label>Address <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(optional)</span></label><input type="text" id="cf-addr" placeholder="Area / address"/></div>
     <div class="fg"><label>Referral Code</label><input type="text" id="cf-code" maxlength="12" placeholder="Auto-generated if left empty" style="text-transform:uppercase"/></div>
     <div class="fg"><label>Notes</label><textarea id="cf-notes" placeholder="Optional"></textarea></div>
     <div class="hint-box">This customer earns their Bonus % on their own purchases, and on every purchase made by someone they are picked as <em>Referred By</em> on the invoice.</div>
@@ -818,6 +926,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
     <h2>Menu</h2>
     <div class="btn-group" style="flex-direction:column;align-items:stretch;gap:10px">
       <button class="btn btn-secondary" style="justify-content:flex-start" onclick="closeModal('mobile-more-modal');mobileNavigate('purchases')">🛒 Purchases</button>
+      <button class="btn btn-secondary" style="justify-content:flex-start" onclick="closeModal('mobile-more-modal');mobileNavigate('requests')">🙋 Part Requests</button>
+      <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-suppliers" onclick="closeModal('mobile-more-modal');mobileNavigate('suppliers')">🏭 Suppliers</button>
       <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-partners" onclick="closeModal('mobile-more-modal');mobileNavigate('partners')">🤝 Customers &amp; Referrals</button>
       <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-reports" onclick="closeModal('mobile-more-modal');mobileNavigate('reports')">📊 Reports</button>
       <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-insights" onclick="closeModal('mobile-more-modal');mobileNavigate('insights')">🧠 Insights</button>
@@ -832,21 +942,23 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
 <script>
 // ═══ CONSTANTS ═══
 const SCOPES='https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
-const SH={PARTS:'Parts',INV:'Invoices',PURCH:'Purchases',WISH:'Wishlist',CFG:'Config',CUST:'Customers',PAY:'Payouts'};
+const SH={PARTS:'Parts',INV:'Invoices',PURCH:'Purchases',WISH:'Wishlist',CFG:'Config',CUST:'Customers',PAY:'Payouts',SUPP:'Suppliers',REQ:'Requests'};
 const SHOP_NAME='AutoParts Spares Pro'; // shown on customer links
 const HDR={
   PARTS:['id','sku','name','category','qty','minQty','buyPrice','sellPrice','supplier','hsn','mrp','cgst','sgst','location'],
-  INV:['id','customer','date','items_json','subtotal','discountType','discountVal','cgst','sgst','total','paid','customerId','referrerId'],
+  INV:['id','customer','date','items_json','subtotal','discountType','discountVal','cgst','sgst','total','paid','customerId','referrerId','phone','address'],
   PURCH:['id','date','partId','partName','sku','supplier','qty','unitCost','total','notes'],
   WISH:['id','name','sku','category','qtyNeeded','customer','priority','status','notes','createdAt'],
   CFG:['key','value'],
-  CUST:['id','name','phone','bonusPct','code','notes','createdAt'],
-  PAY:['id','customerId','date','amount','note']
+  CUST:['id','name','phone','bonusPct','code','notes','createdAt','address'],
+  PAY:['id','customerId','date','amount','note'],
+  SUPP:['id','name','phone','address','createdAt'],
+  REQ:['id','part','qty','name','phone','date','note','status']
 };
 
 // ═══ STATE ═══
 let accessToken=null,spreadsheetId=null;
-let parts=[],invoices=[],purchases=[],wishlist=[],config={},customers=[],payouts=[];
+let parts=[],invoices=[],purchases=[],wishlist=[],config={},customers=[],payouts=[],suppliers=[],requests=[];
 let editingPartId=null,editingWishId=null,selectedPurchPartId=null;
 let billItems=[],currentWishTab='pending';
 let currentRole=null; // 'owner' | 'employee'
@@ -913,7 +1025,7 @@ function doLogin(){
 
 function doLogout(){
   currentRole=null;accessToken=null;spreadsheetId=null;
-  parts=[];invoices=[];purchases=[];wishlist=[];customers=[];payouts=[];
+  parts=[];invoices=[];purchases=[];wishlist=[];customers=[];payouts=[];suppliers=[];requests=[];
   $('login-screen').style.display='flex';
   $('login-user').value='';$('login-pass').value='';
   $('sidebar').style.display='none';$('main').style.display='none';
@@ -929,13 +1041,13 @@ function applyRoleUI(){
   // Show Google Sheet link only to owner
   $('sheet-link-wrap').style.display=isOwn?'block':'none';
   // Nav locks
-  ['nav-partners','nav-reports','nav-insights','nav-settings'].forEach(id=>{
+  ['nav-suppliers','nav-partners','nav-reports','nav-insights','nav-settings'].forEach(id=>{
     $(id).classList.toggle('locked',!isOwn);
   });
   $('nav-analytics-section').style.opacity=isOwn?'1':'0.3';
   $('nav-settings-section').style.opacity=isOwn?'1':'0.3';
   // Mobile "More" menu locks
-  ['mmenu-partners','mmenu-reports','mmenu-insights','mmenu-settings','mmenu-sheet'].forEach(id=>{
+  ['mmenu-suppliers','mmenu-partners','mmenu-reports','mmenu-insights','mmenu-settings','mmenu-sheet'].forEach(id=>{
     $(id).style.display=isOwn?'flex':'none';
   });
   // Greeting
@@ -953,7 +1065,7 @@ function isOwner(){return currentRole==='owner';}
 // ═══ MOBILE NAV ═══
 function mobileNavigate(page,el){
   if(page==='more'){toggleMoreMenu();return;}
-  if(!isOwner()&&['partners','reports','insights','settings'].includes(page))return;
+  if(!isOwner()&&['suppliers','partners','reports','insights','settings'].includes(page))return;
   navigate(page);
   document.querySelectorAll('#mobile-tabbar .mtab').forEach(t=>t.classList.remove('active'));
   if(el)el.classList.add('active');
@@ -1071,38 +1183,44 @@ async function clearRewrite(sh,hdr,rows){
 
 // ═══ DATA LOAD / SAVE ═══
 async function loadAll(){
-  const[pr,ir,pur,wr,cr,pyr]=await Promise.all([readSheet(SH.PARTS),readSheet(SH.INV),readSheet(SH.PURCH),readSheet(SH.WISH),readSheet(SH.CUST),readSheet(SH.PAY)]);
+  const[pr,ir,pur,wr,cr,pyr,sur,rqr]=await Promise.all([readSheet(SH.PARTS),readSheet(SH.INV),readSheet(SH.PURCH),readSheet(SH.WISH),readSheet(SH.CUST),readSheet(SH.PAY),readSheet(SH.SUPP),readSheet(SH.REQ)]);
   parts=pr.slice(1).map(r=>({id:r[0]||uid(),sku:r[1]||'',name:r[2]||'',category:r[3]||'Other',qty:+r[4]||0,minQty:+r[5]||0,buyPrice:+r[6]||0,sellPrice:+r[7]||0,supplier:r[8]||'',hsn:r[9]||'',mrp:+r[10]||0,cgst:+r[11]||0,sgst:+r[12]||0,location:r[13]||''}));
-  invoices=ir.slice(1).map(r=>({id:r[0]||uid(),customer:r[1]||'',date:r[2]||'',items:JSON.parse(r[3]||'[]'),subtotal:+r[4]||0,discountType:r[5]||'none',discountVal:+r[6]||0,cgst:+r[7]||0,sgst:+r[8]||0,total:+r[9]||0,paid:r[10]==='TRUE'||r[10]==='true',customerId:r[11]||'',referrerId:r[12]||''}));
+  invoices=ir.slice(1).map(r=>({id:r[0]||uid(),customer:r[1]||'',date:r[2]||'',items:JSON.parse(r[3]||'[]'),subtotal:+r[4]||0,discountType:r[5]||'none',discountVal:+r[6]||0,cgst:+r[7]||0,sgst:+r[8]||0,total:+r[9]||0,paid:r[10]==='TRUE'||r[10]==='true',customerId:r[11]||'',referrerId:r[12]||'',phone:r[13]||'',address:r[14]||''}));
   purchases=pur.slice(1).map(r=>({id:r[0]||uid(),date:r[1]||'',partId:r[2]||'',partName:r[3]||'',sku:r[4]||'',supplier:r[5]||'',qty:+r[6]||0,unitCost:+r[7]||0,total:+r[8]||0,notes:r[9]||''}));
   wishlist=wr.slice(1).map(r=>({id:r[0]||uid(),name:r[1]||'',sku:r[2]||'',category:r[3]||'Other',qtyNeeded:+r[4]||1,customer:r[5]||'',priority:r[6]||'medium',status:r[7]||'pending',notes:r[8]||'',createdAt:r[9]||today()}));
-  customers=cr.slice(1).filter(r=>r[0]).map(r=>({id:r[0],name:r[1]||'',phone:r[2]||'',pct:+r[3]||0,code:(r[4]||'').toUpperCase(),notes:r[5]||'',createdAt:r[6]||''}));
+  customers=cr.slice(1).filter(r=>r[0]).map(r=>({id:r[0],name:r[1]||'',phone:r[2]||'',pct:+r[3]||0,code:(r[4]||'').toUpperCase(),notes:r[5]||'',createdAt:r[6]||'',address:r[7]||''}));
   payouts=pyr.slice(1).filter(r=>r[0]).map(r=>({id:r[0],customerId:r[1]||'',date:r[2]||'',amount:+r[3]||0,note:r[4]||''}));
+  suppliers=sur.slice(1).filter(r=>r[0]).map(r=>({id:r[0],name:r[1]||'',phone:r[2]||'',address:r[3]||'',createdAt:r[4]||''}));
+  requests=rqr.slice(1).filter(r=>r[0]).map(r=>({id:r[0],part:r[1]||'',qty:+r[2]||1,name:r[3]||'',phone:r[4]||'',date:r[5]||'',note:r[6]||'',status:r[7]||'open'}));
 }
 async function saveParts(){showSync('Saving…',false);await clearRewrite(SH.PARTS,HDR.PARTS,parts.map(p=>[p.id,p.sku,p.name,p.category,p.qty,p.minQty,p.buyPrice,p.sellPrice,p.supplier||'',p.hsn||'',p.mrp||0,p.cgst||0,p.sgst||0,p.location||'']));showSync('Saved ✓');}
-async function saveInvoices(){showSync('Saving…',false);await clearRewrite(SH.INV,HDR.INV,invoices.map(i=>[i.id,i.customer,i.date,JSON.stringify(i.items),i.subtotal,i.discountType,i.discountVal,i.cgst||0,i.sgst||0,i.total,String(i.paid).toUpperCase(),i.customerId||'',i.referrerId||'']));showSync('Saved ✓');}
+async function saveInvoices(){showSync('Saving…',false);await clearRewrite(SH.INV,HDR.INV,invoices.map(i=>[i.id,i.customer,i.date,JSON.stringify(i.items),i.subtotal,i.discountType,i.discountVal,i.cgst||0,i.sgst||0,i.total,String(i.paid).toUpperCase(),i.customerId||'',i.referrerId||'',i.phone||'',i.address||'']));showSync('Saved ✓');}
 async function savePurchases(){showSync('Saving…',false);await clearRewrite(SH.PURCH,HDR.PURCH,purchases.map(p=>[p.id,p.date,p.partId,p.partName,p.sku,p.supplier,p.qty,p.unitCost,p.total,p.notes]));showSync('Saved ✓');}
 async function saveWishlist(){showSync('Saving…',false);await clearRewrite(SH.WISH,HDR.WISH,wishlist.map(w=>[w.id,w.name,w.sku,w.category,w.qtyNeeded,w.customer,w.priority,w.status,w.notes,w.createdAt]));showSync('Saved ✓');}
 
-async function saveCustomers(){showSync('Saving…',false);await clearRewrite(SH.CUST,HDR.CUST,customers.map(c=>[c.id,c.name,c.phone||'',c.pct,c.code,c.notes||'',c.createdAt||'']));showSync('Saved ✓');}
+async function saveCustomers(){showSync('Saving…',false);await clearRewrite(SH.CUST,HDR.CUST,customers.map(c=>[c.id,c.name,c.phone||'',c.pct,c.code,c.notes||'',c.createdAt||'',c.address||'']));showSync('Saved ✓');}
 async function savePayouts(){showSync('Saving…',false);await clearRewrite(SH.PAY,HDR.PAY,payouts.map(p=>[p.id,p.customerId,p.date,p.amount,p.note||'']));showSync('Saved ✓');}
+
+async function saveSuppliers(){showSync('Saving…',false);await clearRewrite(SH.SUPP,HDR.SUPP,suppliers.map(s=>[s.id,s.name,s.phone||'',s.address||'',s.createdAt||'']));showSync('Saved ✓');}
+async function saveRequests(){showSync('Saving…',false);await clearRewrite(SH.REQ,HDR.REQ,requests.map(r=>[r.id,r.part,r.qty,r.name||'',r.phone||'',r.date||'',r.note||'',r.status||'open']));showSync('Saved ✓');}
 
 // ═══ NAVIGATION ═══
 function navigate(page){
-  if(!isOwner()&&['partners','reports','insights','settings'].includes(page))return;
+  if(!isOwner()&&['suppliers','partners','reports','insights','settings'].includes(page))return;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   $(`page-${page}`).classList.add('active');
   document.querySelector(`[data-page="${page}"]`)?.classList.add('active');
   const map={dashboard:renderDashboard,inventory:renderInventory,purchases:renderPurchases,
     wishlist:()=>renderWishlist(currentWishTab),billing:()=>{renderBilling();$('invoice-view-wrap').innerHTML='';},
-    partners:renderPartners,reports:renderReports,insights:renderInsights,settings:loadSettingsDisplay};
+    suppliers:renderSuppliers,requests:renderRequests,partners:renderPartners,reports:renderReports,insights:renderInsights,settings:loadSettingsDisplay};
   map[page]?.();
 }
 function renderAll(){
   renderDashboard();renderInventory();renderPurchases();
   renderWishlist(currentWishTab);renderBilling();
-  if(isOwner()){renderPartners();renderReports();renderInsights();}
+  renderRequests();
+  if(isOwner()){renderSuppliers();renderPartners();renderReports();renderInsights();}
 }
 function lowStockParts(){return parts.filter(p=>p.qty<=p.minQty);}
 function partSalesMap(){
@@ -1200,7 +1318,7 @@ function renderInventory(){
 }
 function openPartModal(id=null){
   if(!isOwner())return;
-  editingPartId=id;
+  editingPartId=id;fillSupplierList();
   $('part-modal-title').textContent=id?'Edit Part':'Add New Part';
   $('part-save-btn').textContent=id?'Save Changes':'Add Part';
   if(id){const p=parts.find(x=>x.id===id);$('pf-sku').value=p.sku;$('pf-name').value=p.name;$('pf-cat').value=p.category;$('pf-qty').value=p.qty;$('pf-minqty').value=p.minQty;$('pf-buy').value=p.buyPrice;$('pf-sell').value=p.sellPrice;$('pf-supplier').value=p.supplier||'';$('pf-hsn').value=p.hsn||'';$('pf-mrp').value=p.mrp||'';$('pf-cgst').value=p.cgst||'';$('pf-sgst').value=p.sgst||'';$('pf-location').value=p.location||'';}
@@ -1249,7 +1367,7 @@ function renderPurchases(){
 }
 function openPurchaseModal(){
   selectedPurchPartId=null;$('purch-part-search').value='';$('purch-selected-wrap').style.display='none';
-  ['purch-qty','purch-cost','purch-notes','purch-supplier'].forEach(x=>$(x).value='');
+  ['purch-qty','purch-cost','purch-notes','purch-supplier','purch-sphone','purch-saddr'].forEach(x=>$(x).value='');fillSupplierList();
   $('purch-date').value=today();$('purch-total-hint').style.display='none';$('purch-update-buy').checked=true;
   openModal('purchase-modal');
 }
@@ -1268,7 +1386,7 @@ function selectPurchPart(id){
   $('purch-selected').textContent=`${p.name} (${p.sku}) — stock: ${p.qty}`;
   $('purch-selected-wrap').style.display='block';
   if(p.buyPrice>0)$('purch-cost').value=p.buyPrice;
-  if(p.supplier)$('purch-supplier').value=p.supplier;
+  if(p.supplier){$('purch-supplier').value=p.supplier;purchSupplierFill();}
   updatePurchTotal();
 }
 function updatePurchTotal(){
@@ -1283,7 +1401,8 @@ async function savePurchase(){
   if(!qty||!cost){alert('Enter quantity and cost.');return;}
   purchases.push({id:uid(),date:$('purch-date').value,partId:p.id,partName:p.name,sku:p.sku,supplier:$('purch-supplier').value.trim(),qty,unitCost:cost,total:qty*cost,notes:$('purch-notes').value.trim()});
   parts=parts.map(x=>{if(x.id!==p.id)return x;const u={...x,qty:x.qty+qty};if($('purch-update-buy').checked&&isOwner())u.buyPrice=cost;return u;});
-  closeModal('purchase-modal');renderAll();await Promise.all([savePurchases(),saveParts()]);
+  const suppChanged=upsertSupplier($('purch-supplier').value,$('purch-sphone').value.trim(),$('purch-saddr').value.trim());
+  closeModal('purchase-modal');renderAll();await Promise.all([savePurchases(),saveParts(),...(suppChanged?[saveSuppliers()]:[])]);
 }
 
 // ═══ WISHLIST ═══
@@ -1334,7 +1453,7 @@ function renderBilling(){
     }).join('');
 }
 function openBillModal(){
-  billItems=[];fillPartnerLists();$('bf-customer').value='';$('bf-ref').value='';updateBillLinks();$('bf-date').value=today();$('bf-part-search').value='';$('bf-disc-type').value='none';$('bf-disc-val').value='';
+  billItems=[];fillPartnerLists();$('bf-customer').value='';$('bf-ref').value='';$('bf-phone').value='';$('bf-addr').value='';_autoFilledFor=null;updateBillLinks();$('bf-date').value=today();$('bf-part-search').value='';$('bf-disc-type').value='none';$('bf-disc-val').value='';
   renderBillItems();openModal('bill-modal');
 }
 function billPartSearch(){
@@ -1402,7 +1521,7 @@ async function saveInvoice(paid){
   if(refRaw&&!rf){alert('Referral not found. Pick someone from the list, or clear the Referred By field.');return;}
   if(rf&&cu&&rf.id===cu.id){alert('A customer cannot refer themselves.');return;}
   const{subtotal,disc,dtype,dval,cgst,sgst,total}=calcBillTotal();
-  const inv={id:uid(),customer,date:$('bf-date').value||today(),items:billItems.map(i=>({...i})),subtotal,discountType:dtype,discountVal:dval,cgst,sgst,total,paid,customerId:cu?cu.id:'',referrerId:rf?rf.id:''};
+  const inv={id:uid(),customer,date:$('bf-date').value||today(),items:billItems.map(i=>({...i})),subtotal,discountType:dtype,discountVal:dval,cgst,sgst,total,paid,customerId:cu?cu.id:'',referrerId:rf?rf.id:'',phone:$('bf-phone').value.trim(),address:$('bf-addr').value.trim()};
   invoices.unshift(inv);
   parts=parts.map(p=>{const item=billItems.find(i=>i.partId===p.id);return item?{...p,qty:p.qty-item.qty}:p;});
   closeModal('bill-modal');renderAll();navigate('billing');viewInvoice(inv.id);
@@ -1454,6 +1573,7 @@ async function deleteInvoice(id){
 // ═══ REPORTS (owner only) ═══
 function renderReports(){
   if(!isOwner())return;
+  renderSupplierRates();renderDemandReport();
   const totalRev=invoices.reduce((s,i)=>s+i.total,0);
   const paidRev=invoices.filter(i=>i.paid).reduce((s,i)=>s+i.total,0);
   const totalDisc=invoices.reduce((s,i)=>{if(i.discountType==='pct')return s+(i.subtotal||i.total)*(i.discountVal/100);if(i.discountType==='flat')return s+i.discountVal;return s;},0);
@@ -1483,7 +1603,9 @@ function renderInsights(){
   const soldParts=parts.map(p=>({...p,rev:sm[p.id]?.rev||0,soldQty:sm[p.id]?.qty||0})).sort((a,b)=>b.rev-a.rev);
   const totalRev=soldParts.reduce((s,p)=>s+p.rev,0);
   let cum=0;
-  const abcParts=soldParts.map(p=>{cum+=p.rev;const pct=totalRev>0?(cum/totalRev)*100:100;const cls=p.rev===0?'X':pct<=70?'A':pct<=90?'B':'C';return{...p,abcClass:cls};});
+  // Rank by where the MIDDLE of each part's revenue slice falls on the cumulative curve.
+  // (Old code counted the part's own revenue first, so a lone product sat at 100% and became 'C'.)
+  const abcParts=soldParts.map(p=>{const mid=totalRev>0?((cum+p.rev/2)/totalRev)*100:100;cum+=p.rev;const cls=p.rev===0?'X':mid<=70?'A':mid<=90?'B':'C';return{...p,abcClass:cls};});
   $('ins-abc').innerHTML=`<div class="table-wrap" style="max-height:280px;overflow-y:auto"><table><thead><tr><th>Class</th><th>Part</th><th>Revenue</th><th>Units Sold</th><th>Action</th></tr></thead><tbody>${abcParts.map(p=>`<tr><td><span class="abc-${p.abcClass.toLowerCase()}">${p.abcClass}</span></td><td style="font-weight:600;font-size:13px">${p.name}</td><td style="color:var(--orange)">${fmt(p.rev)}</td><td>${p.soldQty}</td><td style="font-size:11px;color:var(--muted)">${{A:'Prioritise — keep stocked',B:'Maintain levels',C:'Reduce — slow mover',X:'Never sold — consider removing'}[p.abcClass]}</td></tr>`).join('')}</tbody></table></div>`;
   const dead=parts.filter(p=>p.qty>0&&!(sm[p.id]?.qty));
   $('ins-dead').innerHTML=dead.length===0?'<div style="color:var(--muted);font-size:13px">✓ Every stocked part has been sold at least once</div>':`<div class="table-wrap"><table><thead><tr><th>Part</th><th>Qty</th><th>Stock Value</th><th>Action</th></tr></thead><tbody>${dead.map(p=>`<tr><td style="font-weight:600">${p.name}<div style="font-size:11px;color:var(--muted)">${p.sku}</div></td><td style="font-weight:700;color:var(--red)">${p.qty}</td><td style="color:var(--yellow)">${fmt(p.qty*p.sellPrice)}</td><td><button class="btn btn-purple btn-sm" onclick="openWishModal();setTimeout(()=>{$('wf-name').value='${p.name.replace(/'/g,"\\'")}';$('wf-sku').value='${p.sku}';$('wf-status').value='skip';$('wf-notes').value='Dead stock';},60)">Mark Skip</button></td></tr>`).join('')}</tbody></table></div>`;
@@ -1493,6 +1615,275 @@ function renderInsights(){
   $('ins-fast').innerHTML=fast.length===0?'<div style="color:var(--muted);font-size:13px">No sales data yet</div>':`<div class="table-wrap"><table><thead><tr><th>Part</th><th>Sold</th><th>Revenue</th><th>Stock</th></tr></thead><tbody>${fast.map(([pid,d])=>{const p=parts.find(x=>x.id===pid);return`<tr><td style="font-weight:600">${d.name}<div style="font-size:11px;color:var(--muted)">${p?.sku||''}</div></td><td style="color:var(--green);font-weight:700">${d.qty}</td><td style="color:var(--orange)">${fmt(d.rev)}</td><td style="color:${p?.qty<=p?.minQty?'var(--red)':'var(--text)'};font-weight:${p?.qty<=p?.minQty?700:400}">${p?.qty??'—'}</td></tr>`;}).join('')}</tbody></table></div>`;
   const restock=parts.filter(p=>p.qty<=p.minQty||((sm[p.id]?.qty||0)>2&&p.qty<(sm[p.id]?.qty||0))).sort((a,b)=>{const sa=(sm[a.id]?.qty||0)/(a.qty||1);const sb=(sm[b.id]?.qty||0)/(b.qty||1);return sb-sa;});
   $('ins-restock').innerHTML=restock.length===0?'<div style="color:var(--muted);font-size:13px">✓ No urgent restock needed right now</div>':`<div class="table-wrap"><table><thead><tr><th>Part</th><th>Stock</th><th>Min</th><th>Total Sold</th><th>Urgency</th><th>Action</th></tr></thead><tbody>${restock.slice(0,10).map(p=>{const sold=sm[p.id]?.qty||0;const urg=p.qty===0?'OUT OF STOCK':p.qty<=p.minQty?'High':'Medium';const uc=p.qty===0?'var(--red)':p.qty<=p.minQty?'var(--orange)':'var(--yellow)';return`<tr><td style="font-weight:600">${p.name}<div style="font-size:11px;color:var(--muted)">${p.sku}</div></td><td style="font-weight:700;color:${p.qty===0?'var(--red)':'var(--yellow)'}">${p.qty}</td><td>${p.minQty}</td><td style="color:var(--green)">${sold}</td><td style="font-weight:700;color:${uc}">${urg}</td><td><button class="btn btn-primary btn-sm" onclick="openPurchaseModal();setTimeout(()=>selectPurchPart('${p.id}'),100)">Order Now</button></td></tr>`;}).join('')}</tbody></table></div>`;
+}
+
+// ═══ SUPPLIERS ═══
+const normName=s=>(s||'').trim().toLowerCase().replace(/\s+/g,' ');
+const waNumber=ph=>{let d=(ph||'').replace(/\D/g,'').replace(/^0+/,'');if(d.length===10)d='91'+d;return d;};
+const findSupplier=n=>suppliers.find(s=>normName(s.name)===normName(n))||null;
+let _suppBook=[],editingSuppId=null,_suppOldName='';
+
+function supplierBook(){
+  const m=new Map();
+  const add=name=>{const k=normName(name);if(!k)return null;if(!m.has(k))m.set(k,{key:k,name:name.trim(),rec:null,purchases:[],partKeys:new Set()});return m.get(k);};
+  suppliers.forEach(s=>{const e=add(s.name);if(e){e.rec=s;e.name=s.name;}});
+  purchases.forEach(p=>{const e=add(p.supplier);if(e){e.purchases.push(p);e.partKeys.add(p.partId||normName(p.partName));}});
+  parts.forEach(p=>add(p.supplier));
+  return[...m.values()].sort((a,b)=>a.name.localeCompare(b.name));
+}
+function fillSupplierList(){
+  const names=new Set(supplierBook().map(e=>e.name));
+  $('supp-list').innerHTML=[...names].map(n=>`<option value="${esc(n)}"></option>`).join('');
+}
+function purchSupplierFill(){
+  const s=findSupplier($('purch-supplier').value);
+  if(s){if(!$('purch-sphone').value)$('purch-sphone').value=s.phone||'';if(!$('purch-saddr').value)$('purch-saddr').value=s.address||'';}
+}
+// returns true when the suppliers list changed
+function upsertSupplier(name,phone,address){
+  name=(name||'').trim();if(!name)return false;
+  const ex=findSupplier(name);
+  if(!ex){suppliers.push({id:uid(),name,phone,address,createdAt:today()});return true;}
+  let ch=false;
+  if(phone&&ex.phone!==phone&&(isOwner()||!ex.phone)){ex.phone=phone;ch=true;}
+  if(address&&ex.address!==address&&(isOwner()||!ex.address)){ex.address=address;ch=true;}
+  return ch;
+}
+function renderSuppliers(){
+  if(!isOwner()||!$('supp-tbody'))return;
+  const q=($('supp-search').value||'').trim().toLowerCase();
+  _suppBook=supplierBook();
+  const rows=_suppBook.map((e,i)=>({e,i})).filter(({e})=>!q||e.name.toLowerCase().includes(q)||(e.rec?.phone||'').includes(q)||(e.rec?.address||'').toLowerCase().includes(q));
+  $('supp-tbody').innerHTML=rows.length===0?'<tr class="empty-row"><td colspan="7">No suppliers yet — they appear here once you record a purchase or add one</td></tr>':
+    rows.map(({e,i})=>{
+      const r=e.rec||{};
+      const spent=e.purchases.reduce((s,p)=>s+p.total,0);
+      const wa=r.phone?`<a class="link-ico" href="tel:${esc(r.phone)}">📞 Call</a><a class="link-ico" target="_blank" href="https://wa.me/${waNumber(r.phone)}">💬 WhatsApp</a>`:'';
+      return`<tr>
+        <td style="font-weight:600">${esc(e.name)}${e.rec?'':' <span class="badge badge-gray">no details</span>'}</td>
+        <td>${r.phone?esc(r.phone):'<span style="color:var(--muted)">—</span>'}<div>${wa}</div></td>
+        <td style="font-size:12px;color:var(--subtle);max-width:220px">${r.address?esc(r.address):'<span style="color:var(--muted)">—</span>'}</td>
+        <td>${e.purchases.length}</td><td style="color:var(--orange);font-weight:700">${fmt(spent)}</td><td>${e.partKeys.size}</td>
+        <td><div class="btn-group"><button class="btn btn-secondary btn-sm" onclick="openSuppModal(${i})">${e.rec?'Edit':'Add details'}</button>${e.rec?`<button class="btn btn-danger btn-sm" onclick="deleteSupplier('${e.rec.id}')">Del</button>`:''}</div></td></tr>`;
+    }).join('');
+}
+function openSuppModal(i){
+  if(!isOwner())return;
+  const e=i>=0?_suppBook[i]:null;
+  editingSuppId=e&&e.rec?e.rec.id:null;
+  _suppOldName=e?e.name:'';
+  $('supp-modal-title').textContent=editingSuppId?'Edit Supplier':(e?'Add Supplier Details':'Add Supplier');
+  $('sf-name').value=e?e.name:'';$('sf-phone').value=e?.rec?.phone||'';$('sf-addr').value=e?.rec?.address||'';
+  openModal('supp-modal');
+}
+async function saveSupplier(){
+  if(!isOwner())return;
+  const name=$('sf-name').value.trim();if(!name){alert('Enter the supplier name.');return;}
+  const dup=suppliers.find(s=>normName(s.name)===normName(name)&&s.id!==editingSuppId);
+  if(dup){alert('A supplier with this name already exists.');return;}
+  const phone=$('sf-phone').value.trim(),address=$('sf-addr').value.trim();
+  let renamed=false;
+  if(editingSuppId){
+    suppliers=suppliers.map(s=>s.id===editingSuppId?{...s,name,phone,address}:s);
+    if(_suppOldName&&normName(_suppOldName)!==normName(name)||(_suppOldName&&_suppOldName!==name)){
+      purchases=purchases.map(p=>normName(p.supplier)===normName(_suppOldName)?{...p,supplier:name}:p);
+      parts=parts.map(p=>normName(p.supplier)===normName(_suppOldName)?{...p,supplier:name}:p);renamed=true;
+    }
+  }else suppliers.push({id:uid(),name,phone,address,createdAt:today()});
+  closeModal('supp-modal');renderAll();
+  await Promise.all([saveSuppliers(),...(renamed?[savePurchases(),saveParts()]:[])]);
+}
+async function deleteSupplier(id){
+  if(!isOwner()||!confirm('Delete this supplier\'s contact record?\n\nTheir past purchases stay as they are.'))return;
+  suppliers=suppliers.filter(s=>s.id!==id);renderAll();await saveSuppliers();
+}
+
+// ── Supplier rate comparison (Reports) ──
+function supplierRates(){
+  const byPart=new Map();
+  purchases.forEach(p=>{
+    const sk=normName(p.supplier);if(!sk||!(p.unitCost>0))return;
+    const pk=p.partId||normName(p.partName);
+    if(!byPart.has(pk))byPart.set(pk,{name:p.partName,sku:p.sku,sup:new Map()});
+    const g=byPart.get(pk);
+    if(!g.sup.has(sk))g.sup.set(sk,{name:p.supplier.trim(),buys:[]});
+    g.sup.get(sk).buys.push(p);
+  });
+  const rows=[];
+  byPart.forEach(g=>{
+    const list=[...g.sup.values()].map(s=>{
+      const b=s.buys.slice().sort((a,c)=>(a.date||'').localeCompare(c.date||''));
+      const last=b[b.length-1];
+      const qty=b.reduce((x,y)=>x+y.qty,0),tot=b.reduce((x,y)=>x+y.total,0);
+      return{name:s.name,last:last.unitCost,lastDate:last.date,avg:qty?tot/qty:last.unitCost,n:b.length};
+    }).sort((a,b)=>a.last-b.last||a.name.localeCompare(b.name));
+    rows.push({name:g.name,sku:g.sku,list});
+  });
+  return rows;
+}
+function renderSupplierRates(){
+  const el=$('rep-suppliers');if(!el)return;
+  const multi=supplierRates().filter(r=>r.list.length>=2);
+  if(!multi.length){
+    el.innerHTML='<div style="color:var(--muted);font-size:13px;line-height:1.7">Not enough data yet. Record purchases of the <strong>same part from 2 or more suppliers</strong> and this will show who gives the lower rate.</div>';return;
+  }
+  // scoreboard
+  const sc=new Map();
+  multi.forEach(r=>{
+    const best=r.list[0].last;
+    r.list.forEach(s=>{
+      const k=normName(s.name);
+      if(!sc.has(k))sc.set(k,{name:s.name,wins:0,n:0,prem:0});
+      const x=sc.get(k);x.n++;x.prem+=(s.last/best-1)*100;if(s.last<=best+1e-9)x.wins++;
+    });
+  });
+  const spent=new Map();purchases.forEach(p=>{const k=normName(p.supplier);if(k)spent.set(k,(spent.get(k)||0)+p.total);});
+  const board=[...sc.entries()].map(([k,x])=>({...x,k,avgPrem:x.prem/x.n,spent:spent.get(k)||0})).sort((a,b)=>a.avgPrem-b.avgPrem||b.wins-a.wins);
+  const premTxt=p=>p<0.05?'<span style="color:var(--green);font-weight:700">Lowest</span>':`<span style="color:${p>10?'var(--red)':'var(--yellow)'}">+${p.toFixed(1)}%</span>`;
+  const sb=`<div style="font-size:11px;color:var(--muted);margin-bottom:8px">Compared on the <strong>latest rate</strong> each supplier gave for the same part (${multi.length} part${multi.length>1?'s':''} bought from 2+ suppliers).</div>
+  <div class="table-wrap" style="margin-bottom:18px"><table><thead><tr><th>Supplier</th><th>Cheapest On</th><th>Avg Vs Best Rate</th><th>Total Bought</th></tr></thead><tbody>${board.map((b,i)=>`<tr><td style="font-weight:600">${i===0?'🏆 ':''}${esc(b.name)}</td><td>${b.wins} of ${b.n} shared parts</td><td>${premTxt(b.avgPrem)}</td><td style="color:var(--orange)">${fmt(b.spent)}</td></tr>`).join('')}</tbody></table></div>`;
+  const cmp=multi.map(r=>{const best=r.list[0],worst=r.list[r.list.length-1];return{...r,best,save:worst.last-best.last,pct:best.last>0?(worst.last-best.last)/worst.last*100:0};})
+    .sort((a,b)=>b.pct-a.pct);
+  const detail=`<div class="card-title" style="font-size:13px;margin-bottom:8px">Part-by-part comparison</div>`+cmp.slice(0,25).map(r=>`<div style="padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div style="font-weight:600;font-size:13px">${esc(r.name)} <span style="font-size:11px;color:var(--muted);font-family:monospace">${esc(r.sku)}</span></div>
+      <div style="font-size:12px;color:${r.save>0?'var(--green)':'var(--muted)'}">${r.save>0?`${esc(r.best.name)} saves ${fmt(r.save)}/unit (${r.pct.toFixed(0)}%)`:'Same rate everywhere'}</div></div>
+      <div style="margin-top:5px">${r.list.map((s,i)=>`<span class="rate-chip ${i===0&&r.save>0?'best':''}"><b>${esc(s.name)} · ${fmt(s.last)}</b><small>${esc(s.lastDate||'')} · avg ${fmt(s.avg)} · ${s.n} buy${s.n>1?'s':''}</small></span>`).join('')}</div></div>`).join('');
+  el.innerHTML=sb+detail;
+}
+
+// ═══ PART REQUESTS (demand tracking) ═══
+let reqTab='part',_demand=[],_demandKey=null;
+const tokKey=s=>{const t=(s||'').toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(Boolean).map(w=>w.length>3&&w.endsWith('s')?w.slice(0,-1):w);return[...new Set(t)].sort();};
+const personKey=r=>{const d=(r.phone||'').replace(/\D/g,'').slice(-10);return d||normName(r.name)||'anon:'+r.id;};
+function stockFor(text){
+  const q=tokKey(text);if(!q.length)return{state:'none',qty:0,part:null};
+  const t=normName(text);
+  let m=parts.filter(p=>normName(p.sku)===t||normName(p.name)===t);
+  if(!m.length)m=parts.filter(p=>{const pt=new Set(tokKey(p.name));return q.every(w=>pt.has(w));});
+  if(!m.length)return{state:'none',qty:0,part:null};
+  const qty=m.reduce((s,p)=>s+p.qty,0);
+  return{state:qty>0?'in':'out',qty,part:m.find(p=>p.qty>0)||m[0],count:m.length};
+}
+// Same part typed differently ("Oil Filter", "oil filters", "filter oil") is grouped together
+function demandGroups(){
+  const g=new Map();
+  requests.forEach(r=>{
+    const key=tokKey(r.part).join(' ')||normName(r.part);
+    if(!g.has(key))g.set(key,{key,names:new Map(),reqs:[],people:new Set(),qty:0,last:'',open:0});
+    const x=g.get(key),nm=r.part.trim();
+    x.names.set(nm,(x.names.get(nm)||0)+1);x.reqs.push(r);x.people.add(personKey(r));
+    x.qty+=+r.qty||1;if((r.date||'')>x.last)x.last=r.date||'';if(r.status!=='done')x.open++;
+  });
+  return[...g.values()].map(x=>{
+    const name=[...x.names.entries()].sort((a,b)=>b[1]-a[1])[0][0];
+    return{...x,name,count:x.reqs.length,nPeople:x.people.size,stock:stockFor(name)};
+  }).sort((a,b)=>b.nPeople-a.nPeople||b.count-a.count||b.last.localeCompare(a.last));
+}
+const stockBadge=s=>s.state==='in'?`<span class="badge badge-green">In stock · ${s.qty}</span>`:s.state==='out'?'<span class="badge badge-yellow">Out of stock</span>':'<span class="badge badge-red">Not stocked</span>';
+function setReqTab(t,el){reqTab=t;document.querySelectorAll('#page-requests .tab').forEach(x=>x.classList.remove('active'));el.classList.add('active');renderRequests();}
+function renderRequests(){
+  if(!$('req-tbody'))return;
+  _demand=demandGroups();
+  const open=requests.filter(r=>r.status!=='done');
+  const waiting=new Set(open.map(personKey)).size;
+  const noStock=_demand.filter(g=>g.open>0&&g.stock.state!=='in').length;
+  $('req-stats').innerHTML=[
+    {label:'Open Requests',val:open.length,sub:requests.length+' recorded in total',color:'var(--orange)'},
+    {label:'People Waiting',val:waiting,sub:'asked & not yet served',color:'var(--blue)'},
+    {label:'Different Parts',val:_demand.length,sub:'asked for so far',color:'var(--purple)'},
+    {label:'Not Available',val:noStock,sub:'requested parts missing from stock',color:noStock?'var(--red)':'var(--green)'},
+  ].map(s=>`<div class="stat-card" style="--accent:${s.color}"><div class="stat-label">${s.label}</div><div class="stat-val" style="color:${s.color}">${s.val}</div><div class="stat-sub">${s.sub}</div></div>`).join('');
+  const q=($('req-search').value||'').trim().toLowerCase();
+  const hit=r=>!q||r.part.toLowerCase().includes(q)||(r.name||'').toLowerCase().includes(q)||(r.phone||'').includes(q);
+  if(reqTab==='part'){
+    $('req-thead').innerHTML='<th>Part</th><th>People</th><th>Requests</th><th>Open</th><th>Qty</th><th>Last Asked</th><th>Stock</th><th>Asked By</th><th>Actions</th>';
+    const rows=_demand.map((g,i)=>({g,i})).filter(({g})=>!q||g.reqs.some(hit));
+    $('req-tbody').innerHTML=rows.length===0?'<tr class="empty-row"><td colspan="9">No requests yet — tap “Record Request” when a customer asks for a part</td></tr>':
+      rows.map(({g,i})=>{
+        const who=[...new Map(g.reqs.map(r=>[personKey(r),r])).values()];
+        return`<tr><td style="font-weight:600">${esc(g.name)}</td>
+          <td><span class="badge ${g.nPeople>=3?'badge-red':g.nPeople===2?'badge-yellow':'badge-gray'}">${g.nPeople}</span></td>
+          <td>${g.count}</td><td style="color:${g.open?'var(--orange)':'var(--muted)'};font-weight:700">${g.open}</td><td>${g.qty}</td>
+          <td style="color:var(--subtle);font-size:12px">${esc(g.last)}</td><td>${stockBadge(g.stock)}</td>
+          <td style="font-size:12px;color:var(--muted);max-width:200px">${who.slice(0,3).map(r=>esc(r.name||'Walk-in')+(r.phone?' ('+esc(r.phone)+')':'')).join(', ')}${who.length>3?` +${who.length-3} more`:''}</td>
+          <td><div class="btn-group"><button class="btn btn-primary btn-sm" onclick="openDemandDetail(${i})">Details</button></div></td></tr>`;
+      }).join('');
+  }else{
+    $('req-thead').innerHTML='<th>Date</th><th>Part</th><th>Qty</th><th>Customer</th><th>Phone</th><th>Note</th><th>Status</th><th>Actions</th>';
+    const list=requests.filter(r=>hit(r)&&(reqTab==='all'||(reqTab==='open'?r.status!=='done':r.status==='done'))).slice().reverse();
+    $('req-tbody').innerHTML=list.length===0?'<tr class="empty-row"><td colspan="8">Nothing here</td></tr>':list.map(r=>`<tr>
+      <td style="color:var(--subtle);font-size:12px">${esc(r.date)}</td><td style="font-weight:600">${esc(r.part)}</td><td>${r.qty}</td>
+      <td>${esc(r.name)||'<span style="color:var(--muted)">—</span>'}</td><td>${esc(r.phone)||'<span style="color:var(--muted)">—</span>'}</td>
+      <td style="font-size:12px;color:var(--muted)">${esc(r.note)}</td>
+      <td><span class="badge ${r.status==='done'?'badge-green':'badge-orange'}">${r.status==='done'?'Done':'Open'}</span></td>
+      <td><div class="btn-group">${r.phone?`<button class="btn btn-secondary btn-sm" onclick="notifyRequest('${r.id}')">💬</button>`:''}<button class="btn btn-secondary btn-sm" onclick="toggleReqDone('${r.id}')">${r.status==='done'?'Reopen':'Done'}</button>${isOwner()?`<button class="btn btn-danger btn-sm" onclick="deleteRequest('${r.id}')">Del</button>`:''}</div></td></tr>`).join('');
+  }
+}
+function openReqModal(){
+  $('rq-part').value='';$('rq-name').value='';$('rq-phone').value='';$('rq-note').value='';$('rq-qty').value=1;$('rq-date').value=today();
+  const names=new Set([...parts.map(p=>p.name),...requests.map(r=>r.part.trim())]);
+  $('req-part-list').innerHTML=[...names].filter(Boolean).map(n=>`<option value="${esc(n)}"></option>`).join('');
+  updateReqHint();openModal('req-modal');
+}
+function updateReqHint(){
+  const el=$('rq-hint'),t=$('rq-part').value.trim();
+  if(!t){el.style.display='none';return;}
+  const s=stockFor(t);
+  const prev=_demand.find(g=>g.key===(tokKey(t).join(' ')||normName(t)));
+  let h=s.state==='in'?`✅ Already in stock: <strong>${esc(s.part.name)}</strong> — ${s.qty} pcs${s.part.location?' · 📍'+esc(s.part.location):''}`:
+        s.state==='out'?`⚠ <strong>${esc(s.part.name)}</strong> is in your inventory but out of stock`:
+        `🆕 Not stocked — this will count toward demand`;
+  if(prev)h+=`<br>🙋 Already asked by ${prev.nPeople} ${prev.nPeople===1?'person':'people'} (${prev.count} request${prev.count>1?'s':''})`;
+  el.innerHTML=h;el.style.display='block';
+}
+async function saveRequest(){
+  const part=$('rq-part').value.trim();if(!part){alert('Enter the part name.');return;}
+  // use the inventory's own spelling when it matches exactly, so grouping stays tidy
+  const exact=parts.find(p=>normName(p.name)===normName(part));
+  requests.push({id:uid(),part:exact?exact.name:part,qty:Math.max(1,+$('rq-qty').value||1),name:$('rq-name').value.trim(),phone:$('rq-phone').value.trim(),date:$('rq-date').value||today(),note:$('rq-note').value.trim(),status:'open'});
+  closeModal('req-modal');renderAll();await saveRequests();
+}
+async function toggleReqDone(id){requests=requests.map(r=>r.id===id?{...r,status:r.status==='done'?'open':'done'}:r);renderAll();await saveRequests();}
+async function deleteRequest(id){if(!isOwner()||!confirm('Delete this request?'))return;requests=requests.filter(r=>r.id!==id);renderAll();await saveRequests();}
+function notifyRequest(id){
+  const r=requests.find(x=>x.id===id);if(!r||!r.phone)return;
+  const text=`Hi${r.name?' '+r.name:''}, the part you asked for (${r.part}) is now available at ${SHOP_NAME}.`;
+  window.open(`https://wa.me/${waNumber(r.phone)}?text=${encodeURIComponent(text)}`,'_blank');
+}
+function openDemandDetail(i){
+  const g=_demand[i];if(!g)return;_demandKey=g.key;
+  $('rd-title').textContent=g.name;
+  $('rd-body').innerHTML=`<div class="hint-box">${g.nPeople} ${g.nPeople===1?'person':'people'} · ${g.count} request${g.count>1?'s':''} · ${g.qty} pcs in total · ${stockBadge(g.stock)}</div>`+
+    g.reqs.slice().reverse().map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">
+      <div><div style="font-weight:600">${esc(r.name)||'Walk-in'} <span class="badge ${r.status==='done'?'badge-green':'badge-orange'}">${r.status==='done'?'Done':'Open'}</span></div>
+      <div style="font-size:11px;color:var(--muted)">${esc(r.date)} · qty ${r.qty}${r.phone?' · 📞 '+esc(r.phone):''}${r.note?' · '+esc(r.note):''}${r.part.trim()!==g.name?' · asked as “'+esc(r.part)+'”':''}</div></div>
+      <div class="btn-group">${r.phone?`<button class="btn btn-success btn-sm" onclick="notifyRequest('${r.id}')">💬 Notify</button>`:''}<button class="btn btn-secondary btn-sm" onclick="toggleReqDone('${r.id}');setTimeout(()=>{renderRequests();const k=_demand.findIndex(x=>x.key===_demandKey);if(k>=0)openDemandDetail(k);},50)">${r.status==='done'?'Reopen':'Done'}</button></div></div>`).join('');
+  openModal('req-detail-modal');
+}
+async function demandMarkAllDone(){
+  const g=_demand.find(x=>x.key===_demandKey);if(!g)return;
+  const ids=new Set(g.reqs.map(r=>r.id));
+  requests=requests.map(r=>ids.has(r.id)?{...r,status:'done'}:r);
+  closeModal('req-detail-modal');renderAll();await saveRequests();
+}
+async function demandToOrderList(){
+  const g=_demand.find(x=>x.key===_demandKey);if(!g)return;
+  if(wishlist.some(w=>w.status!=='skip'&&w.status!=='received'&&tokKey(w.name).join(' ')===g.key)){alert('This part is already on the Order List.');return;}
+  const openReqs=g.reqs.filter(r=>r.status!=='done');
+  const people=new Set(openReqs.map(personKey)).size||g.nPeople;
+  wishlist.push({id:uid(),name:g.name,sku:'',category:'Other',qtyNeeded:Math.max(1,openReqs.reduce((s,r)=>s+(+r.qty||1),0)||g.qty),
+    customer:[...new Set(openReqs.map(r=>r.name).filter(Boolean))].slice(0,3).join(', '),priority:people>=3?'high':people===2?'medium':'low',status:'pending',notes:`Requested by ${g.nPeople} ${g.nPeople===1?'person':'people'} (${g.count} request${g.count>1?'s':''})`,createdAt:today()});
+  closeModal('req-detail-modal');renderAll();await saveWishlist();
+  showSync('Added to Order List');
+}
+function renderDemandReport(){
+  const el=$('rep-demand');if(!el)return;
+  const groups=demandGroups();
+  if(!groups.length){el.innerHTML='<div style="color:var(--muted);font-size:13px">No part requests recorded yet. Use the <strong>Part Requests</strong> page when a customer asks for something.</div>';return;}
+  const people=new Set(requests.map(personKey)).size;
+  el.innerHTML=`<div style="font-size:12px;color:var(--subtle);margin-bottom:10px"><strong>${requests.length}</strong> requests from <strong>${people}</strong> ${people===1?'person':'people'} for <strong>${groups.length}</strong> different part${groups.length>1?'s':''}. Similar spellings are grouped together.</div>
+  <div class="table-wrap"><table><thead><tr><th>#</th><th>Part</th><th>People</th><th>Requests</th><th>Still Open</th><th>Stock</th><th>Last Asked</th></tr></thead><tbody>${groups.slice(0,10).map((g,i)=>`<tr><td style="color:var(--muted)">${i+1}</td><td style="font-weight:600">${esc(g.name)}</td><td><span class="badge ${g.nPeople>=3?'badge-red':g.nPeople===2?'badge-yellow':'badge-gray'}">${g.nPeople}</span></td><td>${g.count}</td><td>${g.open}</td><td>${stockBadge(g.stock)}</td><td style="color:var(--subtle);font-size:12px">${esc(g.last)}</td></tr>`).join('')}</tbody></table></div>
+  <div style="font-size:11px;color:var(--muted);margin-top:8px">Tip: parts asked by 2+ people and “Not stocked” are the best candidates to start stocking — open Part Requests → Details → “Add to Order List”.</div>`;
 }
 
 // ═══ CUSTOMERS, REFERRALS & BONUS ═══
@@ -1537,7 +1928,24 @@ function fillPartnerLists(){
   $('cust-list').innerHTML=customers.map(c=>`<option value="${esc(c.name)}"></option>`).join('');
   $('ref-list').innerHTML=customers.map(c=>`<option value="${esc(refLabel(c))}"></option>`).join('');
 }
+let _autoFilledFor=null;
+function contactFor(name){
+  const k=normName(name);if(!k)return null;
+  const p=customers.find(c=>normName(c.name)===k&&(c.phone||c.address));
+  if(p)return{phone:p.phone||'',address:p.address||''};
+  const i=invoices.find(x=>normName(x.customer)===k&&(x.phone||x.address));
+  return i?{phone:i.phone||'',address:i.address||''}:null;
+}
+function autoFillContact(){
+  const k=normName($('bf-customer').value);
+  const empty=!$('bf-phone').value&&!$('bf-addr').value;
+  if(_autoFilledFor!==null&&_autoFilledFor!==k){$('bf-phone').value='';$('bf-addr').value='';_autoFilledFor=null;}
+  if(_autoFilledFor===null&&($('bf-phone').value===''&&$('bf-addr').value==='')){
+    const c=contactFor(k);if(c){$('bf-phone').value=c.phone;$('bf-addr').value=c.address;_autoFilledFor=k;}
+  }
+}
 function updateBillLinks(){
+  autoFillContact();
   const el=$('bf-link-hint');
   const cu=resolvePartnerByName($('bf-customer').value);
   const rv=$('bf-ref').value.trim();const rf=rv?resolvePartnerRef(rv):null;
@@ -1562,12 +1970,13 @@ function updateBonusHint(total,cg,sg){
   el.style.display=lines.length?'block':'none';
 }
 function invPartnerLine(inv){
+  const contact=(inv.phone||inv.address)?`<div style="font-size:12px;color:var(--subtle);margin-top:3px">${inv.phone?'📞 '+esc(inv.phone):''}${inv.phone&&inv.address?' · ':''}${inv.address?'📍 '+esc(inv.address):''}</div>`:'';
   const cu=inv.customerId?findPartner(inv.customerId):null;
   const rf=inv.referrerId?findPartner(inv.referrerId):null;
   let h='';
   if(cu)h+=`<div style="font-size:12px;color:var(--blue);margin-top:3px">⭐ Registered customer · ${esc(cu.code)}</div>`;
   if(rf)h+=`<div style="font-size:12px;color:var(--orange);margin-top:3px">🤝 Referred by ${esc(rf.name)} · ${esc(rf.code)}</div>`;
-  return h;
+  return contact+h;
 }
 
 // ── Admin page ──
@@ -1587,7 +1996,7 @@ function renderPartners(){
   const sb=a=>a.reduce((s,x)=>s+x.base,0);
   $('cust-tbody').innerHTML=rows.length===0?`<tr class="empty-row"><td colspan="8">${customers.length?'No match':'No customers yet — add one to start tracking referral bonus'}</td></tr>`:
     rows.map(({c,l})=>`<tr>
-      <td><div style="font-weight:600">${esc(c.name)}</div><div style="font-size:11px;color:var(--muted);margin-top:2px"><span class="loc-tag">${esc(c.code)}</span>${c.phone?' · '+esc(c.phone):''}</div></td>
+      <td><div style="font-weight:600">${esc(c.name)}</div><div style="font-size:11px;color:var(--muted);margin-top:2px"><span class="loc-tag">${esc(c.code)}</span>${c.phone?' · '+esc(c.phone):''}</div>${c.address?`<div style="font-size:11px;color:var(--muted)">📍 ${esc(c.address)}</div>`:''}</td>
       <td><span class="badge badge-purple">${c.pct}%</span></td>
       <td>${l.own.length} <span style="color:var(--muted);font-size:11px">· ${fmt(sb(l.own))}</span></td>
       <td>${l.refs.length} <span style="color:var(--muted);font-size:11px">· ${fmt(sb(l.refs))}</span></td>
@@ -1608,7 +2017,7 @@ function openCustModal(id=null){
   $('cust-save-btn').textContent=id?'Save Changes':'Add Customer';
   const c=id?findPartner(id):null;
   $('cf-name').value=c?c.name:'';$('cf-phone').value=c?c.phone:'';$('cf-pct').value=c?c.pct:'';
-  $('cf-code').value=c?c.code:'';$('cf-notes').value=c?c.notes:'';
+  $('cf-code').value=c?c.code:'';$('cf-notes').value=c?c.notes:'';$('cf-addr').value=c?c.address||'':'';
   openModal('cust-modal');
 }
 async function saveCustomer(){
@@ -1623,7 +2032,7 @@ async function saveCustomer(){
   if(customers.some(c=>c.name.trim().toLowerCase()===name.toLowerCase()&&c.id!==editingCustId)){
     alert('Another customer already has this exact name. Make it distinct (e.g. add the area) — bills match customers by name.');return;
   }
-  const rec={id:editingCustId||uid(),name,phone:$('cf-phone').value.trim(),pct,code,notes:$('cf-notes').value.trim(),
+  const rec={id:editingCustId||uid(),name,phone:$('cf-phone').value.trim(),address:$('cf-addr').value.trim(),pct,code,notes:$('cf-notes').value.trim(),
     createdAt:editingCustId?(findPartner(editingCustId)?.createdAt||today()):today()};
   let relinked=false;
   if(editingCustId)customers=customers.map(c=>c.id===editingCustId?rec:c);
