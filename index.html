@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
 <title>AutoParts Spares Pro</title>
+<meta name="robots" content="noindex,nofollow"/>
 <!-- PWA -->
 <link rel="manifest" href="manifest.json"/>
 <meta name="theme-color" content="#080d18"/>
@@ -252,9 +253,30 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
 .blurred{filter:blur(6px);user-select:none;pointer-events:none;}
 .locked-overlay{position:relative;}
 .locked-overlay::after{content:'🔒 Owner Only';position:absolute;inset:0;background:rgba(8,13,24,.85);display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:var(--orange);border-radius:var(--radius);}
+
+/* ── PARTNERS / CUSTOMER PORTAL ── */
+#portal{position:fixed;inset:0;overflow-y:auto;background:var(--bg);z-index:500;display:none;}
+.pt-wrap{max-width:920px;margin:0 auto;padding:26px 16px 70px;}
+.pt-brand{font-size:10px;color:var(--orange);letter-spacing:.2em;text-transform:uppercase;font-weight:700;}
+.pt-shop{font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;letter-spacing:.04em;}
+.pt-hello{font-family:'Rajdhani',sans-serif;font-size:30px;font-weight:700;margin:20px 0 14px;}
+.pt-code{font-family:monospace;font-size:24px;font-weight:700;letter-spacing:.14em;color:var(--orange);background:var(--og);border:1px dashed var(--orange);border-radius:8px;padding:6px 14px;display:inline-block;margin-top:4px;}
+.pt-id-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;}
+.pt-k{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:700;}
+.pt-v{font-size:15px;font-weight:600;margin-top:3px;word-break:break-word;}
+.pt-sec{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;letter-spacing:.04em;margin:28px 0 10px;}
+.pt-items{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.5;}
+.pt-note{margin-top:10px;font-size:12px;color:var(--muted);line-height:1.6;}
+.pt-foot{margin-top:34px;font-size:11px;color:var(--muted);text-align:center;line-height:1.8;}
+#portal .stats-grid{margin:18px 0 0;}
+@media (max-width:860px){#portal .pt-wrap{padding-top:20px;}.pt-hello{font-size:24px;}}
+#share-link{width:100%;font-family:monospace;font-size:11px;resize:none;word-break:break-all;}
 </style>
 </head>
 <body>
+
+<!-- ═══ CUSTOMER PORTAL (open link, no login) ═══ -->
+<div id="portal"></div>
 
 <!-- ═══ LOGIN SCREEN ═══ -->
 <div id="login-screen">
@@ -321,6 +343,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
   <div class="nav-item" data-page="wishlist" onclick="navigate('wishlist')"><span class="nav-icon">📋</span> Order List <span class="nav-badge" id="wish-badge" style="display:none">0</span></div>
   <div class="nav-section">Sales</div>
   <div class="nav-item" data-page="billing" onclick="navigate('billing')"><span class="nav-icon">🧾</span> Billing</div>
+  <div class="nav-item" id="nav-partners" data-page="partners" onclick="navigate('partners')"><span class="nav-icon">🤝</span> Customers &amp; Referrals</div>
   <div class="nav-section" id="nav-analytics-section">Analytics</div>
   <div class="nav-item" id="nav-reports" data-page="reports" onclick="navigate('reports')"><span class="nav-icon">📊</span> Reports</div>
   <div class="nav-item" id="nav-insights" data-page="insights" onclick="navigate('insights')"><span class="nav-icon">🧠</span> Insights</div>
@@ -431,6 +454,21 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
   </table></div>
 </div>
 
+<!-- CUSTOMERS & REFERRALS (owner only) -->
+<div id="page-partners" class="page">
+  <div class="ph">
+    <div class="ph-left"><h1>Customers &amp; Referrals</h1><p>Bonus customers, referral codes and shareable customer links</p></div>
+    <button class="btn btn-primary" onclick="openCustModal()">＋ Add Customer</button>
+  </div>
+  <div class="stats-grid" id="cust-stats"></div>
+  <div class="toolbar"><input type="text" class="search-box" id="cust-search" placeholder="Search name, code or phone…" oninput="renderPartners()"/></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Customer</th><th>Bonus</th><th>Own Purchases</th><th>Referrals</th><th>Earned</th><th>Paid Out</th><th>Balance</th><th>Actions</th></tr></thead>
+    <tbody id="cust-tbody"></tbody>
+  </table></div>
+  <div style="font-size:12px;color:var(--muted);margin-top:12px;line-height:1.7">Bonus is calculated on the bill value <strong style="color:var(--subtle)">excluding GST</strong>, and is counted as earned only once the invoice is marked <strong style="color:var(--subtle)">Paid</strong>. Bonus % applies to the customer's own purchases and to purchases by people they referred.</div>
+</div>
+
 <!-- REPORTS (owner only) -->
 <div id="page-reports" class="page">
   <div class="ph"><div class="ph-left"><h1>Sales Reports</h1><p>Revenue, payments & top performers</p></div></div>
@@ -504,6 +542,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
       <div class="access-row allowed">✅ View stock (quantities only)</div>
       <div class="access-row allowed">✅ Record purchases</div>
       <div class="access-row allowed">✅ Add to Order List</div>
+      <div class="access-row allowed">✅ Pick referral on invoices</div>
       <div class="access-row blocked">🚫 See buy prices / margins</div>
       <div class="access-row blocked">🚫 Edit or delete any record</div>
       <div class="access-row blocked">🚫 Change sell prices</div>
@@ -511,6 +550,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
       <div class="access-row blocked">🚫 View insights & analytics</div>
       <div class="access-row blocked">🚫 Mark invoices paid/unpaid</div>
       <div class="access-row blocked">🚫 Access settings</div>
+      <div class="access-row blocked">🚫 Manage bonus customers & share links</div>
     </div>
   </div>
 
@@ -634,8 +674,14 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
   <div class="modal" style="width:560px">
     <h2>New Invoice</h2>
     <div class="frow">
-      <div class="fg"><label>Customer Name</label><input type="text" id="bf-customer" placeholder="Customer name"/></div>
+      <div class="fg"><label>Customer Name</label><input type="text" id="bf-customer" list="cust-list" placeholder="Customer name" oninput="updateBillLinks()" autocomplete="off"/></div>
       <div class="fg"><label>Date</label><input type="date" id="bf-date"/></div>
+    </div>
+    <div class="fg">
+      <label>🤝 Referred By <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(optional)</span></label>
+      <input type="text" id="bf-ref" list="ref-list" placeholder="Search customer name or referral code…" oninput="updateBillLinks()" autocomplete="off" style="width:100%"/>
+      <datalist id="cust-list"></datalist><datalist id="ref-list"></datalist>
+      <div id="bf-link-hint" style="display:none;font-size:12px;color:var(--subtle);line-height:1.7;margin-top:6px"></div>
     </div>
     <div class="fg">
       <label>Add Parts</label>
@@ -652,6 +698,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
         <input type="number" id="bf-disc-val" min="0" placeholder="0" oninput="calcBillTotal()" style="width:90px"/>
         <span id="bf-disc-preview" style="font-size:12px;color:var(--green);font-weight:600"></span>
       </div>
+      <div class="hint-box" id="bf-bonus-hint" style="display:none"></div>
       <div class="grand-total">
         <div>
           <div style="font-size:11px;color:var(--muted)">Subtotal: <span id="bf-subtotal">₹0</span></div>
@@ -667,6 +714,58 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
       <button class="btn btn-secondary" id="save-pending-btn" onclick="saveInvoice(false)" disabled>Save Pending</button>
       <button class="btn btn-primary" id="save-paid-btn" onclick="saveInvoice(true)" disabled>Save + Mark Paid</button>
     </div>
+  </div>
+</div>
+
+<!-- Customer (bonus partner) Modal -->
+<div class="modal-overlay" id="cust-modal">
+  <div class="modal" style="width:460px">
+    <h2 id="cust-modal-title">Add Customer</h2>
+    <div class="fg"><label>Name</label><input type="text" id="cf-name" placeholder="Full name (must be unique)"/></div>
+    <div class="frow">
+      <div class="fg"><label>Phone / WhatsApp</label><input type="text" id="cf-phone" placeholder="10-digit mobile"/></div>
+      <div class="fg"><label>Bonus %</label><input type="number" id="cf-pct" min="0" max="100" step="0.1" placeholder="e.g. 5"/></div>
+    </div>
+    <div class="fg"><label>Referral Code</label><input type="text" id="cf-code" maxlength="12" placeholder="Auto-generated if left empty" style="text-transform:uppercase"/></div>
+    <div class="fg"><label>Notes</label><textarea id="cf-notes" placeholder="Optional"></textarea></div>
+    <div class="hint-box">This customer earns their Bonus % on their own purchases, and on every purchase made by someone they are picked as <em>Referred By</em> on the invoice.</div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('cust-modal')">Cancel</button>
+      <button class="btn btn-primary" id="cust-save-btn" onclick="saveCustomer()">Add Customer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Payout Modal -->
+<div class="modal-overlay" id="payout-modal">
+  <div class="modal" style="width:480px">
+    <h2 id="payout-title">Record Payout</h2>
+    <div class="hint-box" id="payout-balance"></div>
+    <div class="frow">
+      <div class="fg"><label>Amount Paid (₹)</label><input type="number" id="po-amount" min="0" step="0.01" placeholder="0.00"/></div>
+      <div class="fg"><label>Date</label><input type="date" id="po-date"/></div>
+    </div>
+    <div class="fg"><label>Note</label><input type="text" id="po-note" placeholder="e.g. Cash / UPI ref"/></div>
+    <div style="margin-bottom:6px"><button class="btn btn-primary btn-sm" onclick="savePayout()">Save Payout</button></div>
+    <div id="payout-history" style="margin-top:14px"></div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('payout-modal')">Close</button></div>
+  </div>
+</div>
+
+<!-- Share Link Modal -->
+<div class="modal-overlay" id="share-modal">
+  <div class="modal" style="width:520px">
+    <h2 id="share-title">Share Customer Link</h2>
+    <p style="font-size:13px;color:var(--subtle);line-height:1.7;margin-bottom:12px">Anyone with this link can open the page — no login needed. It shows the customer's details, purchases, referrals and bonus.</p>
+    <textarea id="share-link" rows="5" readonly onclick="this.select()"></textarea>
+    <div id="share-meta" style="font-size:11px;color:var(--muted);margin:6px 0 12px"></div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="copyShareLink()">📋 Copy Link</button>
+      <button class="btn btn-success" onclick="shareWhatsApp()">💬 WhatsApp</button>
+      <button class="btn btn-secondary" onclick="previewShare()">👁 Preview</button>
+    </div>
+    <div class="hint-box" style="margin-top:16px">⚠ The page is a <strong>snapshot</strong> taken now. After new bills or payouts, open this dialog again and re-send the link to share updated figures.</div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('share-modal')">Close</button></div>
   </div>
 </div>
 
@@ -719,6 +818,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
     <h2>Menu</h2>
     <div class="btn-group" style="flex-direction:column;align-items:stretch;gap:10px">
       <button class="btn btn-secondary" style="justify-content:flex-start" onclick="closeModal('mobile-more-modal');mobileNavigate('purchases')">🛒 Purchases</button>
+      <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-partners" onclick="closeModal('mobile-more-modal');mobileNavigate('partners')">🤝 Customers &amp; Referrals</button>
       <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-reports" onclick="closeModal('mobile-more-modal');mobileNavigate('reports')">📊 Reports</button>
       <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-insights" onclick="closeModal('mobile-more-modal');mobileNavigate('insights')">🧠 Insights</button>
       <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-settings" onclick="closeModal('mobile-more-modal');mobileNavigate('settings')">⚙️ Settings</button>
@@ -732,18 +832,21 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
 <script>
 // ═══ CONSTANTS ═══
 const SCOPES='https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
-const SH={PARTS:'Parts',INV:'Invoices',PURCH:'Purchases',WISH:'Wishlist',CFG:'Config'};
+const SH={PARTS:'Parts',INV:'Invoices',PURCH:'Purchases',WISH:'Wishlist',CFG:'Config',CUST:'Customers',PAY:'Payouts'};
+const SHOP_NAME='AutoParts Spares Pro'; // shown on customer links
 const HDR={
   PARTS:['id','sku','name','category','qty','minQty','buyPrice','sellPrice','supplier','hsn','mrp','cgst','sgst','location'],
-  INV:['id','customer','date','items_json','subtotal','discountType','discountVal','cgst','sgst','total','paid'],
+  INV:['id','customer','date','items_json','subtotal','discountType','discountVal','cgst','sgst','total','paid','customerId','referrerId'],
   PURCH:['id','date','partId','partName','sku','supplier','qty','unitCost','total','notes'],
   WISH:['id','name','sku','category','qtyNeeded','customer','priority','status','notes','createdAt'],
-  CFG:['key','value']
+  CFG:['key','value'],
+  CUST:['id','name','phone','bonusPct','code','notes','createdAt'],
+  PAY:['id','customerId','date','amount','note']
 };
 
 // ═══ STATE ═══
 let accessToken=null,spreadsheetId=null;
-let parts=[],invoices=[],purchases=[],wishlist=[],config={};
+let parts=[],invoices=[],purchases=[],wishlist=[],config={},customers=[],payouts=[];
 let editingPartId=null,editingWishId=null,selectedPurchPartId=null;
 let billItems=[],currentWishTab='pending';
 let currentRole=null; // 'owner' | 'employee'
@@ -810,7 +913,7 @@ function doLogin(){
 
 function doLogout(){
   currentRole=null;accessToken=null;spreadsheetId=null;
-  parts=[];invoices=[];purchases=[];wishlist=[];
+  parts=[];invoices=[];purchases=[];wishlist=[];customers=[];payouts=[];
   $('login-screen').style.display='flex';
   $('login-user').value='';$('login-pass').value='';
   $('sidebar').style.display='none';$('main').style.display='none';
@@ -826,13 +929,13 @@ function applyRoleUI(){
   // Show Google Sheet link only to owner
   $('sheet-link-wrap').style.display=isOwn?'block':'none';
   // Nav locks
-  ['nav-reports','nav-insights','nav-settings'].forEach(id=>{
+  ['nav-partners','nav-reports','nav-insights','nav-settings'].forEach(id=>{
     $(id).classList.toggle('locked',!isOwn);
   });
   $('nav-analytics-section').style.opacity=isOwn?'1':'0.3';
   $('nav-settings-section').style.opacity=isOwn?'1':'0.3';
   // Mobile "More" menu locks
-  ['mmenu-reports','mmenu-insights','mmenu-settings','mmenu-sheet'].forEach(id=>{
+  ['mmenu-partners','mmenu-reports','mmenu-insights','mmenu-settings','mmenu-sheet'].forEach(id=>{
     $(id).style.display=isOwn?'flex':'none';
   });
   // Greeting
@@ -850,7 +953,7 @@ function isOwner(){return currentRole==='owner';}
 // ═══ MOBILE NAV ═══
 function mobileNavigate(page,el){
   if(page==='more'){toggleMoreMenu();return;}
-  if(!isOwner()&&['reports','insights','settings'].includes(page))return;
+  if(!isOwner()&&['partners','reports','insights','settings'].includes(page))return;
   navigate(page);
   document.querySelectorAll('#mobile-tabbar .mtab').forEach(t=>t.classList.remove('active'));
   if(el)el.classList.add('active');
@@ -941,6 +1044,7 @@ async function findOrCreateSheet(){
   const res=await drReq(`/files?q=${q}&fields=files(id,name)`);
   if(res.files&&res.files.length>0){
     spreadsheetId=res.files[0].id;
+    await ensureSheets();
   }else{
     const c=await shReq('','POST',{properties:{title:'AutoParts_SparesPro_DB'},sheets:Object.values(SH).map(t=>({properties:{title:t}}))});
     spreadsheetId=c.spreadsheetId;
@@ -948,6 +1052,15 @@ async function findOrCreateSheet(){
   }
   const url=`https://docs.google.com/spreadsheets/d/${spreadsheetId}`;
   $('sheet-link').href=url;if(isOwner())$('sheet-link-wrap').style.display='block';
+}
+async function ensureSheets(){
+  // Existing databases made before this update lack the Customers / Payouts tabs
+  const meta=await shReq(`/${spreadsheetId}?fields=sheets.properties.title`);
+  const have=(meta.sheets||[]).map(s=>s.properties.title);
+  const missing=Object.entries(SH).filter(([,t])=>!have.includes(t));
+  if(!missing.length)return;
+  await shReq(`/${spreadsheetId}:batchUpdate`,'POST',{requests:missing.map(([,t])=>({addSheet:{properties:{title:t}}}))});
+  for(const[k,t]of missing)await writeRange(`${t}!A1`,[HDR[k]]);
 }
 async function writeRange(range,values){await shReq(`/${spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,'PUT',{values});}
 async function readSheet(sh){const r=await shReq(`/${spreadsheetId}/values/${encodeURIComponent(sh+'!A1:Z2000')}`);return r.values||[];}
@@ -958,33 +1071,38 @@ async function clearRewrite(sh,hdr,rows){
 
 // ═══ DATA LOAD / SAVE ═══
 async function loadAll(){
-  const[pr,ir,pur,wr]=await Promise.all([readSheet(SH.PARTS),readSheet(SH.INV),readSheet(SH.PURCH),readSheet(SH.WISH)]);
+  const[pr,ir,pur,wr,cr,pyr]=await Promise.all([readSheet(SH.PARTS),readSheet(SH.INV),readSheet(SH.PURCH),readSheet(SH.WISH),readSheet(SH.CUST),readSheet(SH.PAY)]);
   parts=pr.slice(1).map(r=>({id:r[0]||uid(),sku:r[1]||'',name:r[2]||'',category:r[3]||'Other',qty:+r[4]||0,minQty:+r[5]||0,buyPrice:+r[6]||0,sellPrice:+r[7]||0,supplier:r[8]||'',hsn:r[9]||'',mrp:+r[10]||0,cgst:+r[11]||0,sgst:+r[12]||0,location:r[13]||''}));
-  invoices=ir.slice(1).map(r=>({id:r[0]||uid(),customer:r[1]||'',date:r[2]||'',items:JSON.parse(r[3]||'[]'),subtotal:+r[4]||0,discountType:r[5]||'none',discountVal:+r[6]||0,cgst:+r[7]||0,sgst:+r[8]||0,total:+r[9]||0,paid:r[10]==='TRUE'||r[10]==='true'}));
+  invoices=ir.slice(1).map(r=>({id:r[0]||uid(),customer:r[1]||'',date:r[2]||'',items:JSON.parse(r[3]||'[]'),subtotal:+r[4]||0,discountType:r[5]||'none',discountVal:+r[6]||0,cgst:+r[7]||0,sgst:+r[8]||0,total:+r[9]||0,paid:r[10]==='TRUE'||r[10]==='true',customerId:r[11]||'',referrerId:r[12]||''}));
   purchases=pur.slice(1).map(r=>({id:r[0]||uid(),date:r[1]||'',partId:r[2]||'',partName:r[3]||'',sku:r[4]||'',supplier:r[5]||'',qty:+r[6]||0,unitCost:+r[7]||0,total:+r[8]||0,notes:r[9]||''}));
   wishlist=wr.slice(1).map(r=>({id:r[0]||uid(),name:r[1]||'',sku:r[2]||'',category:r[3]||'Other',qtyNeeded:+r[4]||1,customer:r[5]||'',priority:r[6]||'medium',status:r[7]||'pending',notes:r[8]||'',createdAt:r[9]||today()}));
+  customers=cr.slice(1).filter(r=>r[0]).map(r=>({id:r[0],name:r[1]||'',phone:r[2]||'',pct:+r[3]||0,code:(r[4]||'').toUpperCase(),notes:r[5]||'',createdAt:r[6]||''}));
+  payouts=pyr.slice(1).filter(r=>r[0]).map(r=>({id:r[0],customerId:r[1]||'',date:r[2]||'',amount:+r[3]||0,note:r[4]||''}));
 }
 async function saveParts(){showSync('Saving…',false);await clearRewrite(SH.PARTS,HDR.PARTS,parts.map(p=>[p.id,p.sku,p.name,p.category,p.qty,p.minQty,p.buyPrice,p.sellPrice,p.supplier||'',p.hsn||'',p.mrp||0,p.cgst||0,p.sgst||0,p.location||'']));showSync('Saved ✓');}
-async function saveInvoices(){showSync('Saving…',false);await clearRewrite(SH.INV,HDR.INV,invoices.map(i=>[i.id,i.customer,i.date,JSON.stringify(i.items),i.subtotal,i.discountType,i.discountVal,i.cgst||0,i.sgst||0,i.total,String(i.paid).toUpperCase()]));showSync('Saved ✓');}
+async function saveInvoices(){showSync('Saving…',false);await clearRewrite(SH.INV,HDR.INV,invoices.map(i=>[i.id,i.customer,i.date,JSON.stringify(i.items),i.subtotal,i.discountType,i.discountVal,i.cgst||0,i.sgst||0,i.total,String(i.paid).toUpperCase(),i.customerId||'',i.referrerId||'']));showSync('Saved ✓');}
 async function savePurchases(){showSync('Saving…',false);await clearRewrite(SH.PURCH,HDR.PURCH,purchases.map(p=>[p.id,p.date,p.partId,p.partName,p.sku,p.supplier,p.qty,p.unitCost,p.total,p.notes]));showSync('Saved ✓');}
 async function saveWishlist(){showSync('Saving…',false);await clearRewrite(SH.WISH,HDR.WISH,wishlist.map(w=>[w.id,w.name,w.sku,w.category,w.qtyNeeded,w.customer,w.priority,w.status,w.notes,w.createdAt]));showSync('Saved ✓');}
 
+async function saveCustomers(){showSync('Saving…',false);await clearRewrite(SH.CUST,HDR.CUST,customers.map(c=>[c.id,c.name,c.phone||'',c.pct,c.code,c.notes||'',c.createdAt||'']));showSync('Saved ✓');}
+async function savePayouts(){showSync('Saving…',false);await clearRewrite(SH.PAY,HDR.PAY,payouts.map(p=>[p.id,p.customerId,p.date,p.amount,p.note||'']));showSync('Saved ✓');}
+
 // ═══ NAVIGATION ═══
 function navigate(page){
-  if(!isOwner()&&['reports','insights','settings'].includes(page))return;
+  if(!isOwner()&&['partners','reports','insights','settings'].includes(page))return;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   $(`page-${page}`).classList.add('active');
   document.querySelector(`[data-page="${page}"]`)?.classList.add('active');
   const map={dashboard:renderDashboard,inventory:renderInventory,purchases:renderPurchases,
     wishlist:()=>renderWishlist(currentWishTab),billing:()=>{renderBilling();$('invoice-view-wrap').innerHTML='';},
-    reports:renderReports,insights:renderInsights,settings:loadSettingsDisplay};
+    partners:renderPartners,reports:renderReports,insights:renderInsights,settings:loadSettingsDisplay};
   map[page]?.();
 }
 function renderAll(){
   renderDashboard();renderInventory();renderPurchases();
   renderWishlist(currentWishTab);renderBilling();
-  if(isOwner()){renderReports();renderInsights();}
+  if(isOwner()){renderPartners();renderReports();renderInsights();}
 }
 function lowStockParts(){return parts.filter(p=>p.qty<=p.minQty);}
 function partSalesMap(){
@@ -1216,7 +1334,7 @@ function renderBilling(){
     }).join('');
 }
 function openBillModal(){
-  billItems=[];$('bf-customer').value='';$('bf-date').value=today();$('bf-part-search').value='';$('bf-disc-type').value='none';$('bf-disc-val').value='';
+  billItems=[];fillPartnerLists();$('bf-customer').value='';$('bf-ref').value='';updateBillLinks();$('bf-date').value=today();$('bf-part-search').value='';$('bf-disc-type').value='none';$('bf-disc-val').value='';
   renderBillItems();openModal('bill-modal');
 }
 function billPartSearch(){
@@ -1274,12 +1392,17 @@ function calcBillTotal(){
   $('bf-cgst-show').textContent=cgstAmt>0?fmt(cgstAmt):'₹0';
   $('bf-sgst-show').textContent=sgstAmt>0?fmt(sgstAmt):'₹0';
   $('bf-total').textContent=fmt(total);
+  updateBonusHint(total,cgstAmt,sgstAmt);
   return{subtotal,disc,dtype,dval,cgst:cgstAmt,sgst:sgstAmt,total};
 }
 async function saveInvoice(paid){
   const customer=$('bf-customer').value.trim();if(!customer||!billItems.length){alert('Enter customer name and add at least one part.');return;}
+  const cu=resolvePartnerByName(customer);
+  const refRaw=$('bf-ref').value.trim();const rf=refRaw?resolvePartnerRef(refRaw):null;
+  if(refRaw&&!rf){alert('Referral not found. Pick someone from the list, or clear the Referred By field.');return;}
+  if(rf&&cu&&rf.id===cu.id){alert('A customer cannot refer themselves.');return;}
   const{subtotal,disc,dtype,dval,cgst,sgst,total}=calcBillTotal();
-  const inv={id:uid(),customer,date:$('bf-date').value||today(),items:billItems.map(i=>({...i})),subtotal,discountType:dtype,discountVal:dval,cgst,sgst,total,paid};
+  const inv={id:uid(),customer,date:$('bf-date').value||today(),items:billItems.map(i=>({...i})),subtotal,discountType:dtype,discountVal:dval,cgst,sgst,total,paid,customerId:cu?cu.id:'',referrerId:rf?rf.id:''};
   invoices.unshift(inv);
   parts=parts.map(p=>{const item=billItems.find(i=>i.partId===p.id);return item?{...p,qty:p.qty-item.qty}:p;});
   closeModal('bill-modal');renderAll();navigate('billing');viewInvoice(inv.id);
@@ -1294,7 +1417,7 @@ function viewInvoice(id){
         <div>
           <div style="font-size:11px;color:var(--orange);font-weight:700;letter-spacing:.12em">INVOICE #${inv.id.slice(-5)}</div>
           <div style="font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;margin-top:2px">${inv.customer}</div>
-          <div style="font-size:12px;color:var(--muted)">${inv.date}</div>
+          <div style="font-size:12px;color:var(--muted)">${inv.date}</div>${invPartnerLine(inv)}
         </div>
         <div style="text-align:right">
           <div style="font-family:'Rajdhani',sans-serif;font-size:30px;font-weight:700;color:var(--orange)">${fmt(inv.total)}</div>${disc?`<div style="font-size:12px;color:var(--green)">Discount: -${inv.discountType==='pct'?inv.discountVal+'%':fmt(inv.discountVal)}</div>`:''}
@@ -1371,6 +1494,321 @@ function renderInsights(){
   const restock=parts.filter(p=>p.qty<=p.minQty||((sm[p.id]?.qty||0)>2&&p.qty<(sm[p.id]?.qty||0))).sort((a,b)=>{const sa=(sm[a.id]?.qty||0)/(a.qty||1);const sb=(sm[b.id]?.qty||0)/(b.qty||1);return sb-sa;});
   $('ins-restock').innerHTML=restock.length===0?'<div style="color:var(--muted);font-size:13px">✓ No urgent restock needed right now</div>':`<div class="table-wrap"><table><thead><tr><th>Part</th><th>Stock</th><th>Min</th><th>Total Sold</th><th>Urgency</th><th>Action</th></tr></thead><tbody>${restock.slice(0,10).map(p=>{const sold=sm[p.id]?.qty||0;const urg=p.qty===0?'OUT OF STOCK':p.qty<=p.minQty?'High':'Medium';const uc=p.qty===0?'var(--red)':p.qty<=p.minQty?'var(--orange)':'var(--yellow)';return`<tr><td style="font-weight:600">${p.name}<div style="font-size:11px;color:var(--muted)">${p.sku}</div></td><td style="font-weight:700;color:${p.qty===0?'var(--red)':'var(--yellow)'}">${p.qty}</td><td>${p.minQty}</td><td style="color:var(--green)">${sold}</td><td style="font-weight:700;color:${uc}">${urg}</td><td><button class="btn btn-primary btn-sm" onclick="openPurchaseModal();setTimeout(()=>selectPurchPart('${p.id}'),100)">Order Now</button></td></tr>`;}).join('')}</tbody></table></div>`;
 }
+
+// ═══ CUSTOMERS, REFERRALS & BONUS ═══
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const r2=n=>Math.round((+n||0)*100)/100;
+let editingCustId=null,payoutCustId=null,shareLinkCache='',shareCustId=null;
+
+const refLabel=c=>`${c.name} · ${c.code}`;
+const findPartner=id=>customers.find(c=>c.id===id)||null;
+function resolvePartnerByName(name){
+  const n=(name||'').trim().toLowerCase();
+  return n?customers.find(c=>c.name.trim().toLowerCase()===n)||null:null;
+}
+function resolvePartnerRef(v){
+  v=(v||'').trim().toLowerCase();if(!v)return null;
+  return customers.find(c=>c.code.toLowerCase()===v||refLabel(c).toLowerCase()===v)
+      ||customers.find(c=>c.name.trim().toLowerCase()===v)||null;
+}
+function genCode(name){
+  const base=((name||'').replace(/[^A-Za-z]/g,'').toUpperCase()+'XXX').slice(0,3);
+  let code;do{code=base+Math.floor(100+Math.random()*900);}while(customers.some(c=>c.code===code));
+  return code;
+}
+// Bonus base = bill value excluding GST
+const invBase=i=>Math.max(0,(+i.total||0)-(+i.cgst||0)-(+i.sgst||0));
+function partnerLedger(c){
+  const mk=i=>({inv:i,base:r2(invBase(i)),bonus:r2(invBase(i)*c.pct/100)});
+  const own=invoices.filter(i=>i.customerId===c.id).map(mk);
+  const refs=invoices.filter(i=>i.referrerId===c.id&&i.customerId!==c.id).map(mk);
+  const mine=payouts.filter(p=>p.customerId===c.id);
+  const sum=(a,f)=>r2(a.reduce((s,x)=>s+f(x),0));
+  const earnedOwn=sum(own.filter(x=>x.inv.paid),x=>x.bonus);
+  const earnedRef=sum(refs.filter(x=>x.inv.paid),x=>x.bonus);
+  const pending=sum([...own,...refs].filter(x=>!x.inv.paid),x=>x.bonus);
+  const paidOut=sum(mine,p=>p.amount);
+  const earned=r2(earnedOwn+earnedRef);
+  return{own,refs,mine,earnedOwn,earnedRef,earned,pending,paidOut,balance:r2(earned-paidOut)};
+}
+
+// ── Billing helpers ──
+function fillPartnerLists(){
+  $('cust-list').innerHTML=customers.map(c=>`<option value="${esc(c.name)}"></option>`).join('');
+  $('ref-list').innerHTML=customers.map(c=>`<option value="${esc(refLabel(c))}"></option>`).join('');
+}
+function updateBillLinks(){
+  const el=$('bf-link-hint');
+  const cu=resolvePartnerByName($('bf-customer').value);
+  const rv=$('bf-ref').value.trim();const rf=rv?resolvePartnerRef(rv):null;
+  let h='';
+  if(cu)h+=`⭐ Registered customer: <b>${esc(cu.name)}</b> (${esc(cu.code)}) — this purchase counts toward their bonus<br>`;
+  if(rv&&!rf)h+=`<span style="color:var(--red)">⚠ No customer found for “${esc(rv)}”</span>`;
+  else if(rf&&cu&&rf.id===cu.id)h+=`<span style="color:var(--red)">⚠ A customer cannot refer themselves</span>`;
+  else if(rf)h+=`🤝 Referred by <b>${esc(rf.name)}</b> (${esc(rf.code)})`;
+  el.innerHTML=h;el.style.display=h?'block':'none';
+  if(billItems.length)calcBillTotal();else updateBonusHint(0,0,0);
+}
+function updateBonusHint(total,cg,sg){
+  const el=$('bf-bonus-hint');if(!el)return;
+  if(!isOwner()||!total){el.style.display='none';return;}
+  const base=Math.max(0,total-cg-sg);
+  const cu=resolvePartnerByName($('bf-customer').value);
+  const rv=$('bf-ref').value.trim();const rf=rv?resolvePartnerRef(rv):null;
+  const lines=[];
+  if(cu)lines.push(`${esc(cu.name)} — own purchase @ ${cu.pct}%: <b style="color:var(--orange)">${fmt(base*cu.pct/100)}</b>`);
+  if(rf&&(!cu||rf.id!==cu.id))lines.push(`${esc(rf.name)} — referral @ ${rf.pct}%: <b style="color:var(--orange)">${fmt(base*rf.pct/100)}</b>`);
+  el.innerHTML=lines.length?'Bonus on this bill (excl. GST ₹'+base.toFixed(2)+')<br>'+lines.join('<br>'):'';
+  el.style.display=lines.length?'block':'none';
+}
+function invPartnerLine(inv){
+  const cu=inv.customerId?findPartner(inv.customerId):null;
+  const rf=inv.referrerId?findPartner(inv.referrerId):null;
+  let h='';
+  if(cu)h+=`<div style="font-size:12px;color:var(--blue);margin-top:3px">⭐ Registered customer · ${esc(cu.code)}</div>`;
+  if(rf)h+=`<div style="font-size:12px;color:var(--orange);margin-top:3px">🤝 Referred by ${esc(rf.name)} · ${esc(rf.code)}</div>`;
+  return h;
+}
+
+// ── Admin page ──
+function renderPartners(){
+  if(!isOwner()||!$('cust-tbody'))return;
+  const q=($('cust-search').value||'').trim().toLowerCase();
+  const all=customers.map(c=>({c,l:partnerLedger(c)}));
+  const sum=k=>r2(all.reduce((s,x)=>s+x.l[k],0));
+  const nPay=all.reduce((s,x)=>s+x.l.mine.length,0);
+  $('cust-stats').innerHTML=[
+    {label:'Bonus Customers',val:customers.length,sub:'registered',color:'var(--blue)'},
+    {label:'Bonus Earned',val:fmt(sum('earned')),sub:fmt(sum('pending'))+' more on unpaid bills',color:'var(--orange)'},
+    {label:'Paid Out',val:fmt(sum('paidOut')),sub:nPay+' payout'+(nPay===1?'':'s'),color:'var(--purple)'},
+    {label:'Balance Due',val:fmt(sum('balance')),sub:'owed to customers',color:'var(--green)'},
+  ].map(s=>`<div class="stat-card" style="--accent:${s.color}"><div class="stat-label">${s.label}</div><div class="stat-val" style="color:${s.color}">${s.val}</div><div class="stat-sub">${s.sub}</div></div>`).join('');
+  const rows=all.filter(({c})=>!q||c.name.toLowerCase().includes(q)||c.code.toLowerCase().includes(q)||(c.phone||'').includes(q));
+  const sb=a=>a.reduce((s,x)=>s+x.base,0);
+  $('cust-tbody').innerHTML=rows.length===0?`<tr class="empty-row"><td colspan="8">${customers.length?'No match':'No customers yet — add one to start tracking referral bonus'}</td></tr>`:
+    rows.map(({c,l})=>`<tr>
+      <td><div style="font-weight:600">${esc(c.name)}</div><div style="font-size:11px;color:var(--muted);margin-top:2px"><span class="loc-tag">${esc(c.code)}</span>${c.phone?' · '+esc(c.phone):''}</div></td>
+      <td><span class="badge badge-purple">${c.pct}%</span></td>
+      <td>${l.own.length} <span style="color:var(--muted);font-size:11px">· ${fmt(sb(l.own))}</span></td>
+      <td>${l.refs.length} <span style="color:var(--muted);font-size:11px">· ${fmt(sb(l.refs))}</span></td>
+      <td style="color:var(--orange);font-weight:700">${fmt(l.earned)}${l.pending>0?`<div style="font-size:10px;color:var(--yellow);font-weight:400">+${fmt(l.pending)} pending</div>`:''}</td>
+      <td>${fmt(l.paidOut)}</td>
+      <td style="color:var(--green);font-weight:700">${fmt(l.balance)}</td>
+      <td><div class="btn-group">
+        <button class="btn btn-primary btn-sm" onclick="openShare('${c.id}')">🔗 Link</button>
+        <button class="btn btn-success btn-sm" onclick="openPayout('${c.id}')">Payout</button>
+        <button class="btn btn-secondary btn-sm" onclick="openCustModal('${c.id}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCustomer('${c.id}')">Del</button>
+      </div></td></tr>`).join('');
+}
+function openCustModal(id=null){
+  if(!isOwner())return;
+  editingCustId=id;
+  $('cust-modal-title').textContent=id?'Edit Customer':'Add Customer';
+  $('cust-save-btn').textContent=id?'Save Changes':'Add Customer';
+  const c=id?findPartner(id):null;
+  $('cf-name').value=c?c.name:'';$('cf-phone').value=c?c.phone:'';$('cf-pct').value=c?c.pct:'';
+  $('cf-code').value=c?c.code:'';$('cf-notes').value=c?c.notes:'';
+  openModal('cust-modal');
+}
+async function saveCustomer(){
+  if(!isOwner())return;
+  const name=$('cf-name').value.trim();
+  if(!name){alert('Enter a name.');return;}
+  const pct=+$('cf-pct').value;
+  if($('cf-pct').value===''||!(pct>=0&&pct<=100)){alert('Enter a bonus % between 0 and 100.');return;}
+  let code=$('cf-code').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(!code)code=genCode(name);
+  if(customers.some(c=>c.code===code&&c.id!==editingCustId)){alert('That referral code is already used by another customer.');return;}
+  if(customers.some(c=>c.name.trim().toLowerCase()===name.toLowerCase()&&c.id!==editingCustId)){
+    alert('Another customer already has this exact name. Make it distinct (e.g. add the area) — bills match customers by name.');return;
+  }
+  const rec={id:editingCustId||uid(),name,phone:$('cf-phone').value.trim(),pct,code,notes:$('cf-notes').value.trim(),
+    createdAt:editingCustId?(findPartner(editingCustId)?.createdAt||today()):today()};
+  let relinked=false;
+  if(editingCustId)customers=customers.map(c=>c.id===editingCustId?rec:c);
+  else{
+    customers.push(rec);
+    const old=invoices.filter(i=>!i.customerId&&(i.customer||'').trim().toLowerCase()===name.toLowerCase());
+    if(old.length&&confirm(`${old.length} earlier invoice${old.length>1?'s are':' is'} under the name “${name}”.\n\nCount ${old.length>1?'them':'it'} toward this customer's purchases and bonus?`)){
+      invoices=invoices.map(i=>old.includes(i)?{...i,customerId:rec.id}:i);relinked=true;
+    }
+  }
+  closeModal('cust-modal');renderAll();
+  await Promise.all([saveCustomers(),...(relinked?[saveInvoices()]:[])]);
+}
+async function deleteCustomer(id){
+  if(!isOwner())return;
+  const c=findPartner(id);if(!c)return;
+  const n=invoices.filter(i=>i.customerId===id||i.referrerId===id).length;
+  if(!confirm(`Delete “${c.name}”?\n\nTheir payout records will be removed and ${n} invoice${n===1?'':'s'} will be unlinked from them (the invoices themselves stay).`))return;
+  customers=customers.filter(x=>x.id!==id);
+  payouts=payouts.filter(p=>p.customerId!==id);
+  invoices=invoices.map(i=>(i.customerId===id||i.referrerId===id)?{...i,customerId:i.customerId===id?'':i.customerId,referrerId:i.referrerId===id?'':i.referrerId}:i);
+  renderAll();
+  await Promise.all([saveCustomers(),savePayouts(),saveInvoices()]);
+}
+
+// ── Payouts ──
+function openPayout(id){
+  if(!isOwner())return;
+  payoutCustId=id;
+  $('po-amount').value='';$('po-note').value='';$('po-date').value=today();
+  refreshPayoutModal();
+  openModal('payout-modal');
+}
+function refreshPayoutModal(){
+  const c=findPartner(payoutCustId);if(!c)return;
+  const l=partnerLedger(c);
+  $('payout-title').textContent='Payout — '+c.name;
+  $('payout-balance').innerHTML=`Earned <strong>${fmt(l.earned)}</strong> · Paid out <strong>${fmt(l.paidOut)}</strong> · Balance due <strong style="color:var(--green)">${fmt(l.balance)}</strong>`;
+  if(!$('po-amount').value&&l.balance>0)$('po-amount').value=l.balance;
+  $('payout-history').innerHTML=l.mine.length?
+    `<div class="card-title" style="font-size:13px;margin-bottom:6px">Payout history</div>`+
+    l.mine.slice().reverse().map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><div>${esc(p.date)} <span style="color:var(--muted);font-size:11px">${esc(p.note)}</span></div><div style="display:flex;align-items:center;gap:10px"><strong>${fmt(p.amount)}</strong><button class="btn btn-danger btn-sm" onclick="deletePayout('${p.id}')">✕</button></div></div>`).join(''):'';
+}
+async function savePayout(){
+  if(!isOwner())return;
+  const amount=r2($('po-amount').value);
+  if(!(amount>0)){alert('Enter the amount paid.');return;}
+  payouts.push({id:uid(),customerId:payoutCustId,date:$('po-date').value||today(),amount,note:$('po-note').value.trim()});
+  $('po-amount').value='';$('po-note').value='';
+  refreshPayoutModal();renderPartners();
+  await savePayouts();
+}
+async function deletePayout(pid){
+  if(!isOwner()||!confirm('Delete this payout record?'))return;
+  payouts=payouts.filter(p=>p.id!==pid);
+  $('po-amount').value='';refreshPayoutModal();renderPartners();
+  await savePayouts();
+}
+
+// ── Open link (snapshot encoded in the URL #hash — never sent to any server) ──
+const b64u=b=>{let s='';for(let i=0;i<b.length;i+=0x8000)s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');};
+const unb64u=s=>{s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const bin=atob(s);const b=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)b[i]=bin.charCodeAt(i);return b;};
+async function encodePortal(obj){
+  const raw=new TextEncoder().encode(JSON.stringify(obj));
+  if(typeof CompressionStream==='undefined')return'j'+b64u(raw);
+  const out=await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer();
+  return'z'+b64u(new Uint8Array(out));
+}
+async function decodePortal(str){
+  let bytes=unb64u(str.slice(1));
+  if(str[0]==='z')bytes=new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());
+  else if(str[0]!=='j')throw new Error('bad format');
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+function buildPortalData(c){
+  const l=partnerLedger(c);
+  const row=x=>({d:x.inv.date,n:x.inv.id.slice(-5),c:x.inv.customer,t:r2(x.inv.total),p:x.inv.paid?1:0,o:x.bonus});
+  return{v:1,s:SHOP_NAME,g:today(),
+    u:{n:c.name,ph:c.phone||'',cd:c.code,pc:c.pct},
+    own:l.own.map(x=>({...row(x),i:x.inv.items.map(it=>[it.name,it.qty])})),
+    ref:l.refs.map(row),
+    pay:l.mine.map(p=>({d:p.date,a:p.amount,n:p.note||''})),
+    sum:{e:l.earned,eo:l.earnedOwn,er:l.earnedRef,pe:l.pending,po:l.paidOut,b:l.balance}};
+}
+async function buildPortalLink(c){
+  return location.href.split('#')[0]+'#/p/'+await encodePortal(buildPortalData(c));
+}
+async function openShare(id){
+  if(!isOwner())return;
+  const c=findPartner(id);if(!c)return;
+  shareCustId=id;shareLinkCache='';
+  $('share-title').textContent='Share link — '+c.name;
+  $('share-link').value='Generating…';$('share-meta').textContent='';
+  openModal('share-modal');
+  try{
+    shareLinkCache=await buildPortalLink(c);
+    $('share-link').value=shareLinkCache;
+    const n=shareLinkCache.length;
+    $('share-meta').innerHTML=`${n.toLocaleString()} characters`+(n>6000?' · <span style="color:var(--yellow)">long link — if a chat app cuts it, send it by email or ask me for a live-link upgrade</span>':'');
+  }catch(e){$('share-link').value='Could not build link: '+e.message;}
+}
+async function copyShareLink(){
+  if(!shareLinkCache)return;
+  try{await navigator.clipboard.writeText(shareLinkCache);}
+  catch(e){$('share-link').select();document.execCommand('copy');}
+  showSync('Link copied');
+}
+function shareWhatsApp(){
+  if(!shareLinkCache)return;
+  const c=findPartner(shareCustId);
+  let ph=(c.phone||'').replace(/\D/g,'').replace(/^0+/,'');
+  if(ph.length===10)ph='91'+ph;
+  const text=`Hi ${c.name}, here is your ${SHOP_NAME} page — your purchases, referrals and bonus. Your referral code is ${c.code}.\n${shareLinkCache}`;
+  window.open(`https://wa.me/${ph}?text=${encodeURIComponent(text)}`,'_blank');
+}
+function previewShare(){if(shareLinkCache)window.open(shareLinkCache,'_blank');}
+
+// ── Customer portal (read-only, no login) ──
+const portalRoute=()=>location.hash.startsWith('#/p/');
+function portalHTML(d){
+  const u=d.u,s=d.sum;
+  const badge=p=>p?'<span class="badge badge-green">Paid</span>':'<span class="badge badge-yellow">Pending</span>';
+  const bonusCell=r=>r.p?`<span style="color:var(--orange);font-weight:700">${fmt(r.o)}</span>`:`<span style="color:var(--muted)">${fmt(r.o)} <span style="font-size:10px">(after payment)</span></span>`;
+  const own=(d.own||[]).slice().sort((a,b)=>(b.d||'').localeCompare(a.d||''));
+  const ref=(d.ref||[]).slice().sort((a,b)=>(b.d||'').localeCompare(a.d||''));
+  const pay=(d.pay||[]).slice().sort((a,b)=>(b.d||'').localeCompare(a.d||''));
+  const card=(label,val,sub,color)=>`<div class="stat-card" style="--accent:${color}"><div class="stat-label">${label}</div><div class="stat-val" style="color:${color}">${fmt(val)}</div><div class="stat-sub">${sub}</div></div>`;
+  return`<div class="pt-wrap">
+    <div class="pt-brand">Customer Rewards</div>
+    <div class="pt-shop">${esc(d.s)}</div>
+    <div class="pt-hello">Hello, ${esc(u.n)} 👋</div>
+
+    <div class="card">
+      <div class="card-title">🪪 Your Details</div>
+      <div class="pt-id-grid">
+        <div><div class="pt-k">Name</div><div class="pt-v">${esc(u.n)}</div></div>
+        <div><div class="pt-k">Phone</div><div class="pt-v">${esc(u.ph)||'—'}</div></div>
+        <div><div class="pt-k">Bonus Rate</div><div class="pt-v">${esc(u.pc)}% on your bills &amp; referrals</div></div>
+        <div><div class="pt-k">Your Referral Code</div><div class="pt-code">${esc(u.cd)}</div></div>
+      </div>
+      <div class="pt-note">Tell the shop your code — or ask friends to mention your name — when they buy, and you earn ${esc(u.pc)}% on their bill too.</div>
+    </div>
+
+    <div class="stats-grid">
+      ${card('Balance To Receive',s.b,'ready to be paid to you','var(--green)')}
+      ${card('Total Bonus Earned',s.e,`Own ${fmt(s.eo)} · Referrals ${fmt(s.er)}`,'var(--orange)')}
+      ${card('Already Paid To You',s.po,pay.length+' payout'+(pay.length===1?'':'s'),'var(--purple)')}
+      ${card('Coming Soon',s.pe,'on bills not yet paid','var(--yellow)')}
+    </div>
+
+    <div class="pt-sec">🛒 Your Purchases</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Bill</th><th>Items</th><th>Amount</th><th>Status</th><th>Your Bonus</th></tr></thead>
+      <tbody>${own.length?own.map(r=>`<tr><td style="color:var(--subtle)">${esc(r.d)}</td><td style="color:var(--orange);font-weight:700">#${esc(r.n)}</td><td><div class="pt-items">${(r.i||[]).map(x=>esc(x[0])+' ×'+esc(x[1])).join(', ')}</div></td><td style="font-weight:600">${fmt(r.t)}</td><td>${badge(r.p)}</td><td>${bonusCell(r)}</td></tr>`).join(''):'<tr class="empty-row"><td colspan="6">No purchases yet</td></tr>'}</tbody>
+    </table></div>
+
+    <div class="pt-sec">🤝 People You Referred</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Customer</th><th>Bill Amount</th><th>Status</th><th>Your Bonus</th></tr></thead>
+      <tbody>${ref.length?ref.map(r=>`<tr><td style="color:var(--subtle)">${esc(r.d)}</td><td style="font-weight:600">${esc(r.c)}</td><td>${fmt(r.t)}</td><td>${badge(r.p)}</td><td>${bonusCell(r)}</td></tr>`).join(''):'<tr class="empty-row"><td colspan="5">No referrals yet — share your code!</td></tr>'}</tbody>
+    </table></div>
+
+    <div class="pt-sec">💸 Payouts Received</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Amount</th><th>Note</th></tr></thead>
+      <tbody>${pay.length?pay.map(p=>`<tr><td style="color:var(--subtle)">${esc(p.d)}</td><td style="font-weight:700;color:var(--purple)">${fmt(p.a)}</td><td style="color:var(--muted)">${esc(p.n)||'—'}</td></tr>`).join(''):'<tr class="empty-row"><td colspan="3">No payouts yet</td></tr>'}</tbody>
+    </table></div>
+
+    <div class="pt-foot">Bonus is earned on the bill value excluding GST, once a bill is marked Paid.<br/>Figures as of <strong>${esc(d.g)}</strong>. Ask the shop for a fresh link to see the latest.</div>
+  </div>`;
+}
+async function bootPortal(){
+  document.querySelectorAll('#login-screen,#auth-panel,#sidebar,#main,#mobile-tabbar,#fab-invoice').forEach(e=>e.style.display='none');
+  const el=$('portal');el.style.display='block';
+  el.innerHTML='<div class="pt-wrap" style="text-align:center;padding-top:80px;color:var(--muted)"><span class="spinner"></span> Loading…</div>';
+  try{
+    const d=await decodePortal(location.hash.slice(4));
+    if(d.v!==1||!d.u)throw new Error('unsupported');
+    document.title=d.s+' — '+d.u.n;
+    el.innerHTML=portalHTML(d);
+  }catch(e){
+    el.innerHTML='<div class="pt-wrap" style="text-align:center;padding-top:80px"><div style="font-size:40px">🔗</div><div class="pt-hello">This link looks incomplete</div><div class="pt-note">It may have been cut off when it was shared. Please ask the shop to send it again.</div></div>';
+  }
+}
+window.addEventListener('hashchange',()=>{if(portalRoute())location.reload();});
 
 // ═══ MODAL HELPERS ═══
 function openModal(id){$(id).classList.add('open');}
@@ -1456,6 +1894,9 @@ async function installApp(){
 window.addEventListener('appinstalled',()=>{const b=document.getElementById('install-btn');if(b)b.style.display='none';});
 window.addEventListener('offline',()=>showSync('You are offline — changes cannot be saved',true));
 window.addEventListener('online',()=>showSync('Back online ✓'));
+
+// ═══ CUSTOMER PORTAL BOOT (must be last) ═══
+if(portalRoute())bootPortal();
 </script>
 </body>
 </html>
