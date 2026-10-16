@@ -298,6 +298,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
 .sh-chips::-webkit-scrollbar{display:none;}
 .sh-chip{flex:0 0 auto;padding:6px 13px;border-radius:20px;border:1px solid var(--border2);background:var(--card);color:var(--subtle);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;}
 .sh-chip.on{background:var(--orange);border-color:var(--orange);color:#fff;}
+#sh-brands{padding-top:6px;}
+#sh-brands .sh-chip.on{background:var(--purple);border-color:var(--purple);}
+.pbrand{color:var(--purple);font-weight:700;margin-right:5px;}
+.pbrand::after{content:" ·";font-weight:400;opacity:.7;}
 .sh-item{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;}
 .sh-name{font-weight:600;font-size:14px;line-height:1.35;word-break:break-word;}
 .sh-meta{font-size:11px;color:var(--muted);margin-top:3px;}
@@ -454,7 +458,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
   </div>
   <div class="toolbar"><input type="text" class="search-box" id="pur-search" placeholder="Search supplier, brand or part…" oninput="renderPurchases()"/></div>
   <div class="table-wrap"><table>
-    <thead><tr><th>Date</th><th>Part</th><th>SKU</th><th>Brand</th><th>Supplier</th><th>Qty</th><th id="th-unit-cost">Unit Cost ₹</th><th id="th-total-cost">Total ₹</th><th>Notes</th></tr></thead>
+    <thead><tr><th>Date</th><th>Part</th><th>SKU</th><th>Supplier</th><th>Qty</th><th id="th-unit-cost">Unit Cost ₹</th><th id="th-total-cost">Total ₹</th><th>Notes</th></tr></thead>
     <tbody id="pur-tbody"></tbody>
   </table></div>
 </div>
@@ -1397,9 +1401,9 @@ function renderAll(){
 }
 function lowStockParts(){return parts.filter(p=>p.qty<=p.minQty);}
 function partSalesMap(){
-  const m={};
+  const m={},pb={};parts.forEach(p=>pb[p.id]=p.brand||'');
   invoices.forEach(inv=>inv.items.forEach(item=>{
-    if(!m[item.partId])m[item.partId]={qty:0,rev:0,name:item.name};
+    if(!m[item.partId])m[item.partId]={qty:0,rev:0,name:item.name,brand:item.brand||pb[item.partId]||''};
     m[item.partId].qty+=item.qty;m[item.partId].rev+=item.price*item.qty;
   }));
   return m;
@@ -1433,7 +1437,7 @@ function renderDashboard(){
   // Low stock
   const lsEl=$('dash-lowstock');
   if(ls.length===0)lsEl.innerHTML='<div style="color:var(--muted);font-size:13px">✓ All parts well stocked</div>';
-  else lsEl.innerHTML=ls.slice(0,6).map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:600;font-size:13px">${p.name}</div><div style="font-size:11px;color:var(--muted)">${p.sku}${p.location?' · 📍'+p.location:''}</div></div><span class="badge badge-red">${p.qty}/${p.minQty}</span></div>`).join('');
+  else lsEl.innerHTML=ls.slice(0,6).map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:600;font-size:13px">${pLabel(p)}</div><div style="font-size:11px;color:var(--muted)">${p.sku}${p.location?' · 📍'+p.location:''}</div></div><span class="badge badge-red">${p.qty}/${p.minQty}</span></div>`).join('');
   // Low stock alerts chip
   if(ls.length>0){$('chip-lowstock').style.display='block';$('chip-ls-text').textContent=ls.length+' part'+(ls.length>1?'s':'')+' low';}
   else $('chip-lowstock').style.display='none';
@@ -1452,7 +1456,7 @@ function renderDashboard(){
   // Purchases
   const purchEl=$('dash-purchases');
   if(purchases.length===0)purchEl.innerHTML='<div style="color:var(--muted);font-size:13px">No purchases recorded</div>';
-  else purchEl.innerHTML=purchases.slice(-4).reverse().map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:600;font-size:13px">${p.partName}</div><div style="font-size:11px;color:var(--muted)">${p.supplier||'—'} · ${p.date}</div></div>${isOwner()?`<div style="font-weight:700;color:var(--orange)">${fmt(p.total)}</div>`:`<div style="color:var(--muted);font-size:12px">Qty: ${p.qty}</div>`}</div>`).join('');
+  else purchEl.innerHTML=purchases.slice(-4).reverse().map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:600;font-size:13px">${pLabel(p,p.partName)}</div><div style="font-size:11px;color:var(--muted)">${p.supplier||'—'} · ${p.date}</div></div>${isOwner()?`<div style="font-weight:700;color:var(--orange)">${fmt(p.total)}</div>`:`<div style="color:var(--muted);font-size:12px">Qty: ${p.qty}</div>`}</div>`).join('');
 }
 
 // ═══ INVENTORY ═══
@@ -1472,7 +1476,7 @@ function renderInventory(){
   const filtered=parts.filter(p=>{
     if(cat&&p.category!==cat)return false;
     if(brandSel&&(p.brand||'').toLowerCase()!==brandSel.toLowerCase())return false;
-    if(q&&!p.name.toLowerCase().includes(q)&&!p.sku.toLowerCase().includes(q)&&!(p.brand||'').toLowerCase().includes(q)&&!(p.location||'').toLowerCase().includes(q))return false;
+    if(!tokHit(q,[p.brand,p.name,p.sku,p.location]))return false;
     if(st==='low'&&p.qty>p.minQty)return false;
     if(st==='ok'&&p.qty<=p.minQty)return false;
     if(st==='dead'&&(sm[p.id]?.qty||0)>0)return false;
@@ -1485,16 +1489,16 @@ function renderInventory(){
     `<button class="btn btn-secondary" onclick="exportCSV()">⬇ Export CSV</button>`;
   // Header — hide buy price from employee
   $('inv-thead').innerHTML=isOwner()?
-    '<th>SKU</th><th>Location</th><th>Part Name</th><th>Brand</th><th>Category</th><th>Supplier</th><th>Qty</th><th>Min</th><th>Buy ₹</th><th>Sell ₹</th><th>Margin</th><th>Status</th><th>Actions</th>':
-    '<th>SKU</th><th>Location</th><th>Part Name</th><th>Brand</th><th>Category</th><th>Supplier</th><th>Qty</th><th>Min</th><th>Sell ₹</th><th>Status</th>';
+    '<th>SKU</th><th>Location</th><th>Part</th><th>Category</th><th>Supplier</th><th>Qty</th><th>Min</th><th>Buy ₹</th><th>Sell ₹</th><th>Margin</th><th>Status</th><th>Actions</th>':
+    '<th>SKU</th><th>Location</th><th>Part</th><th>Category</th><th>Supplier</th><th>Qty</th><th>Min</th><th>Sell ₹</th><th>Status</th>';
   $('inv-tbody').innerHTML=filtered.length===0?'<tr class="empty-row"><td colspan="12">No parts found</td></tr>':
     filtered.map(p=>{
       const margin=p.buyPrice>0?(((p.sellPrice-p.buyPrice)/p.sellPrice)*100).toFixed(0)+'%':'—';
       const statusBadge=p.qty===0?'<span class="badge badge-red">Out</span>':p.qty<=p.minQty?'<span class="badge badge-yellow">Low</span>':'<span class="badge badge-green">OK</span>';
       if(isOwner()){
-        return`<tr><td style="font-family:monospace;font-size:11px;color:var(--subtle)">${p.sku}</td><td><span class="loc-tag">${p.location||'—'}</span></td><td style="font-weight:600">${p.name}</td><td>${p.brand?`<span class="badge badge-purple">${esc(p.brand)}</span>`:'<span style="color:var(--muted)">—</span>'}</td><td><span class="badge badge-blue">${p.category}</span></td><td style="font-size:12px;color:var(--muted)">${p.supplier||'—'}</td><td style="font-weight:700;color:${p.qty===0?'var(--red)':p.qty<=p.minQty?'var(--yellow)':'var(--green)'}">${p.qty}</td><td style="color:var(--muted)">${p.minQty}</td><td style="color:var(--subtle)">${fmt(p.buyPrice)}</td><td style="font-weight:600;color:var(--orange)">${fmt(p.sellPrice)}</td><td style="color:var(--green)">${margin}</td><td>${statusBadge}</td><td><div class="btn-group"><button class="btn btn-secondary btn-sm" onclick="openPartModal('${p.id}')">Edit</button><button class="btn btn-danger btn-sm" onclick="deletePart('${p.id}')">Del</button></div></td></tr>`;
+        return`<tr><td style="font-family:monospace;font-size:11px;color:var(--subtle)">${p.sku}</td><td><span class="loc-tag">${p.location||'—'}</span></td><td style="font-weight:600">${pLabel(p)}</td><td><span class="badge badge-blue">${p.category}</span></td><td style="font-size:12px;color:var(--muted)">${p.supplier||'—'}</td><td style="font-weight:700;color:${p.qty===0?'var(--red)':p.qty<=p.minQty?'var(--yellow)':'var(--green)'}">${p.qty}</td><td style="color:var(--muted)">${p.minQty}</td><td style="color:var(--subtle)">${fmt(p.buyPrice)}</td><td style="font-weight:600;color:var(--orange)">${fmt(p.sellPrice)}</td><td style="color:var(--green)">${margin}</td><td>${statusBadge}</td><td><div class="btn-group"><button class="btn btn-secondary btn-sm" onclick="openPartModal('${p.id}')">Edit</button><button class="btn btn-danger btn-sm" onclick="deletePart('${p.id}')">Del</button></div></td></tr>`;
       }else{
-        return`<tr><td style="font-family:monospace;font-size:11px;color:var(--subtle)">${p.sku}</td><td><span class="loc-tag">${p.location||'—'}</span></td><td style="font-weight:600">${p.name}</td><td>${p.brand?`<span class="badge badge-purple">${esc(p.brand)}</span>`:'<span style="color:var(--muted)">—</span>'}</td><td><span class="badge badge-blue">${p.category}</span></td><td style="font-size:12px;color:var(--muted)">${p.supplier||'—'}</td><td style="font-weight:700;color:${p.qty===0?'var(--red)':p.qty<=p.minQty?'var(--yellow)':'var(--green)'}">${p.qty}</td><td style="color:var(--muted)">${p.minQty}</td><td style="font-weight:600;color:var(--orange)">${fmt(p.sellPrice)}</td><td>${statusBadge}</td></tr>`;
+        return`<tr><td style="font-family:monospace;font-size:11px;color:var(--subtle)">${p.sku}</td><td><span class="loc-tag">${p.location||'—'}</span></td><td style="font-weight:600">${pLabel(p)}</td><td><span class="badge badge-blue">${p.category}</span></td><td style="font-size:12px;color:var(--muted)">${p.supplier||'—'}</td><td style="font-weight:700;color:${p.qty===0?'var(--red)':p.qty<=p.minQty?'var(--yellow)':'var(--green)'}">${p.qty}</td><td style="color:var(--muted)">${p.minQty}</td><td style="font-weight:600;color:var(--orange)">${fmt(p.sellPrice)}</td><td>${statusBadge}</td></tr>`;
       }
     }).join('');
 }
@@ -1516,7 +1520,7 @@ function updateMarginHint(){
 }
 async function savePart(){
   if(!isOwner())return;
-  const p={id:editingPartId||uid(),sku:$('pf-sku').value.trim(),name:$('pf-name').value.trim(),category:$('pf-cat').value,qty:+$('pf-qty').value,minQty:+$('pf-minqty').value,buyPrice:+$('pf-buy').value,sellPrice:+$('pf-sell').value,supplier:$('pf-supplier').value.trim(),brand:$('pf-brand').value.trim(),hsn:$('pf-hsn').value.trim(),mrp:+$('pf-mrp').value||0,cgst:+$('pf-cgst').value||0,sgst:+$('pf-sgst').value||0,location:$('pf-location').value.trim().toUpperCase().replace(/\s+/g,'')};
+  const p={id:editingPartId||uid(),sku:$('pf-sku').value.trim(),name:$('pf-name').value.trim(),category:$('pf-cat').value,qty:+$('pf-qty').value,minQty:+$('pf-minqty').value,buyPrice:+$('pf-buy').value,sellPrice:+$('pf-sell').value,supplier:$('pf-supplier').value.trim(),brand:canonBrand($('pf-brand').value),hsn:$('pf-hsn').value.trim(),mrp:+$('pf-mrp').value||0,cgst:+$('pf-cgst').value||0,sgst:+$('pf-sgst').value||0,location:$('pf-location').value.trim().toUpperCase().replace(/\s+/g,'')};
   if(!p.sku||!p.name){alert('SKU and Part Name required.');return;}
   if(editingPartId)parts=parts.map(x=>x.id===editingPartId?p:x);else parts.push(p);
   closeModal('part-modal');renderAll();await saveParts();
@@ -1539,13 +1543,13 @@ function exportCSV(){
 // ═══ PURCHASES ═══
 function renderPurchases(){
   const q=$('pur-search').value.toLowerCase();
-  const filtered=purchases.filter(p=>!q||p.partName.toLowerCase().includes(q)||p.supplier.toLowerCase().includes(q)||(p.brand||'').toLowerCase().includes(q));
+  const filtered=purchases.filter(p=>tokHit(q,[p.brand,p.partName,p.sku,p.supplier]));
   // Hide cost columns from employee
   $('th-unit-cost').style.display=isOwner()?'':'none';
   $('th-total-cost').style.display=isOwner()?'':'none';
   $('pur-sub').textContent=isOwner()?`${purchases.length} records · ${fmt(purchases.reduce((s,p)=>s+p.total,0))} total`:`${purchases.length} purchase records`;
-  $('pur-tbody').innerHTML=filtered.length===0?'<tr class="empty-row"><td colspan="9">No purchases found</td></tr>':
-    filtered.slice().reverse().map(p=>`<tr><td style="color:var(--subtle)">${p.date}</td><td style="font-weight:600">${p.partName}</td><td style="font-family:monospace;font-size:11px;color:var(--subtle)">${p.sku}</td><td>${p.brand?`<span class="badge badge-purple">${esc(p.brand)}</span>`:'—'}</td><td>${p.supplier||'—'}</td><td style="font-weight:700;color:var(--blue)">${p.qty}</td><td style="display:${isOwner()?'':'none'};color:var(--muted)">${fmt(p.unitCost)}</td><td style="display:${isOwner()?'':'none'};font-weight:700;color:var(--orange)">${fmt(p.total)}</td><td style="font-size:12px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.notes||'—'}</td></tr>`).join('');
+  $('pur-tbody').innerHTML=filtered.length===0?'<tr class="empty-row"><td colspan="8">No purchases found</td></tr>':
+    filtered.slice().reverse().map(p=>`<tr><td style="color:var(--subtle)">${p.date}</td><td style="font-weight:600">${pLabel(p,p.partName)}</td><td style="font-family:monospace;font-size:11px;color:var(--subtle)">${p.sku}</td><td>${p.supplier||'—'}</td><td style="font-weight:700;color:var(--blue)">${p.qty}</td><td style="display:${isOwner()?'':'none'};color:var(--muted)">${fmt(p.unitCost)}</td><td style="display:${isOwner()?'':'none'};font-weight:700;color:var(--orange)">${fmt(p.total)}</td><td style="font-size:12px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.notes||'—'}</td></tr>`).join('');
 }
 function openPurchaseModal(){
   selectedPurchPartId=null;$('purch-part-search').value='';$('purch-selected-wrap').style.display='none';
@@ -1557,15 +1561,15 @@ function purchPartSearch(){
   const q=$('purch-part-search').value.toLowerCase().trim();
   const dd=$('purch-part-dropdown');
   if(!q){dd.classList.remove('open');return;}
-  const res=parts.filter(p=>p.name.toLowerCase().includes(q)||p.sku.toLowerCase().includes(q)||(p.brand||'').toLowerCase().includes(q)).slice(0,7);
+  const res=parts.filter(p=>tokHit(q,[p.brand,p.name,p.sku])).slice(0,7);
   if(!res.length){dd.classList.remove('open');return;}
-  dd.innerHTML=res.map(p=>`<div class="pdi" onmousedown="selectPurchPart('${p.id}')"><div><div style="font-weight:600;font-size:13px">${p.name}${p.brand?` <span style="color:var(--purple);font-weight:700">· ${esc(p.brand)}</span>`:''}</div><div style="font-size:11px;color:var(--muted)">${p.sku} · stock: ${p.qty}${p.location?' · 📍'+p.location:''}</div></div></div>`).join('');
+  dd.innerHTML=res.map(p=>`<div class="pdi" onmousedown="selectPurchPart('${p.id}')"><div><div style="font-weight:600;font-size:13px">${pLabel(p)}</div><div style="font-size:11px;color:var(--muted)">${p.sku} · stock: ${p.qty}${p.location?' · 📍'+p.location:''}</div></div></div>`).join('');
   dd.classList.add('open');
 }
 function selectPurchPart(id){
   const p=parts.find(x=>x.id===id);selectedPurchPartId=id;
   $('purch-part-search').value='';$('purch-part-dropdown').classList.remove('open');
-  $('purch-selected').textContent=`${p.name}${p.brand?' · '+p.brand:''} (${p.sku}) — stock: ${p.qty}`;
+  $('purch-selected').textContent=`${pText(p)} (${p.sku}) — stock: ${p.qty}`;
   $('purch-selected-wrap').style.display='block';
   if(p.buyPrice>0)$('purch-cost').value=p.buyPrice;
   $('purch-brand').value=p.brand||'';
@@ -1582,8 +1586,8 @@ async function savePurchase(){
   const p=parts.find(x=>x.id===selectedPurchPartId);
   const qty=+$('purch-qty').value,cost=+$('purch-cost').value;
   if(!qty||!cost){alert('Enter quantity and cost.');return;}
-  purchases.push({id:uid(),date:$('purch-date').value,partId:p.id,partName:p.name,sku:p.sku,supplier:$('purch-supplier').value.trim(),brand:$('purch-brand').value.trim(),qty,unitCost:cost,total:qty*cost,notes:$('purch-notes').value.trim()});
-  parts=parts.map(x=>{if(x.id!==p.id)return x;const u={...x,qty:x.qty+qty};if(!x.brand&&$('purch-brand').value.trim())u.brand=$('purch-brand').value.trim();if($('purch-update-buy').checked&&isOwner())u.buyPrice=cost;return u;});
+  purchases.push({id:uid(),date:$('purch-date').value,partId:p.id,partName:p.name,sku:p.sku,supplier:$('purch-supplier').value.trim(),brand:canonBrand($('purch-brand').value),qty,unitCost:cost,total:qty*cost,notes:$('purch-notes').value.trim()});
+  parts=parts.map(x=>{if(x.id!==p.id)return x;const u={...x,qty:x.qty+qty};if(!x.brand&&$('purch-brand').value.trim())u.brand=canonBrand($('purch-brand').value);if($('purch-update-buy').checked&&isOwner())u.buyPrice=cost;return u;});
   const suppChanged=upsertSupplier($('purch-supplier').value,$('purch-sphone').value.trim(),$('purch-saddr').value.trim());
   closeModal('purchase-modal');renderAll();await Promise.all([savePurchases(),saveParts(),...(suppChanged?[saveSuppliers()]:[])]);
 }
@@ -1644,9 +1648,9 @@ function billPartSearch(){
   const q=$('bf-part-search').value.toLowerCase().trim();
   const dd=$('bill-part-dropdown');
   if(!q){dd.classList.remove('open');return;}
-  const res=parts.filter(p=>p.qty>0&&(p.name.toLowerCase().includes(q)||p.sku.toLowerCase().includes(q)||(p.brand||'').toLowerCase().includes(q)||(p.location||'').toLowerCase().includes(q))).slice(0,8);
+  const res=parts.filter(p=>p.qty>0&&tokHit(q,[p.brand,p.name,p.sku,p.location])).slice(0,8);
   if(!res.length){dd.classList.remove('open');return;}
-  dd.innerHTML=res.map(p=>`<div class="pdi" onmousedown="addToBill('${p.id}')"><div><div style="font-weight:600;font-size:13px">${p.name}${p.brand?` <span style="color:var(--purple);font-weight:700">· ${esc(p.brand)}</span>`:''}</div><div style="font-size:11px;color:var(--muted)">${p.sku} · ${p.qty} in stock${p.location?' · 📍'+p.location:''}</div></div><div style="font-weight:700;color:var(--orange)">${fmt(p.sellPrice)}</div></div>`).join('');
+  dd.innerHTML=res.map(p=>`<div class="pdi" onmousedown="addToBill('${p.id}')"><div><div style="font-weight:600;font-size:13px">${pLabel(p)}</div><div style="font-size:11px;color:var(--muted)">${p.sku} · ${p.qty} in stock${p.location?' · 📍'+p.location:''}</div></div><div style="font-weight:700;color:var(--orange)">${fmt(p.sellPrice)}</div></div>`).join('');
   dd.classList.add('open');
 }
 function addToBill(partId){
@@ -1660,7 +1664,7 @@ function renderBillItems(){
   // Employee cannot edit prices, owner can
   $('bill-items-list').innerHTML=billItems.map(item=>`
     <div class="bill-item-row">
-      <div style="flex:1"><div style="font-weight:600;font-size:13px">${item.name}${item.brand?` <span style="color:var(--purple)">· ${esc(item.brand)}</span>`:''}</div><div style="font-size:11px;color:var(--subtle)">${item.sku}</div></div>
+      <div style="flex:1"><div style="font-weight:600;font-size:13px">${pLabel(item)}</div><div style="font-size:11px;color:var(--subtle)">${item.sku}</div></div>
       <input type="number" min="1" max="${item.maxQty}" value="${item.qty}" style="width:58px;text-align:center" onchange="updateBillQty('${item.partId}',this.value)" title="Qty"/>
       ${isOwner()?`<input type="number" min="0" step="0.01" value="${item.price}" style="width:88px;text-align:right" onchange="updateBillPrice('${item.partId}',this.value)" title="Price (editable)"/>`:`<div style="width:88px;text-align:right;font-size:13px;color:var(--subtle)">${fmt(item.price)}</div>`}
       <div style="font-weight:700;color:var(--orange);width:88px;text-align:right">${fmt(item.price*item.qty)}</div>
@@ -1742,7 +1746,7 @@ function viewInvoice(id){
         </div>
       </div>
       <table><thead><tr><th>Part</th><th>HSN</th><th>SKU</th><th>MRP</th><th>Qty</th><th>Unit ₹</th><th>CGST%</th><th>SGST%</th><th>Subtotal</th></tr></thead>
-      <tbody>${inv.items.map(item=>{const p=parts.find(x=>x.id===item.partId);return`<tr><td style="font-weight:600">${item.name}${(item.brand||p?.brand)?` <span style="color:var(--muted);font-weight:400">(${esc(item.brand||p?.brand)})</span>`:''}</td><td style="font-family:monospace;font-size:11px;color:var(--subtle)">${p?.hsn||'—'}</td><td style="font-family:monospace;font-size:11px;color:var(--subtle)">${item.sku}</td><td style="color:var(--muted)">${p?.mrp?fmt(p.mrp):'—'}</td><td>${item.qty}</td><td>${fmt(item.price)}</td><td style="color:var(--blue)">${p?.cgst||0}%</td><td style="color:var(--blue)">${p?.sgst||0}%</td><td style="font-weight:700;color:var(--orange)">${fmt(item.price*item.qty)}</td></tr>`;}).join('')}</tbody>
+      <tbody>${inv.items.map(item=>{const p=parts.find(x=>x.id===item.partId);return`<tr><td style="font-weight:600">${pLabel({brand:item.brand||p?.brand},item.name)}</td><td style="font-family:monospace;font-size:11px;color:var(--subtle)">${p?.hsn||'—'}</td><td style="font-family:monospace;font-size:11px;color:var(--subtle)">${item.sku}</td><td style="color:var(--muted)">${p?.mrp?fmt(p.mrp):'—'}</td><td>${item.qty}</td><td>${fmt(item.price)}</td><td style="color:var(--blue)">${p?.cgst||0}%</td><td style="color:var(--blue)">${p?.sgst||0}%</td><td style="font-weight:700;color:var(--orange)">${fmt(item.price*item.qty)}</td></tr>`;}).join('')}</tbody>
       </table>
       <div style="margin-top:12px;padding:12px 14px;background:var(--surface);border-radius:8px;font-size:13px">
         <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Subtotal</span><span>${fmt(inv.subtotal)}</span></div>
@@ -1789,7 +1793,7 @@ function renderReports(){
   const catArr=Object.entries(catMap).sort((a,b)=>b[1]-a[1]);const maxCat=catArr[0]?.[1]||1;
   $('rep-category').innerHTML=catArr.length===0?'<div style="color:var(--muted)">No sales yet</div>':catArr.map(([cat,val])=>`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="font-weight:600">${cat}</span><span style="color:var(--orange);font-weight:700">${fmt(val)}</span></div><div class="bar-bg"><div class="bar-fill" style="width:${(val/maxCat)*100}%"></div></div></div>`).join('');
   const sm=partSalesMap();const topArr=Object.entries(sm).sort((a,b)=>b[1].qty-a[1].qty).slice(0,7);
-  $('rep-topparts').innerHTML=topArr.length===0?'<div style="color:var(--muted)">No sales yet</div>':topArr.map(([,d],i)=>`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)"><div style="width:22px;height:22px;border-radius:4px;background:${i===0?'var(--orange)':i<=2?'var(--orange)66':'var(--border2)'};display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;color:#fff;flex-shrink:0">${i+1}</div><div style="flex:1;font-weight:600;font-size:13px">${d.name}</div><div style="text-align:right"><div style="color:var(--orange);font-weight:700;font-size:13px">${fmt(d.rev)}</div><div style="font-size:11px;color:var(--muted)">${d.qty} sold</div></div></div>`).join('');
+  $('rep-topparts').innerHTML=topArr.length===0?'<div style="color:var(--muted)">No sales yet</div>':topArr.map(([,d],i)=>`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)"><div style="width:22px;height:22px;border-radius:4px;background:${i===0?'var(--orange)':i<=2?'var(--orange)66':'var(--border2)'};display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;color:#fff;flex-shrink:0">${i+1}</div><div style="flex:1;font-weight:600;font-size:13px">${pLabel(d)}</div><div style="text-align:right"><div style="color:var(--orange);font-weight:700;font-size:13px">${fmt(d.rev)}</div><div style="font-size:11px;color:var(--muted)">${d.qty} sold</div></div></div>`).join('');
   $('rep-payments').innerHTML=[['Total Invoiced (All)',fmt(totalRev),'var(--text)'],['Collected (Paid)',fmt(paidRev),'var(--green)'],['Outstanding',fmt(totalRev-paidRev),'var(--yellow)'],['Discounts Given',fmt(totalDisc),'var(--orange)'],['Collection Rate',totalRev>0?((paidRev/totalRev)*100).toFixed(1)+'%':'0%','var(--blue)'],['Total Purchases',fmt(totalPurch),'var(--purple)'],['Gross Profit',fmt(grossProfit),grossProfit>=0?'var(--green)':'var(--red)']].map(([l,v,c])=>`<div class="kpi-row"><span style="color:var(--subtle);font-weight:500">${l}</span><span style="font-weight:700;color:${c}">${v}</span></div>`).join('');
   const monthly={};invoices.forEach(inv=>{const m=inv.date.slice(0,7);monthly[m]=(monthly[m]||0)+inv.total;});
   const mArr=Object.entries(monthly).sort((a,b)=>a[0].localeCompare(b[0])).slice(-6);const maxM=Math.max(...mArr.map(x=>x[1]),1);
@@ -1806,15 +1810,15 @@ function renderInsights(){
   // Rank by where the MIDDLE of each part's revenue slice falls on the cumulative curve.
   // (Old code counted the part's own revenue first, so a lone product sat at 100% and became 'C'.)
   const abcParts=soldParts.map(p=>{const mid=totalRev>0?((cum+p.rev/2)/totalRev)*100:100;cum+=p.rev;const cls=p.rev===0?'X':mid<=70?'A':mid<=90?'B':'C';return{...p,abcClass:cls};});
-  $('ins-abc').innerHTML=`<div class="table-wrap" style="max-height:280px;overflow-y:auto"><table><thead><tr><th>Class</th><th>Part</th><th>Revenue</th><th>Units Sold</th><th>Action</th></tr></thead><tbody>${abcParts.map(p=>`<tr><td><span class="abc-${p.abcClass.toLowerCase()}">${p.abcClass}</span></td><td style="font-weight:600;font-size:13px">${p.name}</td><td style="color:var(--orange)">${fmt(p.rev)}</td><td>${p.soldQty}</td><td style="font-size:11px;color:var(--muted)">${{A:'Prioritise — keep stocked',B:'Maintain levels',C:'Reduce — slow mover',X:'Never sold — consider removing'}[p.abcClass]}</td></tr>`).join('')}</tbody></table></div>`;
+  $('ins-abc').innerHTML=`<div class="table-wrap" style="max-height:280px;overflow-y:auto"><table><thead><tr><th>Class</th><th>Part</th><th>Revenue</th><th>Units Sold</th><th>Action</th></tr></thead><tbody>${abcParts.map(p=>`<tr><td><span class="abc-${p.abcClass.toLowerCase()}">${p.abcClass}</span></td><td style="font-weight:600;font-size:13px">${pLabel(p)}</td><td style="color:var(--orange)">${fmt(p.rev)}</td><td>${p.soldQty}</td><td style="font-size:11px;color:var(--muted)">${{A:'Prioritise — keep stocked',B:'Maintain levels',C:'Reduce — slow mover',X:'Never sold — consider removing'}[p.abcClass]}</td></tr>`).join('')}</tbody></table></div>`;
   const dead=parts.filter(p=>p.qty>0&&!(sm[p.id]?.qty));
-  $('ins-dead').innerHTML=dead.length===0?'<div style="color:var(--muted);font-size:13px">✓ Every stocked part has been sold at least once</div>':`<div class="table-wrap"><table><thead><tr><th>Part</th><th>Qty</th><th>Stock Value</th><th>Action</th></tr></thead><tbody>${dead.map(p=>`<tr><td style="font-weight:600">${p.name}<div style="font-size:11px;color:var(--muted)">${p.sku}</div></td><td style="font-weight:700;color:var(--red)">${p.qty}</td><td style="color:var(--yellow)">${fmt(p.qty*p.sellPrice)}</td><td><button class="btn btn-purple btn-sm" onclick="openWishModal();setTimeout(()=>{$('wf-name').value='${p.name.replace(/'/g,"\\'")}';$('wf-sku').value='${p.sku}';$('wf-status').value='skip';$('wf-notes').value='Dead stock';},60)">Mark Skip</button></td></tr>`).join('')}</tbody></table></div>`;
+  $('ins-dead').innerHTML=dead.length===0?'<div style="color:var(--muted);font-size:13px">✓ Every stocked part has been sold at least once</div>':`<div class="table-wrap"><table><thead><tr><th>Part</th><th>Qty</th><th>Stock Value</th><th>Action</th></tr></thead><tbody>${dead.map(p=>`<tr><td style="font-weight:600">${pLabel(p)}<div style="font-size:11px;color:var(--muted)">${p.sku}</div></td><td style="font-weight:700;color:var(--red)">${p.qty}</td><td style="color:var(--yellow)">${fmt(p.qty*p.sellPrice)}</td><td><button class="btn btn-purple btn-sm" onclick="openWishModal();setTimeout(()=>{$('wf-name').value='${pText(p).replace(/'/g,"\\'")}';$('wf-sku').value='${p.sku}';$('wf-status').value='skip';$('wf-notes').value='Dead stock';},60)">Mark Skip</button></td></tr>`).join('')}</tbody></table></div>`;
   const slow=parts.filter(p=>(sm[p.id]?.qty||0)>0&&(sm[p.id]?.qty||0)<=2).sort((a,b)=>(sm[a.id]?.qty||0)-(sm[b.id]?.qty||0));
-  $('ins-slow').innerHTML=slow.length===0?'<div style="color:var(--muted);font-size:13px">No slow movers detected</div>':`<div class="table-wrap"><table><thead><tr><th>Part</th><th>Sold</th><th>Stock</th><th>Revenue</th></tr></thead><tbody>${slow.slice(0,10).map(p=>`<tr><td style="font-weight:600">${p.name}<div style="font-size:11px;color:var(--muted)">${p.sku}</div></td><td style="color:var(--yellow);font-weight:700">${sm[p.id]?.qty||0}</td><td>${p.qty}</td><td style="color:var(--orange)">${fmt(sm[p.id]?.rev||0)}</td></tr>`).join('')}</tbody></table></div>`;
+  $('ins-slow').innerHTML=slow.length===0?'<div style="color:var(--muted);font-size:13px">No slow movers detected</div>':`<div class="table-wrap"><table><thead><tr><th>Part</th><th>Sold</th><th>Stock</th><th>Revenue</th></tr></thead><tbody>${slow.slice(0,10).map(p=>`<tr><td style="font-weight:600">${pLabel(p)}<div style="font-size:11px;color:var(--muted)">${p.sku}</div></td><td style="color:var(--yellow);font-weight:700">${sm[p.id]?.qty||0}</td><td>${p.qty}</td><td style="color:var(--orange)">${fmt(sm[p.id]?.rev||0)}</td></tr>`).join('')}</tbody></table></div>`;
   const fast=Object.entries(sm).sort((a,b)=>b[1].qty-a[1].qty).slice(0,10);
-  $('ins-fast').innerHTML=fast.length===0?'<div style="color:var(--muted);font-size:13px">No sales data yet</div>':`<div class="table-wrap"><table><thead><tr><th>Part</th><th>Sold</th><th>Revenue</th><th>Stock</th></tr></thead><tbody>${fast.map(([pid,d])=>{const p=parts.find(x=>x.id===pid);return`<tr><td style="font-weight:600">${d.name}<div style="font-size:11px;color:var(--muted)">${p?.sku||''}</div></td><td style="color:var(--green);font-weight:700">${d.qty}</td><td style="color:var(--orange)">${fmt(d.rev)}</td><td style="color:${p?.qty<=p?.minQty?'var(--red)':'var(--text)'};font-weight:${p?.qty<=p?.minQty?700:400}">${p?.qty??'—'}</td></tr>`;}).join('')}</tbody></table></div>`;
+  $('ins-fast').innerHTML=fast.length===0?'<div style="color:var(--muted);font-size:13px">No sales data yet</div>':`<div class="table-wrap"><table><thead><tr><th>Part</th><th>Sold</th><th>Revenue</th><th>Stock</th></tr></thead><tbody>${fast.map(([pid,d])=>{const p=parts.find(x=>x.id===pid);return`<tr><td style="font-weight:600">${pLabel({brand:p?.brand||d.brand},d.name)}<div style="font-size:11px;color:var(--muted)">${p?.sku||''}</div></td><td style="color:var(--green);font-weight:700">${d.qty}</td><td style="color:var(--orange)">${fmt(d.rev)}</td><td style="color:${p?.qty<=p?.minQty?'var(--red)':'var(--text)'};font-weight:${p?.qty<=p?.minQty?700:400}">${p?.qty??'—'}</td></tr>`;}).join('')}</tbody></table></div>`;
   const restock=parts.filter(p=>p.qty<=p.minQty||((sm[p.id]?.qty||0)>2&&p.qty<(sm[p.id]?.qty||0))).sort((a,b)=>{const sa=(sm[a.id]?.qty||0)/(a.qty||1);const sb=(sm[b.id]?.qty||0)/(b.qty||1);return sb-sa;});
-  $('ins-restock').innerHTML=restock.length===0?'<div style="color:var(--muted);font-size:13px">✓ No urgent restock needed right now</div>':`<div class="table-wrap"><table><thead><tr><th>Part</th><th>Stock</th><th>Min</th><th>Total Sold</th><th>Urgency</th><th>Action</th></tr></thead><tbody>${restock.slice(0,10).map(p=>{const sold=sm[p.id]?.qty||0;const urg=p.qty===0?'OUT OF STOCK':p.qty<=p.minQty?'High':'Medium';const uc=p.qty===0?'var(--red)':p.qty<=p.minQty?'var(--orange)':'var(--yellow)';return`<tr><td style="font-weight:600">${p.name}<div style="font-size:11px;color:var(--muted)">${p.sku}</div></td><td style="font-weight:700;color:${p.qty===0?'var(--red)':'var(--yellow)'}">${p.qty}</td><td>${p.minQty}</td><td style="color:var(--green)">${sold}</td><td style="font-weight:700;color:${uc}">${urg}</td><td><button class="btn btn-primary btn-sm" onclick="openPurchaseModal();setTimeout(()=>selectPurchPart('${p.id}'),100)">Order Now</button></td></tr>`;}).join('')}</tbody></table></div>`;
+  $('ins-restock').innerHTML=restock.length===0?'<div style="color:var(--muted);font-size:13px">✓ No urgent restock needed right now</div>':`<div class="table-wrap"><table><thead><tr><th>Part</th><th>Stock</th><th>Min</th><th>Total Sold</th><th>Urgency</th><th>Action</th></tr></thead><tbody>${restock.slice(0,10).map(p=>{const sold=sm[p.id]?.qty||0;const urg=p.qty===0?'OUT OF STOCK':p.qty<=p.minQty?'High':'Medium';const uc=p.qty===0?'var(--red)':p.qty<=p.minQty?'var(--orange)':'var(--yellow)';return`<tr><td style="font-weight:600">${pLabel(p)}<div style="font-size:11px;color:var(--muted)">${p.sku}</div></td><td style="font-weight:700;color:${p.qty===0?'var(--red)':'var(--yellow)'}">${p.qty}</td><td>${p.minQty}</td><td style="color:var(--green)">${sold}</td><td style="font-weight:700;color:${uc}">${urg}</td><td><button class="btn btn-primary btn-sm" onclick="openPurchaseModal();setTimeout(()=>selectPurchPart('${p.id}'),100)">Order Now</button></td></tr>`;}).join('')}</tbody></table></div>`;
 }
 
 // ═══ LOYALTY POINTS ═══
@@ -1985,6 +1989,7 @@ function supplierBook(){
   parts.forEach(p=>add(p.supplier));
   return[...m.values()].sort((a,b)=>a.name.localeCompare(b.name));
 }
+function canonBrand(v){const b=String(v||'').trim().replace(/\s+/g,' ');if(!b)return'';const k=b.toLowerCase();return brandNames().find(n=>n.toLowerCase()===k)||b;}
 function brandNames(){
   const m=new Map();
   [...parts,...purchases].forEach(x=>{const b=(x.brand||'').trim();if(b&&!m.has(b.toLowerCase()))m.set(b.toLowerCase(),b);});
@@ -2248,6 +2253,15 @@ function renderDemandReport(){
 
 // ═══ CUSTOMERS, REFERRALS & BONUS ═══
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// ── Brand + part display & search (one place, used everywhere) ──
+const brandOf=x=>String(x&&x.brand||'').trim();
+function nameNoBrand(b,n){n=String(n||'');if(b&&n.toLowerCase().startsWith(b.toLowerCase())){const r=n.slice(b.length);if(/^[\s\-–·:]/.test(r)){const t=r.replace(/^[\s\-–·:]+/,'');if(t)return t;}}return n;}
+// HTML: "TVS · Brake Pad" (brand styled). Pass name to override x.name (e.g. purchase.partName).
+function pLabel(x,name){const b=brandOf(x),n=nameNoBrand(b,name!=null?name:(x&&x.name));return b?`<span class="pbrand">${esc(b)}</span>${esc(n)}`:esc(n);}
+// Plain text: "TVS Brake Pad" (WhatsApp, alerts, summaries)
+function pText(x,name){const b=brandOf(x),n=nameNoBrand(b,name!=null?name:(x&&x.name));return b?b+' '+n:n;}
+// Every typed word must appear somewhere in brand / name / SKU / etc, in any order
+function tokHit(q,fields){const t=String(q||'').toLowerCase().split(/\s+/).filter(Boolean);if(!t.length)return true;const h=fields.map(v=>String(v||'')).join(' ').toLowerCase();return t.every(w=>h.includes(w));}
 const r2=n=>Math.round((+n||0)*100)/100;
 let editingCustId=null,payoutCustId=null,shareLinkCache='',shareCustId=null;
 
@@ -2473,7 +2487,7 @@ function buildPortalData(c){
   const row=x=>({d:x.inv.date,n:x.inv.id.slice(-5),c:x.inv.customer,t:r2(x.inv.total),p:x.inv.paid?1:0,o:x.bonus});
   return{v:1,s:SHOP_NAME,g:today(),
     u:{n:c.name,ph:c.phone||'',cd:c.code,pc:c.pct},
-    own:l.own.map(x=>({...row(x),i:x.inv.items.map(it=>[it.name,it.qty])})),
+    own:l.own.map(x=>({...row(x),i:x.inv.items.map(it=>[pText({brand:it.brand||(parts.find(p=>p.id===it.partId)||{}).brand},it.name),it.qty])})),
     ref:l.refs.map(row),
     pay:l.mine.map(p=>({d:p.date,a:p.amount,n:p.note||''})),
     sum:{e:l.earned,eo:l.earnedOwn,er:l.earnedRef,pe:l.pending,po:l.paidOut,b:l.balance}};
@@ -2624,7 +2638,7 @@ async function saveDraft(){
   if(!billItems.length){alert('Add at least one part to save a draft.');return;}
   const old=editingDraftId?drafts.find(d=>d.id===editingDraftId):null;
   const d={id:old?old.id:uid(),customer:$('bf-customer').value.trim(),date:$('bf-date').value||today(),
-    items:billItems.map(({partId,sku,name,price,qty})=>({partId,sku,name,price,qty})),
+    items:billItems.map(({partId,sku,name,brand,price,qty})=>({partId,sku,name,brand:brand||'',price,qty})),
     phone:$('bf-phone').value.trim(),address:$('bf-addr').value.trim(),referral:$('bf-ref').value.trim(),
     discType:$('bf-disc-type').value,discVal:+$('bf-disc-val').value||0,
     createdAt:old?old.createdAt:nowStamp(),updatedAt:nowStamp(),by:isOwner()?'owner':'employee'};
@@ -2645,11 +2659,11 @@ function resumeDraft(id,mergeCurrent=false){
   const notes=[];billItems=[];
   const add=(it)=>{
     const p=parts.find(x=>x.id===it.partId);
-    if(!p){notes.push(`“${it.name}” no longer exists — removed`);return;}
-    if(p.qty<=0){notes.push(`“${it.name}” is out of stock — removed`);return;}
+    if(!p){notes.push(`“${pText({brand:it.brand||(parts.find(x=>x.id===it.partId)||{}).brand},it.name)}” no longer exists — removed`);return;}
+    if(p.qty<=0){notes.push(`“${pText({brand:it.brand||(parts.find(x=>x.id===it.partId)||{}).brand},it.name)}” is out of stock — removed`);return;}
     const ex=billItems.find(x=>x.partId===it.partId);
     const want=(ex?ex.qty:0)+it.qty,qty=Math.min(want,p.qty);
-    if(qty<want)notes.push(`“${it.name}”: only ${p.qty} in stock now (draft had ${want})`);
+    if(qty<want)notes.push(`“${pText({brand:it.brand||(parts.find(x=>x.id===it.partId)||{}).brand},it.name)}”: only ${p.qty} in stock now (draft had ${want})`);
     if(ex)ex.qty=qty;else billItems.push({partId:p.id,sku:p.sku,name:p.name,brand:p.brand||'',price:it.price,qty,maxQty:p.qty});
   };
   d.items.forEach(add);carry.forEach(add);
@@ -2685,7 +2699,7 @@ function renderDrafts(){
     ${list.map(d=>`<div class="draft-card">
       <div style="min-width:0;flex:1 1 200px">
         <div class="d-name">${esc(draftLabel(d))}</div>
-        <div class="d-meta">${d.items.length} item${d.items.length>1?'s':''} · ${esc(d.items.slice(0,3).map(i=>i.name+' ×'+i.qty).join(', '))}${d.items.length>3?' …':''}<br>Started ${esc((d.createdAt||'').slice(11)||d.date)} · updated ${esc((d.updatedAt||'').slice(11)||d.date)}${d.phone?' · 📞 '+esc(d.phone):''}</div>
+        <div class="d-meta">${d.items.length} item${d.items.length>1?'s':''} · ${esc(d.items.slice(0,3).map(i=>pText({brand:i.brand||(parts.find(x=>x.id===i.partId)||{}).brand},i.name)+' ×'+i.qty).join(', '))}${d.items.length>3?' …':''}<br>Started ${esc((d.createdAt||'').slice(11)||d.date)} · updated ${esc((d.updatedAt||'').slice(11)||d.date)}${d.phone?' · 📞 '+esc(d.phone):''}</div>
       </div>
       <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:18px;color:var(--orange)">${fmt(draftTotal(d))}</div>
       <div class="btn-group"><button class="btn btn-primary btn-sm" onclick="resumeDraft('${d.id}')">Resume / Bill</button><button class="btn btn-danger btn-sm" onclick="deleteDraft('${d.id}')">✕</button></div>
@@ -2807,7 +2821,7 @@ function renderOnline(){
       </div>
       <div style="font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--orange)">${fmt(o.total)}</div>
     </div>
-    <div style="margin-top:10px">${o.items.map(it=>{const s=orderLineState(it);return`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--border);font-size:13px"><div style="min-width:0">${esc(it.name)} <span style="color:var(--muted)">×${it.qty}</span></div><span class="badge ${s.cls}">${s.txt}</span></div>`;}).join('')}</div>
+    <div style="margin-top:10px">${o.items.map(it=>{const s=orderLineState(it);return`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--border);font-size:13px"><div style="min-width:0">${pLabel({brand:it.brand||(parts.find(x=>x.id===it.id)||{}).brand},it.name)} <span style="color:var(--muted)">×${it.qty}</span></div><span class="badge ${s.cls}">${s.txt}</span></div>`;}).join('')}</div>
     <div class="btn-group" style="margin-top:12px">
       ${o.status==='new'?`<button class="btn btn-primary btn-sm" onclick="orderToDraft('${esc(o.id)}')">📝 Make Draft Bill</button>`:''}
       <button class="btn btn-success btn-sm" onclick="waOrder('${esc(o.id)}')">💬 WhatsApp</button>
@@ -2829,7 +2843,7 @@ async function orderToDraft(id){
   o.items.forEach(it=>{
     const p=parts.find(x=>x.id===it.id);
     if(!p){skipped.push(it.name+' (no longer in stock list)');return;}
-    items.push({partId:p.id,sku:p.sku,name:p.name,price:p.sellPrice,qty:it.qty});
+    items.push({partId:p.id,sku:p.sku,name:p.name,brand:p.brand||'',price:p.sellPrice,qty:it.qty});
   });
   if(!items.length){alert('None of these parts exist in your stock list any more.');return;}
   const d={id:uid(),customer:cleanText(o.name),date:today(),items,phone:cleanText(o.phone),address:'',referral:'',discType:'none',discVal:0,createdAt:nowStamp(),updatedAt:nowStamp(),by:'online'};
@@ -2840,13 +2854,13 @@ async function orderToDraft(id){
 }
 function waOrder(id){
   const o=orders.find(x=>x.id===id);if(!o)return;
-  const t=`Hi ${o.name}, thanks for your order #${o.id} at ${SHOP_NAME}.\n`+o.items.map(i=>`• ${i.name} ×${i.qty}`).join('\n')+`\nTotal approx. ${fmt(o.total)}. We'll confirm availability shortly.`;
+  const t=`Hi ${o.name}, thanks for your order #${o.id} at ${SHOP_NAME}.\n`+o.items.map(i=>`• ${pText({brand:i.brand||(parts.find(x=>x.id===i.id)||{}).brand},i.name)} ×${i.qty}`).join('\n')+`\nTotal approx. ${fmt(o.total)}. We'll confirm availability shortly.`;
   window.open(`https://wa.me/${waNum(o.phone)}?text=${encodeURIComponent(t)}`,'_blank');
 }
 
 // ── Public shop page (anyone with the link; no login) ──
 const shopRoute=()=>location.hash.startsWith('#/shop/');
-const SHOP={cfg:null,items:[],cat:'',q:'',cart:{},shown:60,busy:false};
+const SHOP={cfg:null,items:[],cat:'',brand:'',q:'',cart:{},shown:60,busy:false};
 const SH_RANK={in:0,low:1,out:2};
 function shopSave(){try{localStorage.setItem('sp_cart',JSON.stringify(SHOP.cart));}catch(e){}}
 function shopLoadCart(){try{const c=JSON.parse(localStorage.getItem('sp_cart')||'{}');if(c&&typeof c==='object')SHOP.cart=c;}catch(e){}}
@@ -2866,7 +2880,7 @@ async function bootShop(){
   el.innerHTML=`<div class="sh-wrap">
     <div class="pt-brand">Parts Catalog</div><div class="pt-shop">${esc(SHOP.cfg.n||'')}</div>
     <div class="pt-note" style="margin-top:4px">Live availability · prices include GST · place an order and the shop will confirm it.</div>
-    <div class="sh-top"><input type="text" inputmode="search" id="sh-q" class="sh-search" placeholder="Search part name or number…" autocomplete="off" oninput="SHOP.q=this.value;SHOP.shown=60;shopRender()"/><div class="sh-chips" id="sh-chips"></div></div>
+    <div class="sh-top"><input type="text" inputmode="search" id="sh-q" class="sh-search" placeholder="Search brand, part name or number…" autocomplete="off" oninput="SHOP.q=this.value;SHOP.shown=60;shopRender()"/><div class="sh-chips" id="sh-chips"></div><div class="sh-chips" id="sh-brands"></div></div>
     <div id="sh-list"><div class="sh-empty"><span class="spinner"></span> Loading…</div></div>
     <div id="sh-more" style="text-align:center"></div>
     <div id="sh-updated" class="pt-foot"></div>
@@ -2880,8 +2894,9 @@ async function shopLoad(){
     const r=await fetch(SHOP.cfg.u+'?action=catalog');
     const d=await r.json();
     if(!d.ok||!Array.isArray(d.items))throw new Error('bad');
-    SHOP.items=d.items.map(i=>({id:String(i.id),sku:String(i.sku||''),name:String(i.name||''),cat:String(i.cat||'Other'),price:+i.price||0,st:['in','low','out'].includes(i.st)?i.st:'in'}))
-      .sort((a,b)=>SH_RANK[a.st]-SH_RANK[b.st]||a.name.localeCompare(b.name));
+    SHOP.items=d.items.map(i=>({id:String(i.id),sku:String(i.sku||''),name:String(i.name||''),brand:String(i.brand||'').trim().replace(/\s+/g,' '),cat:String(i.cat||'Other'),price:+i.price||0,st:['in','low','out'].includes(i.st)?i.st:'in'}))
+      .sort((a,b)=>SH_RANK[a.st]-SH_RANK[b.st]||a.name.localeCompare(b.name)||a.brand.localeCompare(b.brand));
+    {const bc=new Map();SHOP.items.forEach(i=>{const k=i.brand.toLowerCase();if(k&&!bc.has(k))bc.set(k,i.brand);if(k)i.brand=bc.get(k);});}
     // drop cart lines for parts that no longer exist
     Object.keys(SHOP.cart).forEach(id=>{if(!SHOP.items.some(i=>i.id===id))delete SHOP.cart[id];});
     $('sh-updated').textContent='Updated '+new Date(d.updated||Date.now()).toLocaleString();
@@ -2895,10 +2910,18 @@ function shopChips(){
   const cats=[...new Set(SHOP.items.map(i=>i.cat))].sort();
   $('sh-chips').innerHTML=['',...cats].map(c=>`<div class="sh-chip ${SHOP.cat===c?'on':''}" data-c="${esc(c)}" onclick="SHOP.cat=this.dataset.c;SHOP.shown=60;shopRender()">${c?esc(c):'All'}</div>`).join('');
   $('sh-chips').scrollLeft=sc;
+  // Brand chips: only brands that exist in the chosen category (case-insensitive, one chip per brand)
+  const be=$('sh-brands'),bm=new Map();
+  SHOP.items.filter(i=>!SHOP.cat||i.cat===SHOP.cat).forEach(i=>{const k=i.brand.toLowerCase();if(k&&!bm.has(k))bm.set(k,i.brand);});
+  if(SHOP.brand&&!bm.has(SHOP.brand))SHOP.brand='';
+  if(!bm.size){be.style.display='none';be.innerHTML='';}
+  else{const bs=be.scrollLeft;be.style.display='';
+    be.innerHTML=[['','All brands'],...[...bm.entries()].sort((a,b)=>a[1].localeCompare(b[1]))].map(([k,l])=>`<div class="sh-chip ${SHOP.brand===k?'on':''}" data-b="${esc(k)}" onclick="SHOP.brand=this.dataset.b;SHOP.shown=60;shopRender()">${esc(l)}</div>`).join('');
+    be.scrollLeft=bs;}
 }
 function shopMatches(){
   const t=SHOP.q.toLowerCase().split(/\s+/).filter(Boolean);
-  return SHOP.items.filter(i=>(!SHOP.cat||i.cat===SHOP.cat)&&t.every(w=>(i.name+' '+i.sku+' '+i.cat).toLowerCase().includes(w)));
+  return SHOP.items.filter(i=>(!SHOP.cat||i.cat===SHOP.cat)&&(!SHOP.brand||i.brand.toLowerCase()===SHOP.brand)&&t.every(w=>(i.brand+' '+i.name+' '+i.sku+' '+i.cat).toLowerCase().includes(w)));
 }
 const stBadge=s=>s==='in'?'<span class="badge badge-green">In stock</span>':s==='low'?'<span class="badge badge-yellow">Few left</span>':'<span class="badge badge-orange">Out of stock · on request</span>';
 function shopStepper(id){
@@ -2910,7 +2933,7 @@ function shopRender(){
   shopChips();
   const all=shopMatches(),vis=all.slice(0,SHOP.shown);
   $('sh-list').innerHTML=vis.length?vis.map(i=>`<div class="sh-item">
-      <div style="min-width:0;flex:1"><div class="sh-name">${esc(i.name)}</div><div class="sh-meta">${esc(i.sku)}${i.sku?' · ':''}${esc(i.cat)}</div><div style="margin-top:6px">${stBadge(i.st)}</div></div>
+      <div style="min-width:0;flex:1"><div class="sh-name">${pLabel(i)}</div><div class="sh-meta">${esc(i.sku)}${i.sku?' · ':''}${esc(i.cat)}</div><div style="margin-top:6px">${stBadge(i.st)}</div></div>
       <div style="text-align:right;flex:0 0 auto"><div class="sh-price">${fmt(i.price)}</div><div style="margin-top:7px">${shopStepper(i.id)}</div></div>
     </div>`).join(''):`<div class="sh-empty">${SHOP.items.length?'No parts match your search.<br>Can’t find it? Tell the shop — they may be able to source it.':'No parts listed yet.'}</div>`;
   $('sh-more').innerHTML=all.length>SHOP.shown?`<button class="btn btn-secondary" onclick="SHOP.shown+=60;shopRender()">Show more (${all.length-SHOP.shown} more)</button>`:'';
@@ -2937,7 +2960,7 @@ function shopOpenCart(){
   const prevName=$('sh-name')?$('sh-name').value:(saved.n||''),prevPh=$('sh-phone')?$('sh-phone').value:(saved.p||''),prevNote=$('sh-note')?$('sh-note').value:'';
   const out=L.filter(l=>l.it.st==='out').length;
   box.innerHTML=`<h2>Your order</h2>
-    ${L.map(l=>`<div class="sh-line"><div style="min-width:0;flex:1"><div style="font-weight:600">${esc(l.it.name)}</div><div style="font-size:11px;color:var(--muted)">${fmt(l.it.price)} each${l.it.st==='out'?' · <span style="color:var(--orange)">on request</span>':''}</div></div>
+    ${L.map(l=>`<div class="sh-line"><div style="min-width:0;flex:1"><div style="font-weight:600">${pLabel(l.it)}</div><div style="font-size:11px;color:var(--muted)">${fmt(l.it.price)} each${l.it.st==='out'?' · <span style="color:var(--orange)">on request</span>':''}</div></div>
       <div class="sh-stepper"><button data-id="${esc(l.it.id)}" onclick="shopInc(this.dataset.id,-1)">−</button><span>${l.qty}</span><button data-id="${esc(l.it.id)}" onclick="shopInc(this.dataset.id,1)">+</button></div>
       <div style="font-weight:700;color:var(--orange);width:78px;text-align:right">${fmt(l.it.price*l.qty)}</div></div>`).join('')}
     <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0"><span style="color:var(--subtle)">Estimated total</span><span class="sh-price" style="font-size:24px">${fmt(shopTotal())}</span></div>
@@ -2952,7 +2975,7 @@ function shopOpenCart(){
   $('sh-checkout').classList.add('open');
 }
 function shopWaText(name,phone,id){
-  return `Order${id?' #'+id:''} for ${SHOP.cfg.n||'the shop'}\n`+shopLines().map(l=>`• ${l.it.name} ×${l.qty} — ${fmt(l.it.price*l.qty)}`).join('\n')+`\nTotal approx. ${fmt(shopTotal())}\nName: ${name}\nPhone: ${phone}`;
+  return `Order${id?' #'+id:''} for ${SHOP.cfg.n||'the shop'}\n`+shopLines().map(l=>`• ${pText(l.it)} ×${l.qty} — ${fmt(l.it.price*l.qty)}`).join('\n')+`\nTotal approx. ${fmt(shopTotal())}\nName: ${name}\nPhone: ${phone}`;
 }
 async function shopSubmit(){
   if(SHOP.busy)return;
@@ -3079,7 +3102,7 @@ if(portalRoute())bootPortal();else if(shopRoute())bootShop();
  * Paste into: your Spares Pro Google Sheet → Extensions → Apps Script
  * Deploy → New deployment → Web app → Execute as: Me · Who has access: Anyone
  *
- * Exposes ONLY: part name, SKU, category, selling price (incl. GST) and an availability word.
+ * Exposes ONLY: brand, part name, SKU, category, selling price (incl. GST) and an availability word.
  * Never exposes: buying price, supplier, exact quantity, HSN, location, customers, invoices.
  */
 var SHOP_NAME = 'AutoParts Spares Pro';
@@ -3140,7 +3163,7 @@ function doPost(e) {
       var it = catalog[String(l.id)];
       var qty = Math.max(1, Math.min(MAX_QTY, Math.floor(Number(l.qty) || 0)));
       if (!it || !qty) return;
-      items.push({ id: it.id, sku: it.sku, name: it.name, qty: qty, price: it.price });
+      items.push({ id: it.id, sku: it.sku, name: it.name, brand: it.brand, qty: qty, price: it.price });
       total += it.price * qty;
     });
     if (!items.length) return out_({ ok: false, error: 'Those parts are no longer listed. Please refresh the page.' });
@@ -3185,6 +3208,7 @@ function readCatalog_() {
       id: String(row[H.id]),
       sku: String(row[H.sku] || ''),
       name: String(row[H.name] || ''),
+      brand: String(row[H.brand] || '').trim(),
       cat: String(row[H.category] || 'Other'),
       price: Math.round(sell * (1 + gst / 100) * 100) / 100,   // price the customer actually pays
       st: qty <= 0 ? 'out' : (qty <= min ? 'low' : 'in')
