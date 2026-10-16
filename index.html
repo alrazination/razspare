@@ -286,12 +286,35 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
 .draft-card .d-name{font-weight:700;font-size:14px;}
 .draft-card .d-meta{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.5;}
 .draft-pill{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--yellow);background:#eab30822;border:1px solid #eab30855;border-radius:20px;padding:1px 8px;margin-left:6px;vertical-align:middle;}
+
+/* ── PUBLIC SHOP ── */
+#shop{position:fixed;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg);z-index:500;display:none;}
+.sh-wrap{max-width:760px;margin:0 auto;padding:calc(18px + var(--sat)) calc(14px + var(--sar)) calc(100px + var(--sab)) calc(14px + var(--sal));}
+.sh-top{position:sticky;top:var(--sat);z-index:5;background:var(--bg);padding:10px 0 8px;margin-top:10px;}
+#shop input,#shop textarea{font-size:16px;}
+.sh-search{width:100%;padding:12px 14px;border-radius:10px;}
+#shop::before{content:'';position:fixed;top:0;left:0;right:0;height:var(--sat);background:var(--bg);z-index:6;}
+.sh-chips{display:flex;gap:8px;overflow-x:auto;padding:10px 0 2px;scrollbar-width:none;}
+.sh-chips::-webkit-scrollbar{display:none;}
+.sh-chip{flex:0 0 auto;padding:6px 13px;border-radius:20px;border:1px solid var(--border2);background:var(--card);color:var(--subtle);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;}
+.sh-chip.on{background:var(--orange);border-color:var(--orange);color:#fff;}
+.sh-item{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;}
+.sh-name{font-weight:600;font-size:14px;line-height:1.35;word-break:break-word;}
+.sh-meta{font-size:11px;color:var(--muted);margin-top:3px;}
+.sh-price{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--orange);line-height:1.1;}
+.sh-stepper{display:inline-flex;align-items:center;border:1px solid var(--orange);border-radius:8px;overflow:hidden;}
+.sh-stepper button{background:transparent;border:none;color:var(--orange);font-size:20px;width:36px;height:34px;cursor:pointer;}
+.sh-stepper span{min-width:28px;text-align:center;font-weight:700;font-size:14px;}
+.sh-cartbar{position:fixed;left:0;right:0;bottom:0;padding:10px calc(14px + var(--sar)) calc(10px + var(--sab)) calc(14px + var(--sal));background:#060a12;border-top:1px solid var(--border2);display:none;align-items:center;justify-content:space-between;gap:12px;z-index:50;}
+.sh-line{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.sh-empty{text-align:center;color:var(--muted);padding:40px 10px;font-size:14px;}
 </style>
 </head>
 <body>
 
 <!-- ═══ CUSTOMER PORTAL (open link, no login) ═══ -->
 <div id="portal"></div>
+<div id="shop"></div>
 
 <!-- ═══ LOGIN SCREEN ═══ -->
 <div id="login-screen">
@@ -360,6 +383,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
   <div class="nav-item" data-page="requests" onclick="navigate('requests')"><span class="nav-icon">🙋</span> Part Requests</div>
   <div class="nav-section">Sales</div>
   <div class="nav-item" data-page="billing" onclick="navigate('billing')"><span class="nav-icon">🧾</span> Billing <span class="nav-badge" id="draft-badge" style="display:none">0</span></div>
+  <div class="nav-item" data-page="online" onclick="navigate('online')"><span class="nav-icon">🌐</span> Online Orders <span class="nav-badge" id="online-badge" style="display:none">0</span></div>
   <div class="nav-item" id="nav-partners" data-page="partners" onclick="navigate('partners')"><span class="nav-icon">🤝</span> Customers &amp; Referrals</div>
   <div class="nav-section" id="nav-analytics-section">Analytics</div>
   <div class="nav-item" id="nav-reports" data-page="reports" onclick="navigate('reports')"><span class="nav-icon">📊</span> Reports</div>
@@ -505,6 +529,19 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
   </table></div>
 </div>
 
+<!-- ONLINE ORDERS -->
+<div id="page-online" class="page">
+  <div class="ph">
+    <div class="ph-left"><h1>Online Orders</h1><p id="online-sub">Orders placed through your public shop link</p></div>
+    <button class="btn btn-secondary" onclick="refreshOrders(true)">↻ Refresh</button>
+  </div>
+  <div class="tab-bar">
+    <div class="tab active" id="otab-new" onclick="setOrderTab('new')">New</div>
+    <div class="tab" id="otab-done" onclick="setOrderTab('done')">Handled</div>
+  </div>
+  <div id="online-list"></div>
+</div>
+
 <!-- CUSTOMERS & REFERRALS (owner only) -->
 <div id="page-partners" class="page">
   <div class="ph">
@@ -589,6 +626,41 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
       </div>
       <button class="btn btn-primary" onclick="openModal('set-emp-modal')">Set Credentials</button>
     </div>
+  </div>
+
+  <!-- Online Shop (public catalog link) -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title">🌐 Online Shop Link</div>
+    <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:14px">Share one link with anyone. They see your parts, prices (incl. GST) and availability — live — and can place an order. Orders arrive under <strong style="color:var(--subtle)">Online Orders</strong>. Buying prices, suppliers and exact stock counts are never shown.</p>
+    <div class="fg"><label>Web App URL (from the one-time setup below)</label><input type="text" id="shop-url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off"/></div>
+    <div class="fg"><label>Shop WhatsApp number <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(optional — adds a “send on WhatsApp” button for customers)</span></label><input type="text" id="shop-wa" placeholder="10-digit mobile" autocomplete="off"/></div>
+    <div class="btn-group" style="margin-bottom:14px">
+      <button class="btn btn-primary" onclick="saveShopSettings()">Save</button>
+      <button class="btn btn-secondary" onclick="testShop()">Test connection</button>
+    </div>
+    <div id="shop-test" style="font-size:12px;margin-bottom:12px"></div>
+    <div id="shop-link-box" style="display:none">
+      <label style="display:block;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--subtle);font-weight:700;margin-bottom:4px">Your public link</label>
+      <textarea id="shop-link" rows="3" readonly onclick="this.select()" style="width:100%;font-family:monospace;font-size:11px;resize:none"></textarea>
+      <div class="btn-group" style="margin-top:10px">
+        <button class="btn btn-primary" onclick="copyShopLink()">📋 Copy Link</button>
+        <button class="btn btn-success" onclick="shareShopWhatsApp()">💬 WhatsApp</button>
+        <button class="btn btn-secondary" onclick="previewShop()">👁 Preview</button>
+      </div>
+    </div>
+    <details style="margin-top:18px">
+      <summary style="cursor:pointer;font-weight:700;font-size:13px;color:var(--orange)">One-time setup (about 5 minutes)</summary>
+      <ol style="font-size:13px;color:var(--subtle);line-height:1.9;margin:12px 0 12px 18px">
+        <li>Open your <a id="shop-sheet-link" href="#" target="_blank" style="color:var(--orange)">Google Sheet</a> → menu <strong>Extensions → Apps Script</strong>.</li>
+        <li>Delete everything in the editor, press <strong>Copy script</strong> below, paste it, and click Save.</li>
+        <li>Click <strong>Deploy → New deployment</strong> → gear icon → <strong>Web app</strong>.</li>
+        <li>Set <strong>Execute as: Me</strong> and <strong>Who has access: Anyone</strong> → Deploy. Allow the permissions (Google shows an “unverified app” warning for your own script — choose Advanced → Go to project).</li>
+        <li>Copy the <strong>Web app URL</strong>, paste it above, press Save, then <strong>Test connection</strong>.</li>
+      </ol>
+      <button class="btn btn-secondary btn-sm" onclick="copyGas()">📋 Copy script</button>
+      <textarea id="gas-view" rows="6" readonly onclick="this.select()" style="width:100%;margin-top:10px;font-family:monospace;font-size:10px;resize:vertical"></textarea>
+      <p style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6">If you ever edit the script later, redeploy with <strong>Deploy → Manage deployments → Edit → New version</strong>; the URL stays the same.</p>
+    </details>
   </div>
 
   <!-- Access Control Display -->
@@ -931,7 +1003,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
   <div class="mtab" data-mpage="inventory" onclick="mobileNavigate('inventory',this)"><span class="mtab-icon">📦</span>Stock</div>
   <div class="mtab" data-mpage="billing" onclick="mobileNavigate('billing',this)"><span class="mtab-icon">🧾</span>Bills<span class="mtab-badge" id="mdraft-badge" style="display:none">0</span></div>
   <div class="mtab" data-mpage="wishlist" onclick="mobileNavigate('wishlist',this)"><span class="mtab-icon">📋</span>Orders<span class="mtab-badge" id="mwish-badge" style="display:none">0</span></div>
-  <div class="mtab" id="mtab-more" data-mpage="more" onclick="toggleMoreMenu()"><span class="mtab-icon">⋯</span>More</div>
+  <div class="mtab" id="mtab-more" data-mpage="more" onclick="toggleMoreMenu()"><span class="mtab-icon">⋯</span>More<span class="mtab-badge" id="mmore-badge" style="display:none">0</span></div>
 </div>
 <button id="fab-invoice" onclick="openBillModal()" title="New Invoice" style="display:none">＋</button>
 
@@ -942,6 +1014,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
     <div class="btn-group" style="flex-direction:column;align-items:stretch;gap:10px">
       <button class="btn btn-secondary" style="justify-content:flex-start" onclick="closeModal('mobile-more-modal');mobileNavigate('purchases')">🛒 Purchases</button>
       <button class="btn btn-secondary" style="justify-content:flex-start" onclick="closeModal('mobile-more-modal');mobileNavigate('requests')">🙋 Part Requests</button>
+      <button class="btn btn-secondary" style="justify-content:flex-start" onclick="closeModal('mobile-more-modal');mobileNavigate('online')">🌐 Online Orders <span id="mmenu-online-count" style="margin-left:6px;color:var(--orange);font-weight:700"></span></button>
       <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-suppliers" onclick="closeModal('mobile-more-modal');mobileNavigate('suppliers')">🏭 Suppliers</button>
       <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-partners" onclick="closeModal('mobile-more-modal');mobileNavigate('partners')">🤝 Customers &amp; Referrals</button>
       <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-reports" onclick="closeModal('mobile-more-modal');mobileNavigate('reports')">📊 Reports</button>
@@ -957,7 +1030,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
 <script>
 // ═══ CONSTANTS ═══
 const SCOPES='https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
-const SH={PARTS:'Parts',INV:'Invoices',PURCH:'Purchases',WISH:'Wishlist',CFG:'Config',CUST:'Customers',PAY:'Payouts',SUPP:'Suppliers',REQ:'Requests',DRAFT:'Drafts'};
+const SH={PARTS:'Parts',INV:'Invoices',PURCH:'Purchases',WISH:'Wishlist',CFG:'Config',CUST:'Customers',PAY:'Payouts',SUPP:'Suppliers',REQ:'Requests',DRAFT:'Drafts',ORD:'OnlineOrders'};
 const SHOP_NAME='AutoParts Spares Pro'; // shown on customer links
 const HDR={
   PARTS:['id','sku','name','category','qty','minQty','buyPrice','sellPrice','supplier','hsn','mrp','cgst','sgst','location'],
@@ -969,12 +1042,13 @@ const HDR={
   PAY:['id','customerId','date','amount','note'],
   SUPP:['id','name','phone','address','createdAt'],
   REQ:['id','part','qty','name','phone','date','note','status'],
-  DRAFT:['id','customer','date','items_json','phone','address','referral','discType','discVal','createdAt','updatedAt','by']
+  DRAFT:['id','customer','date','items_json','phone','address','referral','discType','discVal','createdAt','updatedAt','by'],
+  ORD:['id','createdAt','name','phone','note','items_json','total','status']
 };
 
 // ═══ STATE ═══
 let accessToken=null,spreadsheetId=null;
-let parts=[],invoices=[],purchases=[],wishlist=[],config={},customers=[],payouts=[],suppliers=[],requests=[],drafts=[],editingDraftId=null,_billSnap='';
+let parts=[],invoices=[],purchases=[],wishlist=[],config={},customers=[],payouts=[],suppliers=[],requests=[],drafts=[],orders=[],editingDraftId=null,_billSnap='';
 let editingPartId=null,editingWishId=null,selectedPurchPartId=null;
 let billItems=[],currentWishTab='pending';
 let currentRole=null; // 'owner' | 'employee'
@@ -1041,7 +1115,7 @@ function doLogin(){
 
 function doLogout(){
   currentRole=null;accessToken=null;spreadsheetId=null;
-  parts=[];invoices=[];purchases=[];wishlist=[];customers=[];payouts=[];suppliers=[];requests=[];drafts=[];editingDraftId=null;
+  parts=[];invoices=[];purchases=[];wishlist=[];customers=[];payouts=[];suppliers=[];requests=[];drafts=[];orders=[];config={};editingDraftId=null;
   $('login-screen').style.display='flex';
   $('login-user').value='';$('login-pass').value='';
   $('sidebar').style.display='none';$('main').style.display='none';
@@ -1134,7 +1208,9 @@ function loadSettingsDisplay(){
     const url=`https://docs.google.com/spreadsheets/d/${spreadsheetId}`;
     $('settings-sheet-link').href=url;
     $('settings-sheet-id').textContent='ID: '+spreadsheetId.slice(0,20)+'…';
+    $('shop-sheet-link').href=url;
   }
+  loadShopSettings();
 }
 
 // ═══ GOOGLE AUTH ═══
@@ -1199,14 +1275,15 @@ async function clearRewrite(sh,hdr,rows){
 
 // ═══ DATA LOAD / SAVE ═══
 async function loadAll(){
-  const[pr,ir,pur,wr,cr,pyr,sur,rqr,dfr]=await Promise.all([readSheet(SH.PARTS),readSheet(SH.INV),readSheet(SH.PURCH),readSheet(SH.WISH),readSheet(SH.CUST),readSheet(SH.PAY),readSheet(SH.SUPP),readSheet(SH.REQ),readSheet(SH.DRAFT)]);
+  const[pr,ir,pur,wr,cr,pyr,sur,rqr,dfr,cfr,orr]=await Promise.all([readSheet(SH.PARTS),readSheet(SH.INV),readSheet(SH.PURCH),readSheet(SH.WISH),readSheet(SH.CUST),readSheet(SH.PAY),readSheet(SH.SUPP),readSheet(SH.REQ),readSheet(SH.DRAFT),readSheet(SH.CFG),readSheet(SH.ORD)]);
   parts=pr.slice(1).map(r=>({id:r[0]||uid(),sku:r[1]||'',name:r[2]||'',category:r[3]||'Other',qty:+r[4]||0,minQty:+r[5]||0,buyPrice:+r[6]||0,sellPrice:+r[7]||0,supplier:r[8]||'',hsn:r[9]||'',mrp:+r[10]||0,cgst:+r[11]||0,sgst:+r[12]||0,location:r[13]||''}));
   invoices=ir.slice(1).map(r=>({id:r[0]||uid(),customer:r[1]||'',date:r[2]||'',items:JSON.parse(r[3]||'[]'),subtotal:+r[4]||0,discountType:r[5]||'none',discountVal:+r[6]||0,cgst:+r[7]||0,sgst:+r[8]||0,total:+r[9]||0,paid:r[10]==='TRUE'||r[10]==='true',customerId:r[11]||'',referrerId:r[12]||'',phone:r[13]||'',address:r[14]||''}));
   purchases=pur.slice(1).map(r=>({id:r[0]||uid(),date:r[1]||'',partId:r[2]||'',partName:r[3]||'',sku:r[4]||'',supplier:r[5]||'',qty:+r[6]||0,unitCost:+r[7]||0,total:+r[8]||0,notes:r[9]||''}));
   wishlist=wr.slice(1).map(r=>({id:r[0]||uid(),name:r[1]||'',sku:r[2]||'',category:r[3]||'Other',qtyNeeded:+r[4]||1,customer:r[5]||'',priority:r[6]||'medium',status:r[7]||'pending',notes:r[8]||'',createdAt:r[9]||today()}));
   customers=cr.slice(1).filter(r=>r[0]).map(r=>({id:r[0],name:r[1]||'',phone:r[2]||'',pct:+r[3]||0,code:(r[4]||'').toUpperCase(),notes:r[5]||'',createdAt:r[6]||'',address:r[7]||''}));
   payouts=pyr.slice(1).filter(r=>r[0]).map(r=>({id:r[0],customerId:r[1]||'',date:r[2]||'',amount:+r[3]||0,note:r[4]||''}));
-  drafts=mapDrafts(dfr);
+  drafts=mapDrafts(dfr);orders=mapOrders(orr);
+  config={};(cfr||[]).slice(1).forEach(r=>{if(r[0])config[r[0]]=r[1]??'';});
   suppliers=sur.slice(1).filter(r=>r[0]).map(r=>({id:r[0],name:r[1]||'',phone:r[2]||'',address:r[3]||'',createdAt:r[4]||''}));
   requests=rqr.slice(1).filter(r=>r[0]).map(r=>({id:r[0],part:r[1]||'',qty:+r[2]||1,name:r[3]||'',phone:r[4]||'',date:r[5]||'',note:r[6]||'',status:r[7]||'open'}));
 }
@@ -1230,12 +1307,12 @@ function navigate(page){
   document.querySelector(`[data-page="${page}"]`)?.classList.add('active');
   const map={dashboard:renderDashboard,inventory:renderInventory,purchases:renderPurchases,
     wishlist:()=>renderWishlist(currentWishTab),billing:()=>{renderBilling();renderDrafts();$('invoice-view-wrap').innerHTML='';refreshDrafts();},
-    suppliers:renderSuppliers,requests:renderRequests,partners:renderPartners,reports:renderReports,insights:renderInsights,settings:loadSettingsDisplay};
+    online:()=>{renderOnline();refreshOrders();},suppliers:renderSuppliers,requests:renderRequests,partners:renderPartners,reports:renderReports,insights:renderInsights,settings:loadSettingsDisplay};
   map[page]?.();
 }
 function renderAll(){
   renderDashboard();renderInventory();renderPurchases();
-  renderWishlist(currentWishTab);renderBilling();renderDrafts();
+  renderWishlist(currentWishTab);renderBilling();renderDrafts();renderOnline();
   renderRequests();
   if(isOwner()){renderSuppliers();renderPartners();renderReports();renderInsights();}
 }
@@ -1284,7 +1361,7 @@ function renderDashboard(){
   // Recent invoices — hide totals from employee
   const invEl=$('dash-recent-inv');
   if(invoices.length===0)invEl.innerHTML='<div style="color:var(--muted);font-size:13px">No invoices yet</div>';
-  else invEl.innerHTML=invoices.slice(0,5).map(inv=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:600;font-size:13px">${inv.customer}</div><div style="font-size:11px;color:var(--muted)">#${inv.id.slice(-5)} · ${inv.date}</div></div><div style="text-align:right">${isOwner()?`<div style="font-weight:700;color:var(--orange)">${fmt(inv.total)}</div>`:''}<span class="badge ${inv.paid?'badge-green':'badge-yellow'}">${inv.paid?'Paid':'Pending'}</span></div></div>`).join('');
+  else invEl.innerHTML=invoices.slice(0,5).map(inv=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:600;font-size:13px">${esc(inv.customer)}</div><div style="font-size:11px;color:var(--muted)">#${inv.id.slice(-5)} · ${inv.date}</div></div><div style="text-align:right">${isOwner()?`<div style="font-weight:700;color:var(--orange)">${fmt(inv.total)}</div>`:''}<span class="badge ${inv.paid?'badge-green':'badge-yellow'}">${inv.paid?'Paid':'Pending'}</span></div></div>`).join('');
   // Wishlist
   const wEl=$('dash-wishlist');
   const pw=wishlist.filter(w=>w.status==='pending').slice(0,4);
@@ -1466,7 +1543,7 @@ function renderBilling(){
       const actions=isOwner()
         ?`<div class="btn-group"><button class="btn btn-secondary btn-sm" onclick="viewInvoice('${inv.id}')">View</button><button class="btn ${inv.paid?'btn-secondary':'btn-success'} btn-sm" onclick="togglePaid('${inv.id}')">${inv.paid?'Unpay':'Mark Paid'}</button><button class="btn btn-danger btn-sm" onclick="deleteInvoice('${inv.id}')">Del</button></div>`
         :`<div class="btn-group"><button class="btn btn-secondary btn-sm" onclick="viewInvoice('${inv.id}')">View</button><button class="btn ${inv.paid?'btn-secondary':'btn-success'} btn-sm" onclick="togglePaid('${inv.id}')">${inv.paid?'Unpay':'Mark Paid'}</button></div>`;
-      return`<tr><td style="font-family:'Rajdhani',sans-serif;color:var(--orange);font-weight:700">#${inv.id.slice(-5)}</td><td style="font-weight:600">${inv.customer}</td><td style="color:var(--subtle);font-size:12px">${inv.date}</td><td style="color:var(--muted)">${inv.items.length} item${inv.items.length>1?'s':''}</td><td>${fmt(inv.subtotal||inv.total)}</td><td>${inv.discountType!=='none'&&inv.discountVal>0?`<span class="badge badge-green">-${inv.discountType==='pct'?inv.discountVal+'%':fmt(inv.discountVal)}</span>`:'<span style="color:var(--muted);font-size:12px">—</span>'}</td><td style="font-weight:700;color:var(--orange)">${fmt(inv.total)}</td><td><span class="badge ${inv.paid?'badge-green':'badge-yellow'}">${inv.paid?'Paid':'Pending'}</span></td><td>${actions}</td></tr>`;
+      return`<tr><td style="font-family:'Rajdhani',sans-serif;color:var(--orange);font-weight:700">#${inv.id.slice(-5)}</td><td style="font-weight:600">${esc(inv.customer)}</td><td style="color:var(--subtle);font-size:12px">${inv.date}</td><td style="color:var(--muted)">${inv.items.length} item${inv.items.length>1?'s':''}</td><td>${fmt(inv.subtotal||inv.total)}</td><td>${inv.discountType!=='none'&&inv.discountVal>0?`<span class="badge badge-green">-${inv.discountType==='pct'?inv.discountVal+'%':fmt(inv.discountVal)}</span>`:'<span style="color:var(--muted);font-size:12px">—</span>'}</td><td style="font-weight:700;color:var(--orange)">${fmt(inv.total)}</td><td><span class="badge ${inv.paid?'badge-green':'badge-yellow'}">${inv.paid?'Paid':'Pending'}</span></td><td>${actions}</td></tr>`;
     }).join('');
 }
 function openBillModal(){
@@ -1555,7 +1632,7 @@ function viewInvoice(id){
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">
         <div>
           <div style="font-size:11px;color:var(--orange);font-weight:700;letter-spacing:.12em">INVOICE #${inv.id.slice(-5)}</div>
-          <div style="font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;margin-top:2px">${inv.customer}</div>
+          <div style="font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;margin-top:2px">${esc(inv.customer)}</div>
           <div style="font-size:12px;color:var(--muted)">${inv.date}</div>${invPartnerLine(inv)}
         </div>
         <div style="text-align:right">
@@ -2238,7 +2315,7 @@ async function bootPortal(){
     el.innerHTML='<div class="pt-wrap" style="text-align:center;padding-top:80px"><div style="font-size:40px">🔗</div><div class="pt-hello">This link looks incomplete</div><div class="pt-note">It may have been cut off when it was shared. Please ask the shop to send it again.</div></div>';
   }
 }
-window.addEventListener('hashchange',()=>{if(portalRoute())location.reload();});
+window.addEventListener('hashchange',()=>{if(portalRoute()||shopRoute())location.reload();});
 
 // ═══ DRAFT BILLS ═══
 // A draft = items set aside for a customer, billed later. No stock deduction, not counted as a sale.
@@ -2354,6 +2431,286 @@ function renderDrafts(){
   </div>`;
 }
 
+// ═══ ONLINE SHOP: settings, public catalog page, order inbox ═══
+const GAS_OK=u=>/^https:\/\/script\.google(usercontent)?\.com\//.test(u||'');
+const cfgGet=(k,d='')=>(config[k]??d);
+const waNum=ph=>{let n=String(ph||'').replace(/\D/g,'').replace(/^0+/,'');return n.length===10?'91'+n:n;};
+const cleanText=s=>String(s||'').replace(/[<>&"'`\\]/g,'').replace(/[\u0000-\u001f]/g,' ').trim();
+async function saveConfig(){showSync('Saving…',false);await clearRewrite(SH.CFG,HDR.CFG,Object.entries(config));showSync('Saved ✓');}
+
+function loadShopSettings(){
+  if(!$('shop-url'))return;
+  $('shop-url').value=cfgGet('shopScriptUrl');$('shop-wa').value=cfgGet('shopWhatsApp');
+  $('gas-view').value=$('gas-src').textContent.replace(/^\n/,'');
+  updateShopLinkBox();
+}
+async function saveShopSettings(){
+  if(!isOwner())return;
+  const u=$('shop-url').value.trim();
+  if(u&&!GAS_OK(u)){alert('That does not look like a Google Apps Script web app URL.\n\nIt should start with https://script.google.com/macros/s/ and end with /exec');return;}
+  config.shopScriptUrl=u;config.shopWhatsApp=$('shop-wa').value.trim();
+  await saveConfig();updateShopLinkBox();
+}
+async function shopLink(){
+  const u=cfgGet('shopScriptUrl');if(!u)return'';
+  return location.href.split('#')[0]+'#/shop/'+await encodePortal({v:1,u,n:SHOP_NAME,w:waNum(cfgGet('shopWhatsApp'))});
+}
+async function updateShopLinkBox(){
+  const link=await shopLink();
+  $('shop-link-box').style.display=link?'block':'none';
+  $('shop-link').value=link;
+}
+async function copyShopLink(){
+  const v=$('shop-link').value;if(!v)return;
+  try{await navigator.clipboard.writeText(v);}catch(e){$('shop-link').select();document.execCommand('copy');}
+  showSync('Link copied');
+}
+function shareShopWhatsApp(){
+  const v=$('shop-link').value;if(!v)return;
+  window.open('https://wa.me/?text='+encodeURIComponent(`Browse ${SHOP_NAME} — live prices & availability, and order online:\n${v}`),'_blank');
+}
+function previewShop(){const v=$('shop-link').value;if(v)window.open(v,'_blank');}
+async function copyGas(){
+  const v=$('gas-view').value;
+  try{await navigator.clipboard.writeText(v);}catch(e){$('gas-view').select();document.execCommand('copy');}
+  showSync('Script copied');
+}
+async function testShop(){
+  const el=$('shop-test'),u=$('shop-url').value.trim();
+  if(!GAS_OK(u)){el.innerHTML='<span style="color:var(--red)">Paste the Web app URL first.</span>';return;}
+  el.innerHTML='<span class="spinner"></span> Checking…';
+  try{
+    const d=await (await fetch(u+'?action=catalog')).json();
+    if(!d.ok)throw new Error(d.error||'bad reply');
+    el.innerHTML=`<span style="color:var(--green)">✓ Connected — ${d.items.length} part${d.items.length===1?'':'s'} would be shown to customers.</span>`;
+  }catch(e){
+    el.innerHTML='<span style="color:var(--red)">✗ Could not read the catalog. Check that “Who has access” is set to <b>Anyone</b>, and that you copied the URL ending in /exec.</span>';
+  }
+}
+
+// ── Owner inbox ──
+let orderTab='new';
+function mapOrders(rows){
+  return(rows||[]).map((r,i)=>{
+    if(i===0||!r[0])return null;
+    let items=[];try{items=JSON.parse(r[5]||'[]');}catch(e){}
+    return{row:i+1,id:String(r[0]),createdAt:r[1]||'',name:r[2]||'',phone:r[3]||'',note:r[4]||'',
+      items:(Array.isArray(items)?items:[]).map(x=>({id:String(x.id||''),sku:String(x.sku||''),name:String(x.name||''),qty:Math.max(1,+x.qty||1),price:+x.price||0})),
+      total:+r[6]||0,status:r[7]||'new'};
+  }).filter(Boolean).reverse();   // newest first
+}
+async function refreshOrders(manual){
+  try{orders=mapOrders(await readSheet(SH.ORD));}catch(e){if(manual)alert('Could not reload orders.');return;}
+  renderOnline();
+}
+function setOrderTab(t){orderTab=t;renderOnline();}
+function orderLineState(it){
+  const p=parts.find(x=>x.id===it.id);
+  if(!p)return{cls:'badge-gray',txt:'not in stock list'};
+  if(p.qty>=it.qty)return{cls:'badge-green',txt:`${p.qty} in stock`};
+  if(p.qty>0)return{cls:'badge-yellow',txt:`only ${p.qty} in stock`};
+  return{cls:'badge-red',txt:'out of stock'};
+}
+function renderOnline(){
+  const nNew=orders.filter(o=>o.status==='new').length;
+  const b=$('online-badge');if(b){b.style.display=nNew?'inline':'none';b.textContent=nNew;}
+  const mb=$('mmore-badge');if(mb){mb.style.display=nNew?'block':'none';mb.textContent=nNew;}
+  const mc=$('mmenu-online-count');if(mc)mc.textContent=nNew?`(${nNew} new)`:'';
+  const list=$('online-list');if(!list)return;
+  $('otab-new').classList.toggle('active',orderTab==='new');$('otab-done').classList.toggle('active',orderTab==='done');
+  $('online-sub').textContent=cfgGet('shopScriptUrl')?`${nNew} new · ${orders.length} total`:'Not set up yet — Settings → Online Shop Link';
+  const show=orders.filter(o=>orderTab==='new'?o.status==='new':o.status!=='new');
+  if(!show.length){
+    list.innerHTML=`<div class="card"><div style="color:var(--muted);font-size:13px;padding:10px;text-align:center;line-height:1.8">${orderTab==='new'?(cfgGet('shopScriptUrl')?'No new online orders.':'Set up your public shop link in <strong>Settings → Online Shop Link</strong> (owner) to start receiving orders.'):'Nothing handled yet.'}</div></div>`;return;
+  }
+  list.innerHTML=show.map(o=>`<div class="card" style="margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start">
+      <div>
+        <div style="font-weight:700;font-size:16px">${esc(o.name)} <span class="badge ${o.status==='new'?'badge-orange':o.status==='drafted'?'badge-blue':'badge-gray'}" style="margin-left:6px">${o.status==='new'?'New':o.status==='drafted'?'In drafts':'Dismissed'}</span></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px">#${esc(o.id)} · ${esc(o.createdAt)} · <a href="tel:${esc(o.phone)}" style="color:var(--blue)">${esc(o.phone)}</a></div>
+        ${o.note?`<div style="font-size:12px;color:var(--subtle);margin-top:6px">📝 ${esc(o.note)}</div>`:''}
+      </div>
+      <div style="font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--orange)">${fmt(o.total)}</div>
+    </div>
+    <div style="margin-top:10px">${o.items.map(it=>{const s=orderLineState(it);return`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--border);font-size:13px"><div style="min-width:0">${esc(it.name)} <span style="color:var(--muted)">×${it.qty}</span></div><span class="badge ${s.cls}">${s.txt}</span></div>`;}).join('')}</div>
+    <div class="btn-group" style="margin-top:12px">
+      ${o.status==='new'?`<button class="btn btn-primary btn-sm" onclick="orderToDraft('${esc(o.id)}')">📝 Make Draft Bill</button>`:''}
+      <button class="btn btn-success btn-sm" onclick="waOrder('${esc(o.id)}')">💬 WhatsApp</button>
+      ${o.status==='new'?`<button class="btn btn-secondary btn-sm" onclick="setOrderStatus('${esc(o.id)}','dismissed')">Dismiss</button>`:`<button class="btn btn-secondary btn-sm" onclick="setOrderStatus('${esc(o.id)}','new')">Move back to New</button>`}
+    </div></div>`).join('');
+}
+// Update ONLY the status cell of that one row — never rewrite the sheet (new orders may be arriving).
+async function setOrderStatus(id,status){
+  const fresh=await readSheet(SH.ORD);
+  const idx=fresh.findIndex((r,i)=>i>0&&String(r[0])===id);
+  if(idx<0){alert('That order is no longer in the sheet.');return;}
+  await writeRange(`${SH.ORD}!H${idx+1}`,[[status]]);
+  const o=orders.find(x=>x.id===id);if(o)o.status=status;
+  renderOnline();
+}
+async function orderToDraft(id){
+  const o=orders.find(x=>x.id===id);if(!o)return;
+  const items=[],skipped=[];
+  o.items.forEach(it=>{
+    const p=parts.find(x=>x.id===it.id);
+    if(!p){skipped.push(it.name+' (no longer in stock list)');return;}
+    items.push({partId:p.id,sku:p.sku,name:p.name,price:p.sellPrice,qty:it.qty});
+  });
+  if(!items.length){alert('None of these parts exist in your stock list any more.');return;}
+  const d={id:uid(),customer:cleanText(o.name),date:today(),items,phone:cleanText(o.phone),address:'',referral:'',discType:'none',discVal:0,createdAt:nowStamp(),updatedAt:nowStamp(),by:'online'};
+  drafts.push(d);renderDrafts();
+  await commitDraftOp({upsert:d});
+  await setOrderStatus(id,'drafted');
+  alert(`Draft bill created for ${d.customer}.\n\nOpen it from Billing → Open Drafts. Items that are out of stock are removed when you open it.`+(skipped.length?'\n\nSkipped: '+skipped.join(', '):''));
+}
+function waOrder(id){
+  const o=orders.find(x=>x.id===id);if(!o)return;
+  const t=`Hi ${o.name}, thanks for your order #${o.id} at ${SHOP_NAME}.\n`+o.items.map(i=>`• ${i.name} ×${i.qty}`).join('\n')+`\nTotal approx. ${fmt(o.total)}. We'll confirm availability shortly.`;
+  window.open(`https://wa.me/${waNum(o.phone)}?text=${encodeURIComponent(t)}`,'_blank');
+}
+
+// ── Public shop page (anyone with the link; no login) ──
+const shopRoute=()=>location.hash.startsWith('#/shop/');
+const SHOP={cfg:null,items:[],cat:'',q:'',cart:{},shown:60,busy:false};
+const SH_RANK={in:0,low:1,out:2};
+function shopSave(){try{localStorage.setItem('sp_cart',JSON.stringify(SHOP.cart));}catch(e){}}
+function shopLoadCart(){try{const c=JSON.parse(localStorage.getItem('sp_cart')||'{}');if(c&&typeof c==='object')SHOP.cart=c;}catch(e){}}
+async function bootShop(){
+  document.querySelectorAll('#login-screen,#auth-panel,#sidebar,#main,#mobile-tabbar,#fab-invoice').forEach(e=>e.style.display='none');
+  const el=$('shop');el.style.display='block';
+  el.innerHTML='<div class="sh-wrap" style="text-align:center;padding-top:90px;color:var(--muted)"><span class="spinner"></span> Loading catalog…</div>';
+  try{
+    const cfg=await decodePortal(location.hash.slice(7));
+    if(cfg.v!==1||!GAS_OK(cfg.u))throw new Error('bad link');
+    SHOP.cfg=cfg;
+  }catch(e){
+    el.innerHTML='<div class="sh-wrap" style="text-align:center;padding-top:90px"><div style="font-size:40px">🔗</div><div class="pt-hello">This link looks incomplete</div><div class="pt-note">Please ask the shop to send it again.</div></div>';return;
+  }
+  document.title=(SHOP.cfg.n||'Shop')+' — Parts catalog';
+  shopLoadCart();
+  el.innerHTML=`<div class="sh-wrap">
+    <div class="pt-brand">Parts Catalog</div><div class="pt-shop">${esc(SHOP.cfg.n||'')}</div>
+    <div class="pt-note" style="margin-top:4px">Live availability · prices include GST · place an order and the shop will confirm it.</div>
+    <div class="sh-top"><input type="text" inputmode="search" id="sh-q" class="sh-search" placeholder="Search part name or number…" autocomplete="off" oninput="SHOP.q=this.value;SHOP.shown=60;shopRender()"/><div class="sh-chips" id="sh-chips"></div></div>
+    <div id="sh-list"><div class="sh-empty"><span class="spinner"></span> Loading…</div></div>
+    <div id="sh-more" style="text-align:center"></div>
+    <div id="sh-updated" class="pt-foot"></div>
+  </div>
+  <div class="sh-cartbar" id="sh-cartbar"></div>
+  <div class="modal-overlay" id="sh-checkout"><div class="modal" style="width:480px" id="sh-checkout-body"></div></div>`;
+  await shopLoad();
+}
+async function shopLoad(){
+  try{
+    const r=await fetch(SHOP.cfg.u+'?action=catalog');
+    const d=await r.json();
+    if(!d.ok||!Array.isArray(d.items))throw new Error('bad');
+    SHOP.items=d.items.map(i=>({id:String(i.id),sku:String(i.sku||''),name:String(i.name||''),cat:String(i.cat||'Other'),price:+i.price||0,st:['in','low','out'].includes(i.st)?i.st:'in'}))
+      .sort((a,b)=>SH_RANK[a.st]-SH_RANK[b.st]||a.name.localeCompare(b.name));
+    // drop cart lines for parts that no longer exist
+    Object.keys(SHOP.cart).forEach(id=>{if(!SHOP.items.some(i=>i.id===id))delete SHOP.cart[id];});
+    $('sh-updated').textContent='Updated '+new Date(d.updated||Date.now()).toLocaleString();
+    shopRender();
+  }catch(e){
+    $('sh-list').innerHTML='<div class="sh-empty">Could not load the catalog right now.<br><br><button class="btn btn-primary" onclick="shopLoad()">Try again</button></div>';
+  }
+}
+function shopChips(){
+  const sc=$('sh-chips').scrollLeft;
+  const cats=[...new Set(SHOP.items.map(i=>i.cat))].sort();
+  $('sh-chips').innerHTML=['',...cats].map(c=>`<div class="sh-chip ${SHOP.cat===c?'on':''}" data-c="${esc(c)}" onclick="SHOP.cat=this.dataset.c;SHOP.shown=60;shopRender()">${c?esc(c):'All'}</div>`).join('');
+  $('sh-chips').scrollLeft=sc;
+}
+function shopMatches(){
+  const t=SHOP.q.toLowerCase().split(/\s+/).filter(Boolean);
+  return SHOP.items.filter(i=>(!SHOP.cat||i.cat===SHOP.cat)&&t.every(w=>(i.name+' '+i.sku+' '+i.cat).toLowerCase().includes(w)));
+}
+const stBadge=s=>s==='in'?'<span class="badge badge-green">In stock</span>':s==='low'?'<span class="badge badge-yellow">Few left</span>':'<span class="badge badge-orange">Out of stock · on request</span>';
+function shopStepper(id){
+  const q=SHOP.cart[id]||0;
+  return q?`<div class="sh-stepper"><button data-id="${esc(id)}" onclick="shopInc(this.dataset.id,-1)">−</button><span>${q}</span><button data-id="${esc(id)}" onclick="shopInc(this.dataset.id,1)">+</button></div>`
+          :`<button class="btn btn-primary btn-sm" data-id="${esc(id)}" onclick="shopInc(this.dataset.id,1)">Add</button>`;
+}
+function shopRender(){
+  shopChips();
+  const all=shopMatches(),vis=all.slice(0,SHOP.shown);
+  $('sh-list').innerHTML=vis.length?vis.map(i=>`<div class="sh-item">
+      <div style="min-width:0;flex:1"><div class="sh-name">${esc(i.name)}</div><div class="sh-meta">${esc(i.sku)}${i.sku?' · ':''}${esc(i.cat)}</div><div style="margin-top:6px">${stBadge(i.st)}</div></div>
+      <div style="text-align:right;flex:0 0 auto"><div class="sh-price">${fmt(i.price)}</div><div style="margin-top:7px">${shopStepper(i.id)}</div></div>
+    </div>`).join(''):`<div class="sh-empty">${SHOP.items.length?'No parts match your search.<br>Can’t find it? Tell the shop — they may be able to source it.':'No parts listed yet.'}</div>`;
+  $('sh-more').innerHTML=all.length>SHOP.shown?`<button class="btn btn-secondary" onclick="SHOP.shown+=60;shopRender()">Show more (${all.length-SHOP.shown} more)</button>`:'';
+  shopCartBar();
+}
+function shopInc(id,d){
+  const q=Math.max(0,Math.min(99,(SHOP.cart[id]||0)+d));
+  if(q)SHOP.cart[id]=q;else delete SHOP.cart[id];
+  shopSave();shopRender();
+  if($('sh-checkout').classList.contains('open'))shopOpenCart();
+}
+function shopLines(){return Object.entries(SHOP.cart).map(([id,qty])=>({it:SHOP.items.find(i=>i.id===id),qty})).filter(l=>l.it);}
+const shopTotal=()=>shopLines().reduce((s,l)=>s+l.it.price*l.qty,0);
+function shopCartBar(){
+  const L=shopLines(),n=L.reduce((s,l)=>s+l.qty,0),bar=$('sh-cartbar');
+  if(!n){bar.style.display='none';return;}
+  bar.style.display='flex';
+  bar.innerHTML=`<div><div style="font-size:12px;color:var(--muted)">${n} item${n>1?'s':''} in cart</div><div class="sh-price">${fmt(shopTotal())}</div></div><button class="btn btn-primary" onclick="shopOpenCart()">View cart &amp; order →</button>`;
+}
+function shopOpenCart(){
+  const L=shopLines(),box=$('sh-checkout-body');
+  if(!L.length){$('sh-checkout').classList.remove('open');return;}
+  let saved={n:'',p:''};try{saved=JSON.parse(localStorage.getItem('sp_me')||'{}');}catch(e){}
+  const prevName=$('sh-name')?$('sh-name').value:(saved.n||''),prevPh=$('sh-phone')?$('sh-phone').value:(saved.p||''),prevNote=$('sh-note')?$('sh-note').value:'';
+  const out=L.filter(l=>l.it.st==='out').length;
+  box.innerHTML=`<h2>Your order</h2>
+    ${L.map(l=>`<div class="sh-line"><div style="min-width:0;flex:1"><div style="font-weight:600">${esc(l.it.name)}</div><div style="font-size:11px;color:var(--muted)">${fmt(l.it.price)} each${l.it.st==='out'?' · <span style="color:var(--orange)">on request</span>':''}</div></div>
+      <div class="sh-stepper"><button data-id="${esc(l.it.id)}" onclick="shopInc(this.dataset.id,-1)">−</button><span>${l.qty}</span><button data-id="${esc(l.it.id)}" onclick="shopInc(this.dataset.id,1)">+</button></div>
+      <div style="font-weight:700;color:var(--orange);width:78px;text-align:right">${fmt(l.it.price*l.qty)}</div></div>`).join('')}
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0"><span style="color:var(--subtle)">Estimated total</span><span class="sh-price" style="font-size:24px">${fmt(shopTotal())}</span></div>
+    ${out?`<div class="hint-box">⚠ ${out} item${out>1?'s are':' is'} not in stock right now — the shop will tell you if and when they can supply ${out>1?'them':'it'}.</div>`:''}
+    <div class="fg"><label>Your name *</label><input type="text" id="sh-name" value="${esc(prevName)}" maxlength="60" autocomplete="name"/></div>
+    <div class="fg"><label>Phone number *</label><input type="text" id="sh-phone" value="${esc(prevPh)}" maxlength="16" inputmode="tel" autocomplete="tel"/></div>
+    <div class="fg"><label>Note (vehicle model, year…) </label><textarea id="sh-note" maxlength="300" placeholder="Optional">${esc(prevNote)}</textarea></div>
+    <input type="text" id="sh-hp" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0"/>
+    <div id="sh-err" style="color:var(--red);font-size:12px;margin-bottom:8px;display:none"></div>
+    <div class="hint-box">This sends your order to the shop — it is not a payment. They will confirm availability and final price with you.</div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="$('sh-checkout').classList.remove('open')">Keep browsing</button><button class="btn btn-primary" id="sh-submit" onclick="shopSubmit()">Place order</button></div>`;
+  $('sh-checkout').classList.add('open');
+}
+function shopWaText(name,phone,id){
+  return `Order${id?' #'+id:''} for ${SHOP.cfg.n||'the shop'}\n`+shopLines().map(l=>`• ${l.it.name} ×${l.qty} — ${fmt(l.it.price*l.qty)}`).join('\n')+`\nTotal approx. ${fmt(shopTotal())}\nName: ${name}\nPhone: ${phone}`;
+}
+async function shopSubmit(){
+  if(SHOP.busy)return;
+  const name=$('sh-name').value.trim(),phone=$('sh-phone').value.trim(),note=$('sh-note').value.trim(),err=$('sh-err');
+  const fail=m=>{err.textContent=m;err.style.display='block';};
+  if(name.length<2)return fail('Please enter your name.');
+  if(phone.replace(/\D/g,'').length<7)return fail('Please enter a valid phone number.');
+  err.style.display='none';
+  const L=shopLines();if(!L.length)return;
+  SHOP.busy=true;const btn=$('sh-submit');btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Sending…';
+  try{localStorage.setItem('sp_me',JSON.stringify({n:name,p:phone}));}catch(e){}
+  const wa=SHOP.cfg.w;
+  try{
+    const r=await fetch(SHOP.cfg.u,{method:'POST',body:JSON.stringify({name,phone,note,website:$('sh-hp').value,items:L.map(l=>({id:l.it.id,qty:l.qty}))})});
+    const d=await r.json();
+    if(!d.ok){const se=new Error(d.error||'failed');se.server=!!d.error;throw se;}
+    SHOP.lastText=shopWaText(name,phone,d.id);
+    SHOP.cart={};shopSave();shopRender();
+    $('sh-checkout-body').innerHTML=`<div style="text-align:center;padding:10px 0">
+      <div style="font-size:46px">✅</div><div class="pt-hello" style="margin:6px 0 8px;font-size:24px">Order sent!</div>
+      <div style="font-size:13px;color:var(--subtle);line-height:1.8">Order number <strong style="color:var(--orange)">#${esc(d.id)}</strong><br>The shop will confirm availability and contact you on <strong>${esc(phone)}</strong>.</div></div>
+      <div class="modal-actions" style="justify-content:center;flex-wrap:wrap">${wa?`<button class="btn btn-success" onclick="window.open('https://wa.me/'+SHOP.cfg.w+'?text='+encodeURIComponent(SHOP.lastText),'_blank')">💬 Also send on WhatsApp</button>`:''}<button class="btn btn-primary" onclick="$('sh-checkout').classList.remove('open')">Done</button></div>`;
+  }catch(e){
+    btn.disabled=false;btn.textContent='Place order';
+    fail((e&&e.server?e.message:'Could not send the order. Please check your connection and try again.')+(wa?' You can also send it on WhatsApp below.':''));
+    if(wa&&!$('sh-wa-fallback')){
+      const b=document.createElement('button');b.id='sh-wa-fallback';b.className='btn btn-success';b.style.marginBottom='10px';b.textContent='💬 Send order on WhatsApp';
+      b.onclick=()=>window.open('https://wa.me/'+wa+'?text='+encodeURIComponent(shopWaText(name,phone,'')),'_blank');
+      err.after(b);
+    }
+  }finally{SHOP.busy=false;}
+}
+
 // ═══ MODAL HELPERS ═══
 function openModal(id){$(id).classList.add('open');}
 function closeModal(id){$(id).classList.remove('open');}
@@ -2440,7 +2797,130 @@ window.addEventListener('offline',()=>showSync('You are offline — changes cann
 window.addEventListener('online',()=>showSync('Back online ✓'));
 
 // ═══ CUSTOMER PORTAL BOOT (must be last) ═══
-if(portalRoute())bootPortal();
+if(portalRoute())bootPortal();else if(shopRoute())bootShop();
+</script>
+<script type="text/plain" id="gas-src">/**
+ * Spares Pro — public catalog & order gateway
+ * Paste into: your Spares Pro Google Sheet → Extensions → Apps Script
+ * Deploy → New deployment → Web app → Execute as: Me · Who has access: Anyone
+ *
+ * Exposes ONLY: part name, SKU, category, selling price (incl. GST) and an availability word.
+ * Never exposes: buying price, supplier, exact quantity, HSN, location, customers, invoices.
+ */
+var SHOP_NAME = 'AutoParts Spares Pro';
+var PARTS_SHEET = 'Parts';
+var ORDERS_SHEET = 'OnlineOrders';
+var ORDER_HEADER = ['id', 'createdAt', 'name', 'phone', 'note', 'items_json', 'total', 'status'];
+var MAX_LINES = 30;            // max different parts per order
+var MAX_QTY = 99;              // max quantity per part
+var MAX_PER_PHONE_HOUR = 5;    // orders from one phone number per hour
+var MAX_ORDERS_HOUR = 60;      // orders from everyone per hour (spam brake)
+
+function doGet(e) {
+  var action = (e && e.parameter && e.parameter.action) || 'catalog';
+  if (action !== 'catalog') return out_({ ok: false, error: 'unknown action' });
+  return out_({ ok: true, shop: SHOP_NAME, updated: new Date().toISOString(), items: readCatalog_() });
+}
+
+function doPost(e) {
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(20000);
+    var body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+
+    // Honeypot: real people never fill this hidden field. Pretend success so bots learn nothing.
+    if (body.website) return out_({ ok: true, id: 'W0' });
+
+    var name = clean_(body.name, 60);
+    var phone = String(body.phone || '').replace(/[^0-9+]/g, '').slice(0, 16);
+    var note = clean_(body.note, 300);
+    if (name.length < 2) return out_({ ok: false, error: 'Please enter your name.' });
+    if (phone.replace(/\D/g, '').length < 7) return out_({ ok: false, error: 'Please enter a valid phone number.' });
+
+    var lines = (body.items || []).slice(0, MAX_LINES);
+    if (!lines.length) return out_({ ok: false, error: 'Your cart is empty.' });
+
+    // Spam brakes (per phone and overall, per hour)
+    var cache = CacheService.getScriptCache();
+    var bucket = Math.floor(Date.now() / 3600000);
+    var kPhone = 'p' + bucket + '_' + phone, kAll = 'a' + bucket;
+    var nPhone = Number(cache.get(kPhone) || 0), nAll = Number(cache.get(kAll) || 0);
+    if (nPhone >= MAX_PER_PHONE_HOUR || nAll >= MAX_ORDERS_HOUR)
+      return out_({ ok: false, error: 'Too many orders just now. Please call or WhatsApp the shop.' });
+
+    // Prices ALWAYS come from the sheet — anything the browser sends about price is ignored.
+    var catalog = {};
+    readCatalog_().forEach(function (it) { catalog[it.id] = it; });
+    var items = [], total = 0;
+    lines.forEach(function (l) {
+      var it = catalog[String(l.id)];
+      var qty = Math.max(1, Math.min(MAX_QTY, Math.floor(Number(l.qty) || 0)));
+      if (!it || !qty) return;
+      items.push({ id: it.id, sku: it.sku, name: it.name, qty: qty, price: it.price });
+      total += it.price * qty;
+    });
+    if (!items.length) return out_({ ok: false, error: 'Those parts are no longer listed. Please refresh the page.' });
+
+    var sh = ordersSheet_();
+    var id = 'W' + Date.now().toString(36).toUpperCase().slice(-6);
+    var when = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm');
+    sh.appendRow([id, when, name, phone, note, JSON.stringify(items), Math.round(total * 100) / 100, 'new']);
+    cache.put(kPhone, String(nPhone + 1), 3700);
+    cache.put(kAll, String(nAll + 1), 3700);
+    return out_({ ok: true, id: id, total: Math.round(total * 100) / 100 });
+  } catch (err) {
+    return out_({ ok: false, error: 'Could not place the order. Please try again or WhatsApp the shop.' });
+  } finally {
+    try { lock.releaseLock(); } catch (x) {}
+  }
+}
+
+function readCatalog_() {
+  var sh = SpreadsheetApp.getActive().getSheetByName(PARTS_SHEET);
+  if (!sh || sh.getLastRow() < 2) return [];
+  var v = sh.getDataRange().getValues();
+  var H = {};
+  v[0].forEach(function (h, i) { H[String(h)] = i; });
+  var items = [];
+  for (var r = 1; r < v.length; r++) {
+    var row = v[r];
+    if (!row[H.id]) continue;
+    var sell = Number(row[H.sellPrice]) || 0;
+    if (sell <= 0) continue;                                   // unpriced parts are not listed
+    var gst = (Number(row[H.cgst]) || 0) + (Number(row[H.sgst]) || 0);
+    var qty = Number(row[H.qty]) || 0, min = Number(row[H.minQty]) || 0;
+    items.push({
+      id: String(row[H.id]),
+      sku: String(row[H.sku] || ''),
+      name: String(row[H.name] || ''),
+      cat: String(row[H.category] || 'Other'),
+      price: Math.round(sell * (1 + gst / 100) * 100) / 100,   // price the customer actually pays
+      st: qty <= 0 ? 'out' : (qty <= min ? 'low' : 'in')
+    });
+  }
+  return items;
+}
+
+function ordersSheet_() {
+  var ss = SpreadsheetApp.getActive();
+  var sh = ss.getSheetByName(ORDERS_SHEET);
+  if (!sh) { sh = ss.insertSheet(ORDERS_SHEET); sh.appendRow(ORDER_HEADER); }
+  return sh;
+}
+
+// Strip characters that could be abused (HTML, spreadsheet formulas) from public text
+function clean_(s, max) {
+  return String(s || '')
+    .replace(/[<>&"'`\\]/g, '')
+    .replace(/[\u0000-\u001f]/g, ' ')
+    .replace(/^[=+\-@\s]+/, '')
+    .trim()
+    .slice(0, max);
+}
+
+function out_(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
 </script>
 </body>
 </html>
