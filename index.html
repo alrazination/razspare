@@ -580,6 +580,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
       <div class="fg"><label>Minimum points to redeem</label><input type="number" id="loy-min" min="0" step="1" placeholder="0"/></div>
     </div>
     <div class="hint-box" id="loy-preview" style="margin-bottom:12px"></div>
+    <div id="loy-off-banner" style="display:none;color:var(--red);font-size:13px;font-weight:600;margin-bottom:12px">⚠ Loyalty is currently OFF — no points are being earned. Tick the box above and press Save Rules.</div>
     <button class="btn btn-primary" onclick="saveLoyaltySettings()">Save Rules</button>
     <div style="font-size:12px;color:var(--muted);margin-top:12px;line-height:1.7">Points are worked out on the bill value <strong style="color:var(--subtle)">excluding GST</strong>, whole points only, and count once the invoice is <strong style="color:var(--subtle)">Paid</strong>. Customers registered under <em>Customers &amp; Referrals</em> (matched by name or phone) never earn loyalty points. Changing the rules affects new bills only.</div>
   </div>
@@ -1098,7 +1099,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
 <script>
 // ═══ CONSTANTS ═══
 const SCOPES='https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
-const SH={PARTS:'Parts',INV:'Invoices',PURCH:'Purchases',WISH:'Wishlist',CFG:'Config',CUST:'Customers',PAY:'Payouts',SUPP:'Suppliers',REQ:'Requests',DRAFT:'Drafts',ORD:'OnlineOrders',LADJ:'LoyaltyAdj'};
+const SH={PARTS:'Parts',INV:'Invoices',PURCH:'Purchases',WISH:'Wishlist',CFG:'Config',CUST:'Customers',PAY:'Payouts',SUPP:'Suppliers',REQ:'Requests',DRAFT:'Drafts',ORD:'OnlineOrders',LADJ:'LoyaltyAdj',LBAL:'LoyaltyBalances'};
 const SHOP_NAME='AutoParts Spares Pro'; // shown on customer links
 const HDR={
   PARTS:['id','sku','name','category','qty','minQty','buyPrice','sellPrice','supplier','hsn','mrp','cgst','sgst','location','brand'],
@@ -1112,7 +1113,8 @@ const HDR={
   REQ:['id','part','qty','name','phone','date','note','status'],
   DRAFT:['id','customer','date','items_json','phone','address','referral','discType','discVal','createdAt','updatedAt','by'],
   ORD:['id','createdAt','name','phone','note','items_json','total','status'],
-  LADJ:['id','phone','name','date','points','note']
+  LADJ:['id','phone','name','date','points','note'],
+  LBAL:['phone','name','bills','spent','pointsEarned','pointsPending','adjustments','pointsRedeemed','balance','lastVisit']
 };
 
 // ═══ STATE ═══
@@ -1358,14 +1360,21 @@ async function loadAll(){
   requests=rqr.slice(1).filter(r=>r[0]).map(r=>({id:r[0],part:r[1]||'',qty:+r[2]||1,name:r[3]||'',phone:r[4]||'',date:r[5]||'',note:r[6]||'',status:r[7]||'open'}));
 }
 async function saveParts(){showSync('Saving…',false);await clearRewrite(SH.PARTS,HDR.PARTS,parts.map(p=>[p.id,p.sku,p.name,p.category,p.qty,p.minQty,p.buyPrice,p.sellPrice,p.supplier||'',p.hsn||'',p.mrp||0,p.cgst||0,p.sgst||0,p.location||'',p.brand||'']));showSync('Saved ✓');}
-async function saveInvoices(){showSync('Saving…',false);await clearRewrite(SH.INV,HDR.INV,invoices.map(i=>[i.id,i.customer,i.date,JSON.stringify(i.items),i.subtotal,i.discountType,i.discountVal,i.cgst||0,i.sgst||0,i.total,String(i.paid).toUpperCase(),i.customerId||'',i.referrerId||'',i.phone||'',i.address||'',i.lpts||0,i.lused||0,i.ldisc||0]));showSync('Saved ✓');}
+async function saveInvoices(){showSync('Saving…',false);await clearRewrite(SH.INV,HDR.INV,invoices.map(i=>[i.id,i.customer,i.date,JSON.stringify(i.items),i.subtotal,i.discountType,i.discountVal,i.cgst||0,i.sgst||0,i.total,String(i.paid).toUpperCase(),i.customerId||'',i.referrerId||'',i.phone||'',i.address||'',i.lpts||0,i.lused||0,i.ldisc||0]));await saveLoyaltySummary();showSync('Saved ✓');}
 async function savePurchases(){showSync('Saving…',false);await clearRewrite(SH.PURCH,HDR.PURCH,purchases.map(p=>[p.id,p.date,p.partId,p.partName,p.sku,p.supplier,p.qty,p.unitCost,p.total,p.notes,p.brand||'']));showSync('Saved ✓');}
 async function saveWishlist(){showSync('Saving…',false);await clearRewrite(SH.WISH,HDR.WISH,wishlist.map(w=>[w.id,w.name,w.sku,w.category,w.qtyNeeded,w.customer,w.priority,w.status,w.notes,w.createdAt]));showSync('Saved ✓');}
 
 async function saveCustomers(){showSync('Saving…',false);await clearRewrite(SH.CUST,HDR.CUST,customers.map(c=>[c.id,c.name,c.phone||'',c.pct,c.code,c.notes||'',c.createdAt||'',c.address||'']));showSync('Saved ✓');}
 async function savePayouts(){showSync('Saving…',false);await clearRewrite(SH.PAY,HDR.PAY,payouts.map(p=>[p.id,p.customerId,p.date,p.amount,p.note||'']));showSync('Saved ✓');}
 
-async function saveLadj(){showSync('Saving…',false);await clearRewrite(SH.LADJ,HDR.LADJ,ladj.map(a=>[a.id,a.phone,a.name||'',a.date||'',a.points,a.note||'']));showSync('Saved ✓');}
+async function saveLadj(){showSync('Saving…',false);await clearRewrite(SH.LADJ,HDR.LADJ,ladj.map(a=>[a.id,a.phone,a.name||'',a.date||'',a.points,a.note||'']));await saveLoyaltySummary();showSync('Saved ✓');}
+// Read-only summary of every member's points, so balances are visible in the Google Sheet
+async function saveLoyaltySummary(){
+  try{
+    const rows=[...loyaltyMembers().values()].sort((a,b)=>(b.last||'').localeCompare(a.last||'')).map(e=>[e.phone,e.name,e.bills,e.spent,e.earned,e.pending,e.adj,e.used,e.balance,e.last]);
+    await clearRewrite(SH.LBAL,HDR.LBAL,rows);
+  }catch(e){console.warn('Loyalty summary not saved',e);}
+}
 async function saveSuppliers(){showSync('Saving…',false);await clearRewrite(SH.SUPP,HDR.SUPP,suppliers.map(s=>[s.id,s.name,s.phone||'',s.address||'',s.createdAt||'']));showSync('Saved ✓');}
 async function saveRequests(){showSync('Saving…',false);await clearRewrite(SH.REQ,HDR.REQ,requests.map(r=>[r.id,r.part,r.qty,r.name||'',r.phone||'',r.date||'',r.note||'',r.status||'open']));showSync('Saved ✓');}
 
@@ -1814,7 +1823,8 @@ const phoneKey=ph=>String(ph||'').replace(/\D/g,'').slice(-10);
 const validPhone=ph=>phoneKey(ph).length===10;
 function loyaltyCfg(){
   const n=(k,d)=>{const v=parseFloat(config[k]);return isFinite(v)&&v>=0?v:d;};
-  return{on:cfgGet('loyaltyOn','0')==='1'||cfgGet('loyaltyOn','0')===1,pts:n('loyaltyPts',1),per:Math.max(1,n('loyaltyPer',100)),value:n('loyaltyValue',1),min:Math.floor(n('loyaltyMin',0))};
+  const raw=config.loyaltyOn;
+  return{on:(raw===undefined||raw==='')?true:(raw==='1'||raw===1||raw===true),pts:n('loyaltyPts',1),per:Math.max(1,n('loyaltyPer',100)),value:n('loyaltyValue',1),min:Math.floor(n('loyaltyMin',0))};
 }
 const loyaltyEarn=base=>{const c=loyaltyCfg();return c.on?Math.floor((base/c.per)*c.pts+1e-9):0;};
 // Registered (referral-program) customers never earn loyalty points
@@ -1857,7 +1867,7 @@ function loyaltyState(){
 function updateLoyaltyBox(){
   const box=$('bf-loy');if(!box)return;
   const c=loyaltyCfg();
-  if(!c.on){box.style.display='none';return;}
+  if(!c.on){box.style.display=isOwner()?'block':'none';$('bf-loy-info').innerHTML='⭐ Loyalty points are <b>OFF</b> — turn them on under <b>Loyalty Points</b> in the menu.';$('bf-loy-row').style.display='none';$('bf-loy-earn').textContent='';return;}
   const st=loyaltyState();
   let h='';
   if(st.reason==='nophone')h='⭐ <b>Loyalty:</b> enter the customer’s 10-digit phone number to earn / use points.';
@@ -1916,6 +1926,7 @@ function renderLoyalty(){
   if(!_loyBound){_loyBound=true;['loy-pts','loy-per','loy-val'].forEach(id=>$(id).addEventListener('input',loyPreview));}
   if(!$('page-loyalty').classList.contains('active')||!$('loy-pts').dataset.init){loadLoyaltyForm();$('loy-pts').dataset.init='1';}
   const c=loyaltyCfg();
+  $('loy-off-banner').style.display=c.on?'none':'block';
   const all=[...loyaltyMembers().values()].sort((a,b)=>(b.last||'').localeCompare(a.last||''));
   const q=($('loy-search').value||'').trim().toLowerCase();
   const rows=all.filter(e=>!q||e.name.toLowerCase().includes(q)||e.phone.includes(q.replace(/\D/g,'')||'\u0000'));
