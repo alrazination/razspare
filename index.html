@@ -385,6 +385,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
   <div class="nav-item" data-page="billing" onclick="navigate('billing')"><span class="nav-icon">🧾</span> Billing <span class="nav-badge" id="draft-badge" style="display:none">0</span></div>
   <div class="nav-item" data-page="online" onclick="navigate('online')"><span class="nav-icon">🌐</span> Online Orders <span class="nav-badge" id="online-badge" style="display:none">0</span></div>
   <div class="nav-item" id="nav-partners" data-page="partners" onclick="navigate('partners')"><span class="nav-icon">🤝</span> Customers &amp; Referrals</div>
+  <div class="nav-item" id="nav-loyalty" data-page="loyalty" onclick="navigate('loyalty')"><span class="nav-icon">⭐</span> Loyalty Points</div>
   <div class="nav-section" id="nav-analytics-section">Analytics</div>
   <div class="nav-item" id="nav-reports" data-page="reports" onclick="navigate('reports')"><span class="nav-icon">📊</span> Reports</div>
   <div class="nav-item" id="nav-insights" data-page="insights" onclick="navigate('insights')"><span class="nav-icon">🧠</span> Insights</div>
@@ -429,7 +430,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
     <div class="btn-group" id="inv-actions"></div>
   </div>
   <div class="toolbar">
-    <input type="text" class="search-box" id="inv-search" placeholder="Search name, SKU or location…" oninput="renderInventory()"/>
+    <input type="text" class="search-box" id="inv-search" placeholder="Search name, SKU, brand or location…" oninput="renderInventory()"/>
+    <select id="inv-brand" onchange="renderInventory()" style="width:150px"><option value="">All Brands</option></select>
     <select id="inv-cat" onchange="renderInventory()" style="width:160px">
       <option value="">All Categories</option>
       <option>Engine</option><option>Brakes</option><option>Suspension</option><option>Electrical</option><option>Body</option><option>Transmission</option><option>Cooling</option><option>Exhaust</option><option>Filters</option><option>Other</option>
@@ -450,9 +452,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
     <div class="ph-left"><h1>Purchases</h1><p id="pur-sub">Track stock bought from suppliers</p></div>
     <button class="btn btn-primary" onclick="openPurchaseModal()">＋ Record Purchase</button>
   </div>
-  <div class="toolbar"><input type="text" class="search-box" id="pur-search" placeholder="Search supplier or part…" oninput="renderPurchases()"/></div>
+  <div class="toolbar"><input type="text" class="search-box" id="pur-search" placeholder="Search supplier, brand or part…" oninput="renderPurchases()"/></div>
   <div class="table-wrap"><table>
-    <thead><tr><th>Date</th><th>Part</th><th>SKU</th><th>Supplier</th><th>Qty</th><th id="th-unit-cost">Unit Cost ₹</th><th id="th-total-cost">Total ₹</th><th>Notes</th></tr></thead>
+    <thead><tr><th>Date</th><th>Part</th><th>SKU</th><th>Brand</th><th>Supplier</th><th>Qty</th><th id="th-unit-cost">Unit Cost ₹</th><th id="th-total-cost">Total ₹</th><th>Notes</th></tr></thead>
     <tbody id="pur-tbody"></tbody>
   </table></div>
 </div>
@@ -555,6 +557,38 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
     <tbody id="cust-tbody"></tbody>
   </table></div>
   <div style="font-size:12px;color:var(--muted);margin-top:12px;line-height:1.7">Bonus is calculated on the bill value <strong style="color:var(--subtle)">excluding GST</strong>, and is counted as earned only once the invoice is marked <strong style="color:var(--subtle)">Paid</strong>. Bonus % applies to the customer's own purchases and to purchases by people they referred.</div>
+</div>
+
+<!-- LOYALTY POINTS (owner only) -->
+<div id="page-loyalty" class="page">
+  <div class="ph">
+    <div class="ph-left"><h1>Loyalty Points</h1><p>Points for walk-in customers, tracked by phone number. Referral customers earn bonus instead.</p></div>
+    <button class="btn btn-primary" onclick="openLoyAdj()">＋ Adjust Points</button>
+  </div>
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title">⚙️ Loyalty Rules</div>
+    <div class="fg" style="display:flex;align-items:center;gap:10px">
+      <input type="checkbox" id="loy-on" style="width:auto;accent-color:var(--orange)"/>
+      <label for="loy-on" style="display:inline;font-size:13px;color:var(--text);text-transform:none;letter-spacing:0;font-weight:400">Loyalty points are ON — customers with a phone number earn points on every paid bill</label>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Points earned</label><input type="number" id="loy-pts" min="0" step="0.5" placeholder="1"/></div>
+      <div class="fg"><label>For every ₹ spent</label><input type="number" id="loy-per" min="1" step="1" placeholder="100"/></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>1 point is worth (₹) when redeemed</label><input type="number" id="loy-val" min="0" step="0.1" placeholder="1"/></div>
+      <div class="fg"><label>Minimum points to redeem</label><input type="number" id="loy-min" min="0" step="1" placeholder="0"/></div>
+    </div>
+    <div class="hint-box" id="loy-preview" style="margin-bottom:12px"></div>
+    <button class="btn btn-primary" onclick="saveLoyaltySettings()">Save Rules</button>
+    <div style="font-size:12px;color:var(--muted);margin-top:12px;line-height:1.7">Points are worked out on the bill value <strong style="color:var(--subtle)">excluding GST</strong>, whole points only, and count once the invoice is <strong style="color:var(--subtle)">Paid</strong>. Customers registered under <em>Customers &amp; Referrals</em> (matched by name or phone) never earn loyalty points. Changing the rules affects new bills only.</div>
+  </div>
+  <div class="stats-grid" id="loy-stats"></div>
+  <div class="toolbar"><input type="text" class="search-box" id="loy-search" placeholder="Search name or phone…" oninput="renderLoyalty()"/></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Customer</th><th>Phone</th><th>Bills</th><th>Spent</th><th>Earned</th><th>Redeemed</th><th>Balance</th><th>Actions</th></tr></thead>
+    <tbody id="loy-tbody"></tbody>
+  </table></div>
 </div>
 
 <!-- REPORTS (owner only) -->
@@ -720,7 +754,11 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
       <div class="fg"><label>Buy Price (₹)</label><input type="number" id="pf-buy" min="0" step="0.01" placeholder="0.00" oninput="updateMarginHint()"/></div>
       <div class="fg"><label>Sell Price (₹)</label><input type="number" id="pf-sell" min="0" step="0.01" placeholder="0.00" oninput="updateMarginHint()"/></div>
     </div>
-    <div class="fg"><label>Supplier / Brand</label><input type="text" id="pf-supplier" list="supp-list" placeholder="Optional"/></div>
+    <div class="frow">
+      <div class="fg"><label>Brand <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(TVS, Bajaj, Hero…)</span></label><input type="text" id="pf-brand" list="brand-list" placeholder="Make of the part" autocomplete="off"/></div>
+      <div class="fg"><label>Usual Supplier <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(who you buy from)</span></label><input type="text" id="pf-supplier" list="supp-list" placeholder="Optional" autocomplete="off"/></div>
+    </div>
+    <datalist id="brand-list"></datalist>
     <div class="frow">
       <div class="fg"><label>HSN Code</label><input type="text" id="pf-hsn" placeholder="e.g. 87089900"/></div>
       <div class="fg"><label>MRP (₹)</label><input type="number" id="pf-mrp" min="0" step="0.01" placeholder="0.00"/></div>
@@ -753,8 +791,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
     </div>
     <div class="frow">
       <div class="fg"><label>Date</label><input type="date" id="purch-date"/></div>
-      <div class="fg"><label>Supplier</label><input type="text" id="purch-supplier" list="supp-list" placeholder="Supplier name" oninput="purchSupplierFill()" autocomplete="off"/></div>
+      <div class="fg"><label>Brand</label><input type="text" id="purch-brand" list="brand-list" placeholder="TVS, Bajaj…" autocomplete="off"/></div>
     </div>
+    <div class="fg"><label>Supplier <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(who you bought it from — can differ for the same brand)</span></label><input type="text" id="purch-supplier" list="supp-list" placeholder="Supplier name" oninput="purchSupplierFill()" autocomplete="off"/></div>
     <div class="frow">
       <div class="fg"><label>Supplier Phone <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(optional)</span></label><input type="text" id="purch-sphone" placeholder="Mobile / landline"/></div>
       <div class="fg"><label>Supplier Address <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(optional)</span></label><input type="text" id="purch-saddr" placeholder="Shop / city"/></div>
@@ -816,7 +855,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
       <div class="fg"><label>Date</label><input type="date" id="bf-date"/></div>
     </div>
     <div class="frow">
-      <div class="fg"><label>Phone <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(optional)</span></label><input type="text" id="bf-phone" placeholder="Mobile number" oninput="_autoFilledFor=null"/></div>
+      <div class="fg"><label>Phone <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(optional)</span></label><input type="text" id="bf-phone" placeholder="Mobile number" oninput="_autoFilledFor=null;updateLoyaltyBox()"/></div>
       <div class="fg"><label>Address <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(optional)</span></label><input type="text" id="bf-addr" placeholder="Area / address" oninput="_autoFilledFor=null"/></div>
     </div>
     <div class="fg">
@@ -824,6 +863,17 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
       <input type="text" id="bf-ref" list="ref-list" placeholder="Search customer name or referral code…" oninput="updateBillLinks()" autocomplete="off" style="width:100%"/>
       <datalist id="cust-list"></datalist><datalist id="ref-list"></datalist>
       <div id="bf-link-hint" style="display:none;font-size:12px;color:var(--subtle);line-height:1.7;margin-top:6px"></div>
+    </div>
+    <div class="hint-box" id="bf-loy" style="display:none;border-left-color:var(--yellow)">
+      <div id="bf-loy-info" style="line-height:1.7"></div>
+      <div id="bf-loy-row" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px">
+        <span style="font-size:12px">Redeem</span>
+        <input type="number" id="bf-lredeem" min="0" step="1" placeholder="0" oninput="calcBillTotal()" style="width:90px"/>
+        <span style="font-size:12px">points</span>
+        <button class="btn btn-secondary btn-sm" type="button" onclick="redeemMax()">Use max</button>
+        <span id="bf-lred-val" style="font-size:12px;color:var(--green);font-weight:600"></span>
+      </div>
+      <div id="bf-loy-earn" style="font-size:12px;color:var(--orange);margin-top:6px"></div>
     </div>
     <div class="fg">
       <label>Add Parts</label>
@@ -834,6 +884,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
     </div>
     <div id="bill-items-list"></div>
     <div class="bill-total-section" id="bill-total-section" style="display:none">
+      <div id="bf-loy-line" style="display:none;font-size:12px;color:var(--yellow);margin-bottom:8px;font-weight:600"></div>
       <div class="discount-row">
         <label>Discount</label>
         <select id="bf-disc-type" onchange="calcBillTotal()" style="width:110px"><option value="none">None</option><option value="pct">Percent (%)</option><option value="flat">Flat (₹)</option></select>
@@ -857,6 +908,22 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
       <button class="btn btn-secondary" id="save-draft-btn" onclick="saveDraft()" disabled style="border-color:var(--yellow);color:var(--yellow)">💾 Save Draft</button>
       <button class="btn btn-secondary" id="save-pending-btn" onclick="saveInvoice(false)" disabled>Save Pending</button>
       <button class="btn btn-primary" id="save-paid-btn" onclick="saveInvoice(true)" disabled>Save + Mark Paid</button>
+    </div>
+  </div>
+</div>
+
+<!-- Loyalty adjust modal -->
+<div class="modal-overlay" id="loyadj-modal">
+  <div class="modal" style="width:420px">
+    <h2>Adjust Loyalty Points</h2>
+    <div class="fg"><label>Phone</label><input type="text" id="la-phone" inputmode="numeric" placeholder="10-digit mobile" oninput="loyAdjFill()"/></div>
+    <div class="fg"><label>Customer name</label><input type="text" id="la-name" placeholder="Optional"/></div>
+    <div class="fg"><label>Points (+ to add, − to deduct)</label><input type="number" id="la-pts" step="1" placeholder="e.g. 20 or -10"/></div>
+    <div class="fg"><label>Note</label><input type="text" id="la-note" placeholder="e.g. Welcome bonus / redeemed at counter"/></div>
+    <div class="hint-box" id="la-hint" style="display:none"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('loyadj-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveLoyAdj()">Save</button>
     </div>
   </div>
 </div>
@@ -1017,6 +1084,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
       <button class="btn btn-secondary" style="justify-content:flex-start" onclick="closeModal('mobile-more-modal');mobileNavigate('online')">🌐 Online Orders <span id="mmenu-online-count" style="margin-left:6px;color:var(--orange);font-weight:700"></span></button>
       <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-suppliers" onclick="closeModal('mobile-more-modal');mobileNavigate('suppliers')">🏭 Suppliers</button>
       <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-partners" onclick="closeModal('mobile-more-modal');mobileNavigate('partners')">🤝 Customers &amp; Referrals</button>
+      <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-loyalty" onclick="closeModal('mobile-more-modal');mobileNavigate('loyalty')">⭐ Loyalty Points</button>
       <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-reports" onclick="closeModal('mobile-more-modal');mobileNavigate('reports')">📊 Reports</button>
       <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-insights" onclick="closeModal('mobile-more-modal');mobileNavigate('insights')">🧠 Insights</button>
       <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-settings" onclick="closeModal('mobile-more-modal');mobileNavigate('settings')">⚙️ Settings</button>
@@ -1030,12 +1098,12 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
 <script>
 // ═══ CONSTANTS ═══
 const SCOPES='https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file';
-const SH={PARTS:'Parts',INV:'Invoices',PURCH:'Purchases',WISH:'Wishlist',CFG:'Config',CUST:'Customers',PAY:'Payouts',SUPP:'Suppliers',REQ:'Requests',DRAFT:'Drafts',ORD:'OnlineOrders'};
+const SH={PARTS:'Parts',INV:'Invoices',PURCH:'Purchases',WISH:'Wishlist',CFG:'Config',CUST:'Customers',PAY:'Payouts',SUPP:'Suppliers',REQ:'Requests',DRAFT:'Drafts',ORD:'OnlineOrders',LADJ:'LoyaltyAdj'};
 const SHOP_NAME='AutoParts Spares Pro'; // shown on customer links
 const HDR={
-  PARTS:['id','sku','name','category','qty','minQty','buyPrice','sellPrice','supplier','hsn','mrp','cgst','sgst','location'],
-  INV:['id','customer','date','items_json','subtotal','discountType','discountVal','cgst','sgst','total','paid','customerId','referrerId','phone','address'],
-  PURCH:['id','date','partId','partName','sku','supplier','qty','unitCost','total','notes'],
+  PARTS:['id','sku','name','category','qty','minQty','buyPrice','sellPrice','supplier','hsn','mrp','cgst','sgst','location','brand'],
+  INV:['id','customer','date','items_json','subtotal','discountType','discountVal','cgst','sgst','total','paid','customerId','referrerId','phone','address','loyaltyPts','loyaltyUsed','loyaltyDisc'],
+  PURCH:['id','date','partId','partName','sku','supplier','qty','unitCost','total','notes','brand'],
   WISH:['id','name','sku','category','qtyNeeded','customer','priority','status','notes','createdAt'],
   CFG:['key','value'],
   CUST:['id','name','phone','bonusPct','code','notes','createdAt','address'],
@@ -1043,12 +1111,13 @@ const HDR={
   SUPP:['id','name','phone','address','createdAt'],
   REQ:['id','part','qty','name','phone','date','note','status'],
   DRAFT:['id','customer','date','items_json','phone','address','referral','discType','discVal','createdAt','updatedAt','by'],
-  ORD:['id','createdAt','name','phone','note','items_json','total','status']
+  ORD:['id','createdAt','name','phone','note','items_json','total','status'],
+  LADJ:['id','phone','name','date','points','note']
 };
 
 // ═══ STATE ═══
 let accessToken=null,spreadsheetId=null;
-let parts=[],invoices=[],purchases=[],wishlist=[],config={},customers=[],payouts=[],suppliers=[],requests=[],drafts=[],orders=[],editingDraftId=null,_billSnap='';
+let parts=[],invoices=[],purchases=[],wishlist=[],config={},customers=[],payouts=[],suppliers=[],requests=[],drafts=[],orders=[],ladj=[],editingDraftId=null,_billSnap='';
 let editingPartId=null,editingWishId=null,selectedPurchPartId=null;
 let billItems=[],currentWishTab='pending';
 let currentRole=null; // 'owner' | 'employee'
@@ -1115,7 +1184,7 @@ function doLogin(){
 
 function doLogout(){
   currentRole=null;accessToken=null;spreadsheetId=null;
-  parts=[];invoices=[];purchases=[];wishlist=[];customers=[];payouts=[];suppliers=[];requests=[];drafts=[];orders=[];config={};editingDraftId=null;
+  parts=[];invoices=[];purchases=[];wishlist=[];customers=[];payouts=[];suppliers=[];requests=[];drafts=[];orders=[];ladj=[];config={};editingDraftId=null;
   $('login-screen').style.display='flex';
   $('login-user').value='';$('login-pass').value='';
   $('sidebar').style.display='none';$('main').style.display='none';
@@ -1131,13 +1200,13 @@ function applyRoleUI(){
   // Show Google Sheet link only to owner
   $('sheet-link-wrap').style.display=isOwn?'block':'none';
   // Nav locks
-  ['nav-suppliers','nav-partners','nav-reports','nav-insights','nav-settings'].forEach(id=>{
+  ['nav-suppliers','nav-partners','nav-loyalty','nav-reports','nav-insights','nav-settings'].forEach(id=>{
     $(id).classList.toggle('locked',!isOwn);
   });
   $('nav-analytics-section').style.opacity=isOwn?'1':'0.3';
   $('nav-settings-section').style.opacity=isOwn?'1':'0.3';
   // Mobile "More" menu locks
-  ['mmenu-suppliers','mmenu-partners','mmenu-reports','mmenu-insights','mmenu-settings','mmenu-sheet'].forEach(id=>{
+  ['mmenu-suppliers','mmenu-partners','mmenu-loyalty','mmenu-reports','mmenu-insights','mmenu-settings','mmenu-sheet'].forEach(id=>{
     $(id).style.display=isOwn?'flex':'none';
   });
   // Greeting
@@ -1155,7 +1224,7 @@ function isOwner(){return currentRole==='owner';}
 // ═══ MOBILE NAV ═══
 function mobileNavigate(page,el){
   if(page==='more'){toggleMoreMenu();return;}
-  if(!isOwner()&&['suppliers','partners','reports','insights','settings'].includes(page))return;
+  if(!isOwner()&&['suppliers','partners','loyalty','reports','insights','settings'].includes(page))return;
   navigate(page);
   document.querySelectorAll('#mobile-tabbar .mtab').forEach(t=>t.classList.remove('active'));
   if(el)el.classList.add('active');
@@ -1275,46 +1344,48 @@ async function clearRewrite(sh,hdr,rows){
 
 // ═══ DATA LOAD / SAVE ═══
 async function loadAll(){
-  const[pr,ir,pur,wr,cr,pyr,sur,rqr,dfr,cfr,orr]=await Promise.all([readSheet(SH.PARTS),readSheet(SH.INV),readSheet(SH.PURCH),readSheet(SH.WISH),readSheet(SH.CUST),readSheet(SH.PAY),readSheet(SH.SUPP),readSheet(SH.REQ),readSheet(SH.DRAFT),readSheet(SH.CFG),readSheet(SH.ORD)]);
-  parts=pr.slice(1).map(r=>({id:r[0]||uid(),sku:r[1]||'',name:r[2]||'',category:r[3]||'Other',qty:+r[4]||0,minQty:+r[5]||0,buyPrice:+r[6]||0,sellPrice:+r[7]||0,supplier:r[8]||'',hsn:r[9]||'',mrp:+r[10]||0,cgst:+r[11]||0,sgst:+r[12]||0,location:r[13]||''}));
-  invoices=ir.slice(1).map(r=>({id:r[0]||uid(),customer:r[1]||'',date:r[2]||'',items:JSON.parse(r[3]||'[]'),subtotal:+r[4]||0,discountType:r[5]||'none',discountVal:+r[6]||0,cgst:+r[7]||0,sgst:+r[8]||0,total:+r[9]||0,paid:r[10]==='TRUE'||r[10]==='true',customerId:r[11]||'',referrerId:r[12]||'',phone:r[13]||'',address:r[14]||''}));
-  purchases=pur.slice(1).map(r=>({id:r[0]||uid(),date:r[1]||'',partId:r[2]||'',partName:r[3]||'',sku:r[4]||'',supplier:r[5]||'',qty:+r[6]||0,unitCost:+r[7]||0,total:+r[8]||0,notes:r[9]||''}));
+  const[pr,ir,pur,wr,cr,pyr,sur,rqr,dfr,cfr,orr,lar]=await Promise.all([readSheet(SH.PARTS),readSheet(SH.INV),readSheet(SH.PURCH),readSheet(SH.WISH),readSheet(SH.CUST),readSheet(SH.PAY),readSheet(SH.SUPP),readSheet(SH.REQ),readSheet(SH.DRAFT),readSheet(SH.CFG),readSheet(SH.ORD),readSheet(SH.LADJ)]);
+  parts=pr.slice(1).map(r=>({id:r[0]||uid(),sku:r[1]||'',name:r[2]||'',category:r[3]||'Other',qty:+r[4]||0,minQty:+r[5]||0,buyPrice:+r[6]||0,sellPrice:+r[7]||0,supplier:r[8]||'',hsn:r[9]||'',mrp:+r[10]||0,cgst:+r[11]||0,sgst:+r[12]||0,location:r[13]||'',brand:r[14]||''}));
+  invoices=ir.slice(1).map(r=>({id:r[0]||uid(),customer:r[1]||'',date:r[2]||'',items:JSON.parse(r[3]||'[]'),subtotal:+r[4]||0,discountType:r[5]||'none',discountVal:+r[6]||0,cgst:+r[7]||0,sgst:+r[8]||0,total:+r[9]||0,paid:r[10]==='TRUE'||r[10]==='true',customerId:r[11]||'',referrerId:r[12]||'',phone:r[13]||'',address:r[14]||'',lpts:+r[15]||0,lused:+r[16]||0,ldisc:+r[17]||0}));
+  purchases=pur.slice(1).map(r=>({id:r[0]||uid(),date:r[1]||'',partId:r[2]||'',partName:r[3]||'',sku:r[4]||'',supplier:r[5]||'',qty:+r[6]||0,unitCost:+r[7]||0,total:+r[8]||0,notes:r[9]||'',brand:r[10]||''}));
   wishlist=wr.slice(1).map(r=>({id:r[0]||uid(),name:r[1]||'',sku:r[2]||'',category:r[3]||'Other',qtyNeeded:+r[4]||1,customer:r[5]||'',priority:r[6]||'medium',status:r[7]||'pending',notes:r[8]||'',createdAt:r[9]||today()}));
   customers=cr.slice(1).filter(r=>r[0]).map(r=>({id:r[0],name:r[1]||'',phone:r[2]||'',pct:+r[3]||0,code:(r[4]||'').toUpperCase(),notes:r[5]||'',createdAt:r[6]||'',address:r[7]||''}));
   payouts=pyr.slice(1).filter(r=>r[0]).map(r=>({id:r[0],customerId:r[1]||'',date:r[2]||'',amount:+r[3]||0,note:r[4]||''}));
   drafts=mapDrafts(dfr);orders=mapOrders(orr);
+  ladj=lar.slice(1).filter(r=>r[0]).map(r=>({id:r[0],phone:r[1]||'',name:r[2]||'',date:r[3]||'',points:+r[4]||0,note:r[5]||''}));
   config={};(cfr||[]).slice(1).forEach(r=>{if(r[0])config[r[0]]=r[1]??'';});
   suppliers=sur.slice(1).filter(r=>r[0]).map(r=>({id:r[0],name:r[1]||'',phone:r[2]||'',address:r[3]||'',createdAt:r[4]||''}));
   requests=rqr.slice(1).filter(r=>r[0]).map(r=>({id:r[0],part:r[1]||'',qty:+r[2]||1,name:r[3]||'',phone:r[4]||'',date:r[5]||'',note:r[6]||'',status:r[7]||'open'}));
 }
-async function saveParts(){showSync('Saving…',false);await clearRewrite(SH.PARTS,HDR.PARTS,parts.map(p=>[p.id,p.sku,p.name,p.category,p.qty,p.minQty,p.buyPrice,p.sellPrice,p.supplier||'',p.hsn||'',p.mrp||0,p.cgst||0,p.sgst||0,p.location||'']));showSync('Saved ✓');}
-async function saveInvoices(){showSync('Saving…',false);await clearRewrite(SH.INV,HDR.INV,invoices.map(i=>[i.id,i.customer,i.date,JSON.stringify(i.items),i.subtotal,i.discountType,i.discountVal,i.cgst||0,i.sgst||0,i.total,String(i.paid).toUpperCase(),i.customerId||'',i.referrerId||'',i.phone||'',i.address||'']));showSync('Saved ✓');}
-async function savePurchases(){showSync('Saving…',false);await clearRewrite(SH.PURCH,HDR.PURCH,purchases.map(p=>[p.id,p.date,p.partId,p.partName,p.sku,p.supplier,p.qty,p.unitCost,p.total,p.notes]));showSync('Saved ✓');}
+async function saveParts(){showSync('Saving…',false);await clearRewrite(SH.PARTS,HDR.PARTS,parts.map(p=>[p.id,p.sku,p.name,p.category,p.qty,p.minQty,p.buyPrice,p.sellPrice,p.supplier||'',p.hsn||'',p.mrp||0,p.cgst||0,p.sgst||0,p.location||'',p.brand||'']));showSync('Saved ✓');}
+async function saveInvoices(){showSync('Saving…',false);await clearRewrite(SH.INV,HDR.INV,invoices.map(i=>[i.id,i.customer,i.date,JSON.stringify(i.items),i.subtotal,i.discountType,i.discountVal,i.cgst||0,i.sgst||0,i.total,String(i.paid).toUpperCase(),i.customerId||'',i.referrerId||'',i.phone||'',i.address||'',i.lpts||0,i.lused||0,i.ldisc||0]));showSync('Saved ✓');}
+async function savePurchases(){showSync('Saving…',false);await clearRewrite(SH.PURCH,HDR.PURCH,purchases.map(p=>[p.id,p.date,p.partId,p.partName,p.sku,p.supplier,p.qty,p.unitCost,p.total,p.notes,p.brand||'']));showSync('Saved ✓');}
 async function saveWishlist(){showSync('Saving…',false);await clearRewrite(SH.WISH,HDR.WISH,wishlist.map(w=>[w.id,w.name,w.sku,w.category,w.qtyNeeded,w.customer,w.priority,w.status,w.notes,w.createdAt]));showSync('Saved ✓');}
 
 async function saveCustomers(){showSync('Saving…',false);await clearRewrite(SH.CUST,HDR.CUST,customers.map(c=>[c.id,c.name,c.phone||'',c.pct,c.code,c.notes||'',c.createdAt||'',c.address||'']));showSync('Saved ✓');}
 async function savePayouts(){showSync('Saving…',false);await clearRewrite(SH.PAY,HDR.PAY,payouts.map(p=>[p.id,p.customerId,p.date,p.amount,p.note||'']));showSync('Saved ✓');}
 
+async function saveLadj(){showSync('Saving…',false);await clearRewrite(SH.LADJ,HDR.LADJ,ladj.map(a=>[a.id,a.phone,a.name||'',a.date||'',a.points,a.note||'']));showSync('Saved ✓');}
 async function saveSuppliers(){showSync('Saving…',false);await clearRewrite(SH.SUPP,HDR.SUPP,suppliers.map(s=>[s.id,s.name,s.phone||'',s.address||'',s.createdAt||'']));showSync('Saved ✓');}
 async function saveRequests(){showSync('Saving…',false);await clearRewrite(SH.REQ,HDR.REQ,requests.map(r=>[r.id,r.part,r.qty,r.name||'',r.phone||'',r.date||'',r.note||'',r.status||'open']));showSync('Saved ✓');}
 
 // ═══ NAVIGATION ═══
 function navigate(page){
-  if(!isOwner()&&['suppliers','partners','reports','insights','settings'].includes(page))return;
+  if(!isOwner()&&['suppliers','partners','loyalty','reports','insights','settings'].includes(page))return;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   $(`page-${page}`).classList.add('active');
   document.querySelector(`[data-page="${page}"]`)?.classList.add('active');
   const map={dashboard:renderDashboard,inventory:renderInventory,purchases:renderPurchases,
     wishlist:()=>renderWishlist(currentWishTab),billing:()=>{renderBilling();renderDrafts();$('invoice-view-wrap').innerHTML='';refreshDrafts();},
-    online:()=>{renderOnline();refreshOrders();},suppliers:renderSuppliers,requests:renderRequests,partners:renderPartners,reports:renderReports,insights:renderInsights,settings:loadSettingsDisplay};
+    online:()=>{renderOnline();refreshOrders();},suppliers:renderSuppliers,requests:renderRequests,partners:renderPartners,loyalty:renderLoyalty,reports:renderReports,insights:renderInsights,settings:loadSettingsDisplay};
   map[page]?.();
 }
 function renderAll(){
   renderDashboard();renderInventory();renderPurchases();
   renderWishlist(currentWishTab);renderBilling();renderDrafts();renderOnline();
   renderRequests();
-  if(isOwner()){renderSuppliers();renderPartners();renderReports();renderInsights();}
+  if(isOwner()){renderSuppliers();renderPartners();renderLoyalty();renderReports();renderInsights();}
 }
 function lowStockParts(){return parts.filter(p=>p.qty<=p.minQty);}
 function partSalesMap(){
@@ -1381,10 +1452,19 @@ function renderInventory(){
   const q=$('inv-search').value.toLowerCase();
   const cat=$('inv-cat').value;
   const st=$('inv-status').value;
+  const bsel=$('inv-brand');
+  const bnames=brandNames();
+  if(bsel.options.length-1!==bnames.length||[...bsel.options].slice(1).some((o,i)=>o.value!==bnames[i])){
+    const cur=bsel.value;
+    bsel.innerHTML='<option value="">All Brands</option>'+bnames.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+    bsel.value=bnames.includes(cur)?cur:'';
+  }
+  const brandSel=bsel.value;
   const sm=partSalesMap();
   const filtered=parts.filter(p=>{
     if(cat&&p.category!==cat)return false;
-    if(q&&!p.name.toLowerCase().includes(q)&&!p.sku.toLowerCase().includes(q)&&!(p.location||'').toLowerCase().includes(q))return false;
+    if(brandSel&&(p.brand||'').toLowerCase()!==brandSel.toLowerCase())return false;
+    if(q&&!p.name.toLowerCase().includes(q)&&!p.sku.toLowerCase().includes(q)&&!(p.brand||'').toLowerCase().includes(q)&&!(p.location||'').toLowerCase().includes(q))return false;
     if(st==='low'&&p.qty>p.minQty)return false;
     if(st==='ok'&&p.qty<=p.minQty)return false;
     if(st==='dead'&&(sm[p.id]?.qty||0)>0)return false;
@@ -1397,16 +1477,16 @@ function renderInventory(){
     `<button class="btn btn-secondary" onclick="exportCSV()">⬇ Export CSV</button>`;
   // Header — hide buy price from employee
   $('inv-thead').innerHTML=isOwner()?
-    '<th>SKU</th><th>Location</th><th>Part Name</th><th>Category</th><th>Supplier</th><th>Qty</th><th>Min</th><th>Buy ₹</th><th>Sell ₹</th><th>Margin</th><th>Status</th><th>Actions</th>':
-    '<th>SKU</th><th>Location</th><th>Part Name</th><th>Category</th><th>Supplier</th><th>Qty</th><th>Min</th><th>Sell ₹</th><th>Status</th>';
+    '<th>SKU</th><th>Location</th><th>Part Name</th><th>Brand</th><th>Category</th><th>Supplier</th><th>Qty</th><th>Min</th><th>Buy ₹</th><th>Sell ₹</th><th>Margin</th><th>Status</th><th>Actions</th>':
+    '<th>SKU</th><th>Location</th><th>Part Name</th><th>Brand</th><th>Category</th><th>Supplier</th><th>Qty</th><th>Min</th><th>Sell ₹</th><th>Status</th>';
   $('inv-tbody').innerHTML=filtered.length===0?'<tr class="empty-row"><td colspan="12">No parts found</td></tr>':
     filtered.map(p=>{
       const margin=p.buyPrice>0?(((p.sellPrice-p.buyPrice)/p.sellPrice)*100).toFixed(0)+'%':'—';
       const statusBadge=p.qty===0?'<span class="badge badge-red">Out</span>':p.qty<=p.minQty?'<span class="badge badge-yellow">Low</span>':'<span class="badge badge-green">OK</span>';
       if(isOwner()){
-        return`<tr><td style="font-family:monospace;font-size:11px;color:var(--subtle)">${p.sku}</td><td><span class="loc-tag">${p.location||'—'}</span></td><td style="font-weight:600">${p.name}</td><td><span class="badge badge-blue">${p.category}</span></td><td style="font-size:12px;color:var(--muted)">${p.supplier||'—'}</td><td style="font-weight:700;color:${p.qty===0?'var(--red)':p.qty<=p.minQty?'var(--yellow)':'var(--green)'}">${p.qty}</td><td style="color:var(--muted)">${p.minQty}</td><td style="color:var(--subtle)">${fmt(p.buyPrice)}</td><td style="font-weight:600;color:var(--orange)">${fmt(p.sellPrice)}</td><td style="color:var(--green)">${margin}</td><td>${statusBadge}</td><td><div class="btn-group"><button class="btn btn-secondary btn-sm" onclick="openPartModal('${p.id}')">Edit</button><button class="btn btn-danger btn-sm" onclick="deletePart('${p.id}')">Del</button></div></td></tr>`;
+        return`<tr><td style="font-family:monospace;font-size:11px;color:var(--subtle)">${p.sku}</td><td><span class="loc-tag">${p.location||'—'}</span></td><td style="font-weight:600">${p.name}</td><td>${p.brand?`<span class="badge badge-purple">${esc(p.brand)}</span>`:'<span style="color:var(--muted)">—</span>'}</td><td><span class="badge badge-blue">${p.category}</span></td><td style="font-size:12px;color:var(--muted)">${p.supplier||'—'}</td><td style="font-weight:700;color:${p.qty===0?'var(--red)':p.qty<=p.minQty?'var(--yellow)':'var(--green)'}">${p.qty}</td><td style="color:var(--muted)">${p.minQty}</td><td style="color:var(--subtle)">${fmt(p.buyPrice)}</td><td style="font-weight:600;color:var(--orange)">${fmt(p.sellPrice)}</td><td style="color:var(--green)">${margin}</td><td>${statusBadge}</td><td><div class="btn-group"><button class="btn btn-secondary btn-sm" onclick="openPartModal('${p.id}')">Edit</button><button class="btn btn-danger btn-sm" onclick="deletePart('${p.id}')">Del</button></div></td></tr>`;
       }else{
-        return`<tr><td style="font-family:monospace;font-size:11px;color:var(--subtle)">${p.sku}</td><td><span class="loc-tag">${p.location||'—'}</span></td><td style="font-weight:600">${p.name}</td><td><span class="badge badge-blue">${p.category}</span></td><td style="font-size:12px;color:var(--muted)">${p.supplier||'—'}</td><td style="font-weight:700;color:${p.qty===0?'var(--red)':p.qty<=p.minQty?'var(--yellow)':'var(--green)'}">${p.qty}</td><td style="color:var(--muted)">${p.minQty}</td><td style="font-weight:600;color:var(--orange)">${fmt(p.sellPrice)}</td><td>${statusBadge}</td></tr>`;
+        return`<tr><td style="font-family:monospace;font-size:11px;color:var(--subtle)">${p.sku}</td><td><span class="loc-tag">${p.location||'—'}</span></td><td style="font-weight:600">${p.name}</td><td>${p.brand?`<span class="badge badge-purple">${esc(p.brand)}</span>`:'<span style="color:var(--muted)">—</span>'}</td><td><span class="badge badge-blue">${p.category}</span></td><td style="font-size:12px;color:var(--muted)">${p.supplier||'—'}</td><td style="font-weight:700;color:${p.qty===0?'var(--red)':p.qty<=p.minQty?'var(--yellow)':'var(--green)'}">${p.qty}</td><td style="color:var(--muted)">${p.minQty}</td><td style="font-weight:600;color:var(--orange)">${fmt(p.sellPrice)}</td><td>${statusBadge}</td></tr>`;
       }
     }).join('');
 }
@@ -1415,8 +1495,8 @@ function openPartModal(id=null){
   editingPartId=id;fillSupplierList();
   $('part-modal-title').textContent=id?'Edit Part':'Add New Part';
   $('part-save-btn').textContent=id?'Save Changes':'Add Part';
-  if(id){const p=parts.find(x=>x.id===id);$('pf-sku').value=p.sku;$('pf-name').value=p.name;$('pf-cat').value=p.category;$('pf-qty').value=p.qty;$('pf-minqty').value=p.minQty;$('pf-buy').value=p.buyPrice;$('pf-sell').value=p.sellPrice;$('pf-supplier').value=p.supplier||'';$('pf-hsn').value=p.hsn||'';$('pf-mrp').value=p.mrp||'';$('pf-cgst').value=p.cgst||'';$('pf-sgst').value=p.sgst||'';$('pf-location').value=p.location||'';}
-  else{['pf-sku','pf-name','pf-qty','pf-minqty','pf-buy','pf-sell','pf-supplier','pf-hsn','pf-mrp','pf-cgst','pf-sgst','pf-location'].forEach(x=>$(x).value='');$('pf-cat').value='Engine';}
+  if(id){const p=parts.find(x=>x.id===id);$('pf-sku').value=p.sku;$('pf-name').value=p.name;$('pf-cat').value=p.category;$('pf-qty').value=p.qty;$('pf-minqty').value=p.minQty;$('pf-buy').value=p.buyPrice;$('pf-sell').value=p.sellPrice;$('pf-supplier').value=p.supplier||'';$('pf-brand').value=p.brand||'';$('pf-hsn').value=p.hsn||'';$('pf-mrp').value=p.mrp||'';$('pf-cgst').value=p.cgst||'';$('pf-sgst').value=p.sgst||'';$('pf-location').value=p.location||'';}
+  else{['pf-sku','pf-name','pf-qty','pf-minqty','pf-buy','pf-sell','pf-supplier','pf-brand','pf-hsn','pf-mrp','pf-cgst','pf-sgst','pf-location'].forEach(x=>$(x).value='');$('pf-cat').value='Engine';}
   $('margin-hint').style.display='none';
   openModal('part-modal');
 }
@@ -1428,7 +1508,7 @@ function updateMarginHint(){
 }
 async function savePart(){
   if(!isOwner())return;
-  const p={id:editingPartId||uid(),sku:$('pf-sku').value.trim(),name:$('pf-name').value.trim(),category:$('pf-cat').value,qty:+$('pf-qty').value,minQty:+$('pf-minqty').value,buyPrice:+$('pf-buy').value,sellPrice:+$('pf-sell').value,supplier:$('pf-supplier').value.trim(),hsn:$('pf-hsn').value.trim(),mrp:+$('pf-mrp').value||0,cgst:+$('pf-cgst').value||0,sgst:+$('pf-sgst').value||0,location:$('pf-location').value.trim().toUpperCase().replace(/\s+/g,'')};
+  const p={id:editingPartId||uid(),sku:$('pf-sku').value.trim(),name:$('pf-name').value.trim(),category:$('pf-cat').value,qty:+$('pf-qty').value,minQty:+$('pf-minqty').value,buyPrice:+$('pf-buy').value,sellPrice:+$('pf-sell').value,supplier:$('pf-supplier').value.trim(),brand:$('pf-brand').value.trim(),hsn:$('pf-hsn').value.trim(),mrp:+$('pf-mrp').value||0,cgst:+$('pf-cgst').value||0,sgst:+$('pf-sgst').value||0,location:$('pf-location').value.trim().toUpperCase().replace(/\s+/g,'')};
   if(!p.sku||!p.name){alert('SKU and Part Name required.');return;}
   if(editingPartId)parts=parts.map(x=>x.id===editingPartId?p:x);else parts.push(p);
   closeModal('part-modal');renderAll();await saveParts();
@@ -1439,10 +1519,10 @@ async function deletePart(id){
   parts=parts.filter(p=>p.id!==id);renderAll();await saveParts();
 }
 function exportCSV(){
-  const rows=[isOwner()?['SKU','Location','Name','Category','Supplier','Qty','Min Qty','Buy Price','Sell Price','Margin']:['SKU','Location','Name','Category','Supplier','Qty','Min Qty','Sell Price']];
+  const rows=[isOwner()?['SKU','Location','Name','Brand','Category','Supplier','Qty','Min Qty','Buy Price','Sell Price','Margin']:['SKU','Location','Name','Brand','Category','Supplier','Qty','Min Qty','Sell Price']];
   parts.forEach(p=>{
-    if(isOwner())rows.push([p.sku,p.location||'',p.name,p.category,p.supplier||'',p.qty,p.minQty,p.buyPrice,p.sellPrice,p.buyPrice>0?(((p.sellPrice-p.buyPrice)/p.sellPrice)*100).toFixed(1)+'%':'']);
-    else rows.push([p.sku,p.location||'',p.name,p.category,p.supplier||'',p.qty,p.minQty,p.sellPrice]);
+    if(isOwner())rows.push([p.sku,p.location||'',p.name,p.brand||'',p.category,p.supplier||'',p.qty,p.minQty,p.buyPrice,p.sellPrice,p.buyPrice>0?(((p.sellPrice-p.buyPrice)/p.sellPrice)*100).toFixed(1)+'%':'']);
+    else rows.push([p.sku,p.location||'',p.name,p.brand||'',p.category,p.supplier||'',p.qty,p.minQty,p.sellPrice]);
   });
   const csv=rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
   const a=document.createElement('a');a.href='data:text/csv,'+encodeURIComponent(csv);a.download='inventory.csv';a.click();
@@ -1451,17 +1531,17 @@ function exportCSV(){
 // ═══ PURCHASES ═══
 function renderPurchases(){
   const q=$('pur-search').value.toLowerCase();
-  const filtered=purchases.filter(p=>!q||p.partName.toLowerCase().includes(q)||p.supplier.toLowerCase().includes(q));
+  const filtered=purchases.filter(p=>!q||p.partName.toLowerCase().includes(q)||p.supplier.toLowerCase().includes(q)||(p.brand||'').toLowerCase().includes(q));
   // Hide cost columns from employee
   $('th-unit-cost').style.display=isOwner()?'':'none';
   $('th-total-cost').style.display=isOwner()?'':'none';
   $('pur-sub').textContent=isOwner()?`${purchases.length} records · ${fmt(purchases.reduce((s,p)=>s+p.total,0))} total`:`${purchases.length} purchase records`;
-  $('pur-tbody').innerHTML=filtered.length===0?'<tr class="empty-row"><td colspan="8">No purchases found</td></tr>':
-    filtered.slice().reverse().map(p=>`<tr><td style="color:var(--subtle)">${p.date}</td><td style="font-weight:600">${p.partName}</td><td style="font-family:monospace;font-size:11px;color:var(--subtle)">${p.sku}</td><td>${p.supplier||'—'}</td><td style="font-weight:700;color:var(--blue)">${p.qty}</td><td style="display:${isOwner()?'':'none'};color:var(--muted)">${fmt(p.unitCost)}</td><td style="display:${isOwner()?'':'none'};font-weight:700;color:var(--orange)">${fmt(p.total)}</td><td style="font-size:12px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.notes||'—'}</td></tr>`).join('');
+  $('pur-tbody').innerHTML=filtered.length===0?'<tr class="empty-row"><td colspan="9">No purchases found</td></tr>':
+    filtered.slice().reverse().map(p=>`<tr><td style="color:var(--subtle)">${p.date}</td><td style="font-weight:600">${p.partName}</td><td style="font-family:monospace;font-size:11px;color:var(--subtle)">${p.sku}</td><td>${p.brand?`<span class="badge badge-purple">${esc(p.brand)}</span>`:'—'}</td><td>${p.supplier||'—'}</td><td style="font-weight:700;color:var(--blue)">${p.qty}</td><td style="display:${isOwner()?'':'none'};color:var(--muted)">${fmt(p.unitCost)}</td><td style="display:${isOwner()?'':'none'};font-weight:700;color:var(--orange)">${fmt(p.total)}</td><td style="font-size:12px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.notes||'—'}</td></tr>`).join('');
 }
 function openPurchaseModal(){
   selectedPurchPartId=null;$('purch-part-search').value='';$('purch-selected-wrap').style.display='none';
-  ['purch-qty','purch-cost','purch-notes','purch-supplier','purch-sphone','purch-saddr'].forEach(x=>$(x).value='');fillSupplierList();
+  ['purch-qty','purch-cost','purch-notes','purch-supplier','purch-brand','purch-sphone','purch-saddr'].forEach(x=>$(x).value='');fillSupplierList();
   $('purch-date').value=today();$('purch-total-hint').style.display='none';$('purch-update-buy').checked=true;
   openModal('purchase-modal');
 }
@@ -1469,17 +1549,18 @@ function purchPartSearch(){
   const q=$('purch-part-search').value.toLowerCase().trim();
   const dd=$('purch-part-dropdown');
   if(!q){dd.classList.remove('open');return;}
-  const res=parts.filter(p=>p.name.toLowerCase().includes(q)||p.sku.toLowerCase().includes(q)).slice(0,7);
+  const res=parts.filter(p=>p.name.toLowerCase().includes(q)||p.sku.toLowerCase().includes(q)||(p.brand||'').toLowerCase().includes(q)).slice(0,7);
   if(!res.length){dd.classList.remove('open');return;}
-  dd.innerHTML=res.map(p=>`<div class="pdi" onmousedown="selectPurchPart('${p.id}')"><div><div style="font-weight:600;font-size:13px">${p.name}</div><div style="font-size:11px;color:var(--muted)">${p.sku} · stock: ${p.qty}${p.location?' · 📍'+p.location:''}</div></div></div>`).join('');
+  dd.innerHTML=res.map(p=>`<div class="pdi" onmousedown="selectPurchPart('${p.id}')"><div><div style="font-weight:600;font-size:13px">${p.name}${p.brand?` <span style="color:var(--purple);font-weight:700">· ${esc(p.brand)}</span>`:''}</div><div style="font-size:11px;color:var(--muted)">${p.sku} · stock: ${p.qty}${p.location?' · 📍'+p.location:''}</div></div></div>`).join('');
   dd.classList.add('open');
 }
 function selectPurchPart(id){
   const p=parts.find(x=>x.id===id);selectedPurchPartId=id;
   $('purch-part-search').value='';$('purch-part-dropdown').classList.remove('open');
-  $('purch-selected').textContent=`${p.name} (${p.sku}) — stock: ${p.qty}`;
+  $('purch-selected').textContent=`${p.name}${p.brand?' · '+p.brand:''} (${p.sku}) — stock: ${p.qty}`;
   $('purch-selected-wrap').style.display='block';
   if(p.buyPrice>0)$('purch-cost').value=p.buyPrice;
+  $('purch-brand').value=p.brand||'';
   if(p.supplier){$('purch-supplier').value=p.supplier;purchSupplierFill();}
   updatePurchTotal();
 }
@@ -1493,8 +1574,8 @@ async function savePurchase(){
   const p=parts.find(x=>x.id===selectedPurchPartId);
   const qty=+$('purch-qty').value,cost=+$('purch-cost').value;
   if(!qty||!cost){alert('Enter quantity and cost.');return;}
-  purchases.push({id:uid(),date:$('purch-date').value,partId:p.id,partName:p.name,sku:p.sku,supplier:$('purch-supplier').value.trim(),qty,unitCost:cost,total:qty*cost,notes:$('purch-notes').value.trim()});
-  parts=parts.map(x=>{if(x.id!==p.id)return x;const u={...x,qty:x.qty+qty};if($('purch-update-buy').checked&&isOwner())u.buyPrice=cost;return u;});
+  purchases.push({id:uid(),date:$('purch-date').value,partId:p.id,partName:p.name,sku:p.sku,supplier:$('purch-supplier').value.trim(),brand:$('purch-brand').value.trim(),qty,unitCost:cost,total:qty*cost,notes:$('purch-notes').value.trim()});
+  parts=parts.map(x=>{if(x.id!==p.id)return x;const u={...x,qty:x.qty+qty};if(!x.brand&&$('purch-brand').value.trim())u.brand=$('purch-brand').value.trim();if($('purch-update-buy').checked&&isOwner())u.buyPrice=cost;return u;});
   const suppChanged=upsertSupplier($('purch-supplier').value,$('purch-sphone').value.trim(),$('purch-saddr').value.trim());
   closeModal('purchase-modal');renderAll();await Promise.all([savePurchases(),saveParts(),...(suppChanged?[saveSuppliers()]:[])]);
 }
@@ -1548,30 +1629,30 @@ function renderBilling(){
 }
 function openBillModal(){
   editingDraftId=null;$('bill-title').textContent='New Invoice';
-  billItems=[];fillPartnerLists();$('bf-customer').value='';$('bf-ref').value='';$('bf-phone').value='';$('bf-addr').value='';_autoFilledFor=null;updateBillLinks();$('bf-date').value=today();$('bf-part-search').value='';$('bf-disc-type').value='none';$('bf-disc-val').value='';
+  billItems=[];fillPartnerLists();$('bf-lredeem').value='';$('bf-customer').value='';$('bf-ref').value='';$('bf-phone').value='';$('bf-addr').value='';_autoFilledFor=null;updateBillLinks();$('bf-date').value=today();$('bf-part-search').value='';$('bf-disc-type').value='none';$('bf-disc-val').value='';
   renderBillItems();openModal('bill-modal');_billSnap=billSnapshot();
 }
 function billPartSearch(){
   const q=$('bf-part-search').value.toLowerCase().trim();
   const dd=$('bill-part-dropdown');
   if(!q){dd.classList.remove('open');return;}
-  const res=parts.filter(p=>p.qty>0&&(p.name.toLowerCase().includes(q)||p.sku.toLowerCase().includes(q)||(p.location||'').toLowerCase().includes(q))).slice(0,8);
+  const res=parts.filter(p=>p.qty>0&&(p.name.toLowerCase().includes(q)||p.sku.toLowerCase().includes(q)||(p.brand||'').toLowerCase().includes(q)||(p.location||'').toLowerCase().includes(q))).slice(0,8);
   if(!res.length){dd.classList.remove('open');return;}
-  dd.innerHTML=res.map(p=>`<div class="pdi" onmousedown="addToBill('${p.id}')"><div><div style="font-weight:600;font-size:13px">${p.name}</div><div style="font-size:11px;color:var(--muted)">${p.sku} · ${p.qty} in stock${p.location?' · 📍'+p.location:''}</div></div><div style="font-weight:700;color:var(--orange)">${fmt(p.sellPrice)}</div></div>`).join('');
+  dd.innerHTML=res.map(p=>`<div class="pdi" onmousedown="addToBill('${p.id}')"><div><div style="font-weight:600;font-size:13px">${p.name}${p.brand?` <span style="color:var(--purple);font-weight:700">· ${esc(p.brand)}</span>`:''}</div><div style="font-size:11px;color:var(--muted)">${p.sku} · ${p.qty} in stock${p.location?' · 📍'+p.location:''}</div></div><div style="font-weight:700;color:var(--orange)">${fmt(p.sellPrice)}</div></div>`).join('');
   dd.classList.add('open');
 }
 function addToBill(partId){
   const p=parts.find(x=>x.id===partId);
   const ex=billItems.find(i=>i.partId===partId);
   if(ex)billItems=billItems.map(i=>i.partId===partId?{...i,qty:Math.min(i.qty+1,p.qty)}:i);
-  else billItems.push({partId,sku:p.sku,name:p.name,price:p.sellPrice,qty:1,maxQty:p.qty});
+  else billItems.push({partId,sku:p.sku,name:p.name,brand:p.brand||'',price:p.sellPrice,qty:1,maxQty:p.qty});
   $('bf-part-search').value='';$('bill-part-dropdown').classList.remove('open');renderBillItems();
 }
 function renderBillItems(){
   // Employee cannot edit prices, owner can
   $('bill-items-list').innerHTML=billItems.map(item=>`
     <div class="bill-item-row">
-      <div style="flex:1"><div style="font-weight:600;font-size:13px">${item.name}</div><div style="font-size:11px;color:var(--subtle)">${item.sku}</div></div>
+      <div style="flex:1"><div style="font-weight:600;font-size:13px">${item.name}${item.brand?` <span style="color:var(--purple)">· ${esc(item.brand)}</span>`:''}</div><div style="font-size:11px;color:var(--subtle)">${item.sku}</div></div>
       <input type="number" min="1" max="${item.maxQty}" value="${item.qty}" style="width:58px;text-align:center" onchange="updateBillQty('${item.partId}',this.value)" title="Qty"/>
       ${isOwner()?`<input type="number" min="0" step="0.01" value="${item.price}" style="width:88px;text-align:right" onchange="updateBillPrice('${item.partId}',this.value)" title="Price (editable)"/>`:`<div style="width:88px;text-align:right;font-size:13px;color:var(--subtle)">${fmt(item.price)}</div>`}
       <div style="font-weight:700;color:var(--orange);width:88px;text-align:right">${fmt(item.price*item.qty)}</div>
@@ -1589,13 +1670,22 @@ function calcBillTotal(){
   const subtotal=billItems.reduce((s,i)=>s+i.price*i.qty,0);
   const dtype=$('bf-disc-type').value,dval=+$('bf-disc-val').value||0;
   let disc=dtype==='pct'?subtotal*(dval/100):dtype==='flat'?Math.min(dval,subtotal):0;
-  const taxable=Math.max(0,subtotal-disc);
+  const ls=loyaltyState();
+  const lval=loyaltyCfg().value;
+  let lpts=0,ld=0;
+  if(ls.canRedeem&&lval>0){
+    lpts=Math.max(0,Math.floor(+$('bf-lredeem').value||0));
+    lpts=Math.min(lpts,ls.balance,Math.floor(Math.max(0,subtotal-disc)/lval+1e-9));
+    if(lpts<ls.min)lpts=0;
+    ld=r2(lpts*lval);
+  }
+  const taxable=Math.max(0,subtotal-disc-ld);
   // Weighted avg CGST/SGST from items using part rates
   let cgstAmt=0,sgstAmt=0;
   billItems.forEach(item=>{
     const p=parts.find(x=>x.id===item.partId);
     const lineTotal=item.price*item.qty;
-    const lineTaxable=disc>0?lineTotal*(taxable/subtotal):lineTotal;
+    const lineTaxable=(disc+ld)>0?lineTotal*(taxable/subtotal):lineTotal;
     cgstAmt+=lineTaxable*((p?.cgst||0)/100);
     sgstAmt+=lineTaxable*((p?.sgst||0)/100);
   });
@@ -1607,7 +1697,8 @@ function calcBillTotal(){
   $('bf-sgst-show').textContent=sgstAmt>0?fmt(sgstAmt):'₹0';
   $('bf-total').textContent=fmt(total);
   updateBonusHint(total,cgstAmt,sgstAmt);
-  return{subtotal,disc,dtype,dval,cgst:cgstAmt,sgst:sgstAmt,total};
+  updateLoyaltyPreview(total,cgstAmt,sgstAmt,lpts,ld);
+  return{subtotal,disc,dtype,dval,cgst:cgstAmt,sgst:sgstAmt,total,lpts,ld};
 }
 async function saveInvoice(paid){
   const customer=$('bf-customer').value.trim();if(!customer||!billItems.length){alert('Enter customer name and add at least one part.');return;}
@@ -1615,8 +1706,10 @@ async function saveInvoice(paid){
   const refRaw=$('bf-ref').value.trim();const rf=refRaw?resolvePartnerRef(refRaw):null;
   if(refRaw&&!rf){alert('Referral not found. Pick someone from the list, or clear the Referred By field.');return;}
   if(rf&&cu&&rf.id===cu.id){alert('A customer cannot refer themselves.');return;}
-  const{subtotal,disc,dtype,dval,cgst,sgst,total}=calcBillTotal();
-  const inv={id:uid(),customer,date:$('bf-date').value||today(),items:billItems.map(i=>({...i})),subtotal,discountType:dtype,discountVal:dval,cgst,sgst,total,paid,customerId:cu?cu.id:'',referrerId:rf?rf.id:'',phone:$('bf-phone').value.trim(),address:$('bf-addr').value.trim()};
+  const{subtotal,disc,dtype,dval,cgst,sgst,total,lpts,ld}=calcBillTotal();
+  const lst=loyaltyState();
+  const learn=lst.eligible?loyaltyEarn(Math.max(0,total-cgst-sgst)):0;
+  const inv={id:uid(),customer,date:$('bf-date').value||today(),items:billItems.map(i=>({...i})),subtotal,discountType:dtype,discountVal:dval,cgst,sgst,total,paid,customerId:cu?cu.id:'',referrerId:rf?rf.id:'',phone:$('bf-phone').value.trim(),address:$('bf-addr').value.trim(),lpts:learn,lused:lpts,ldisc:ld};
   invoices.unshift(inv);
   parts=parts.map(p=>{const item=billItems.find(i=>i.partId===p.id);return item?{...p,qty:p.qty-item.qty}:p;});
   const wasDraft=editingDraftId;editingDraftId=null;
@@ -1641,14 +1734,16 @@ function viewInvoice(id){
         </div>
       </div>
       <table><thead><tr><th>Part</th><th>HSN</th><th>SKU</th><th>MRP</th><th>Qty</th><th>Unit ₹</th><th>CGST%</th><th>SGST%</th><th>Subtotal</th></tr></thead>
-      <tbody>${inv.items.map(item=>{const p=parts.find(x=>x.id===item.partId);return`<tr><td style="font-weight:600">${item.name}</td><td style="font-family:monospace;font-size:11px;color:var(--subtle)">${p?.hsn||'—'}</td><td style="font-family:monospace;font-size:11px;color:var(--subtle)">${item.sku}</td><td style="color:var(--muted)">${p?.mrp?fmt(p.mrp):'—'}</td><td>${item.qty}</td><td>${fmt(item.price)}</td><td style="color:var(--blue)">${p?.cgst||0}%</td><td style="color:var(--blue)">${p?.sgst||0}%</td><td style="font-weight:700;color:var(--orange)">${fmt(item.price*item.qty)}</td></tr>`;}).join('')}</tbody>
+      <tbody>${inv.items.map(item=>{const p=parts.find(x=>x.id===item.partId);return`<tr><td style="font-weight:600">${item.name}${(item.brand||p?.brand)?` <span style="color:var(--muted);font-weight:400">(${esc(item.brand||p?.brand)})</span>`:''}</td><td style="font-family:monospace;font-size:11px;color:var(--subtle)">${p?.hsn||'—'}</td><td style="font-family:monospace;font-size:11px;color:var(--subtle)">${item.sku}</td><td style="color:var(--muted)">${p?.mrp?fmt(p.mrp):'—'}</td><td>${item.qty}</td><td>${fmt(item.price)}</td><td style="color:var(--blue)">${p?.cgst||0}%</td><td style="color:var(--blue)">${p?.sgst||0}%</td><td style="font-weight:700;color:var(--orange)">${fmt(item.price*item.qty)}</td></tr>`;}).join('')}</tbody>
       </table>
       <div style="margin-top:12px;padding:12px 14px;background:var(--surface);border-radius:8px;font-size:13px">
         <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Subtotal</span><span>${fmt(inv.subtotal)}</span></div>
         ${inv.discountType!=='none'&&inv.discountVal>0?`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)"><span style="color:var(--green)">Discount (${inv.discountType==='pct'?inv.discountVal+'%':fmt(inv.discountVal)})</span><span style="color:var(--green)">-${fmt(inv.discountType==='pct'?(inv.subtotal*(inv.discountVal/100)):inv.discountVal)}</span></div>`:''}
+        ${inv.ldisc>0?`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)"><span style="color:var(--yellow)">Loyalty points used (${inv.lused} pts)</span><span style="color:var(--yellow)">-${fmt(inv.ldisc)}</span></div>`:''}
         <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)"><span style="color:var(--blue)">CGST</span><span style="color:var(--blue)">${fmt(inv.cgst||0)}</span></div>
         <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)"><span style="color:var(--blue)">SGST</span><span style="color:var(--blue)">${fmt(inv.sgst||0)}</span></div>
         <div style="display:flex;justify-content:space-between;padding:6px 0 0;font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700"><span>Grand Total</span><span style="color:var(--orange)">${fmt(inv.total)}</span></div>
+        ${inv.lpts>0?`<div style="margin-top:8px;font-size:12px;color:var(--yellow)">⭐ ${inv.lpts} loyalty point${inv.lpts===1?'':'s'} ${inv.paid?'earned':'will be added once paid'}</div>`:''}
       </div>
       <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
         <button class="btn btn-secondary" onclick="window.print()">🖨 Print</button>
@@ -1673,7 +1768,7 @@ function renderReports(){
   renderSupplierRates();renderDemandReport();
   const totalRev=invoices.reduce((s,i)=>s+i.total,0);
   const paidRev=invoices.filter(i=>i.paid).reduce((s,i)=>s+i.total,0);
-  const totalDisc=invoices.reduce((s,i)=>{if(i.discountType==='pct')return s+(i.subtotal||i.total)*(i.discountVal/100);if(i.discountType==='flat')return s+i.discountVal;return s;},0);
+  const totalDisc=invoices.reduce((s,i)=>{if(i.discountType==='pct')return s+(i.subtotal||i.total)*(i.discountVal/100);if(i.discountType==='flat')return s+i.discountVal;return s;},0)+invoices.reduce((s,i)=>s+(i.ldisc||0),0);
   const totalPurch=purchases.reduce((s,p)=>s+p.total,0);
   const grossProfit=totalRev-totalPurch;
   $('rep-stats').innerHTML=[
@@ -1714,6 +1809,158 @@ function renderInsights(){
   $('ins-restock').innerHTML=restock.length===0?'<div style="color:var(--muted);font-size:13px">✓ No urgent restock needed right now</div>':`<div class="table-wrap"><table><thead><tr><th>Part</th><th>Stock</th><th>Min</th><th>Total Sold</th><th>Urgency</th><th>Action</th></tr></thead><tbody>${restock.slice(0,10).map(p=>{const sold=sm[p.id]?.qty||0;const urg=p.qty===0?'OUT OF STOCK':p.qty<=p.minQty?'High':'Medium';const uc=p.qty===0?'var(--red)':p.qty<=p.minQty?'var(--orange)':'var(--yellow)';return`<tr><td style="font-weight:600">${p.name}<div style="font-size:11px;color:var(--muted)">${p.sku}</div></td><td style="font-weight:700;color:${p.qty===0?'var(--red)':'var(--yellow)'}">${p.qty}</td><td>${p.minQty}</td><td style="color:var(--green)">${sold}</td><td style="font-weight:700;color:${uc}">${urg}</td><td><button class="btn btn-primary btn-sm" onclick="openPurchaseModal();setTimeout(()=>selectPurchPart('${p.id}'),100)">Order Now</button></td></tr>`;}).join('')}</tbody></table></div>`;
 }
 
+// ═══ LOYALTY POINTS ═══
+const phoneKey=ph=>String(ph||'').replace(/\D/g,'').slice(-10);
+const validPhone=ph=>phoneKey(ph).length===10;
+function loyaltyCfg(){
+  const n=(k,d)=>{const v=parseFloat(config[k]);return isFinite(v)&&v>=0?v:d;};
+  return{on:cfgGet('loyaltyOn','0')==='1'||cfgGet('loyaltyOn','0')===1,pts:n('loyaltyPts',1),per:Math.max(1,n('loyaltyPer',100)),value:n('loyaltyValue',1),min:Math.floor(n('loyaltyMin',0))};
+}
+const loyaltyEarn=base=>{const c=loyaltyCfg();return c.on?Math.floor((base/c.per)*c.pts+1e-9):0;};
+// Registered (referral-program) customers never earn loyalty points
+function isProgramCustomer(name,phone){
+  const k=phoneKey(phone);
+  if(resolvePartnerByName(name))return true;
+  return !!k&&customers.some(c=>phoneKey(c.phone)===k);
+}
+function loyaltyMembers(){
+  const m=new Map();
+  const get=(k,ph,nm)=>{if(!m.has(k))m.set(k,{key:k,phone:ph,name:nm||'',bills:0,spent:0,earned:0,pending:0,used:0,adj:0,last:''});return m.get(k);};
+  invoices.slice().reverse().forEach(i=>{
+    const k=phoneKey(i.phone);if(k.length!==10||i.customerId)return;
+    if(isProgramCustomer(i.customer,i.phone))return;
+    const e=get(k,k,i.customer);
+    if(i.customer)e.name=i.customer;
+    e.bills++;e.spent+=invBase(i);e.used+=(i.lused||0);
+    if(i.paid)e.earned+=(i.lpts||0);else e.pending+=(i.lpts||0);
+    if((i.date||'')>=e.last)e.last=i.date||'';
+  });
+  ladj.forEach(a=>{const k=phoneKey(a.phone);if(k.length!==10)return;const e=get(k,k,a.name);if(!e.name&&a.name)e.name=a.name;e.adj+=a.points;});
+  m.forEach(e=>{e.spent=r2(e.spent);e.balance=Math.max(0,Math.round(e.earned+e.adj-e.used));e.rawBalance=Math.round(e.earned+e.adj-e.used);});
+  return m;
+}
+// State for the bill currently being made
+function loyaltyState(){
+  const c=loyaltyCfg();
+  const empty={on:c.on,eligible:false,canRedeem:false,balance:0,min:c.min,key:'',reason:''};
+  if(!c.on)return{...empty,reason:'off'};
+  const ph=$('bf-phone')?$('bf-phone').value:'';
+  if(!validPhone(ph))return{...empty,reason:'nophone'};
+  const name=$('bf-customer').value;
+  if(isProgramCustomer(name,ph))return{...empty,reason:'program'};
+  const key=phoneKey(ph);
+  const mem=loyaltyMembers().get(key);
+  const bal=mem?mem.balance:0;
+  // points used in a draft/invoice being edited are not an issue: invoices are never edited
+  return{on:true,eligible:true,canRedeem:bal>0&&bal>=c.min&&c.value>0,balance:bal,min:c.min,key,reason:''};
+}
+function updateLoyaltyBox(){
+  const box=$('bf-loy');if(!box)return;
+  const c=loyaltyCfg();
+  if(!c.on){box.style.display='none';return;}
+  const st=loyaltyState();
+  let h='';
+  if(st.reason==='nophone')h='⭐ <b>Loyalty:</b> enter the customer’s 10-digit phone number to earn / use points.';
+  else if(st.reason==='program')h='⭐ Registered referral customer — earns bonus instead of loyalty points.';
+  else{
+    h=`⭐ <b>Loyalty balance:</b> ${st.balance} point${st.balance===1?'':'s'}${c.value>0?` (worth ${fmt(st.balance*c.value)})`:''}`;
+    if(st.balance>0&&st.balance<c.min)h+=` — needs ${c.min} points to redeem`;
+  }
+  $('bf-loy-info').innerHTML=h;
+  $('bf-loy-row').style.display=st.canRedeem?'flex':'none';
+  if(!st.canRedeem)$('bf-lredeem').value='';
+  box.style.display='block';
+  if(billItems.length)calcBillTotal();else $('bf-loy-earn').textContent='';
+}
+function redeemMax(){
+  const st=loyaltyState();if(!st.canRedeem)return;
+  const subtotal=billItems.reduce((s,i)=>s+i.price*i.qty,0);
+  const dtype=$('bf-disc-type').value,dval=+$('bf-disc-val').value||0;
+  const disc=dtype==='pct'?subtotal*(dval/100):dtype==='flat'?Math.min(dval,subtotal):0;
+  const lval=loyaltyCfg().value;
+  $('bf-lredeem').value=Math.min(st.balance,Math.floor(Math.max(0,subtotal-disc)/lval+1e-9));
+  calcBillTotal();
+}
+function updateLoyaltyPreview(total,cg,sg,lpts,ld){
+  if(!$('bf-loy-earn'))return;
+  const st=loyaltyState();
+  $('bf-lred-val').textContent=ld>0?`= −${fmt(ld)}`:'';
+  const line=$('bf-loy-line');
+  if(line){line.style.display=ld>0?'block':'none';line.textContent=ld>0?`⭐ Loyalty redeemed: ${lpts} pts = −${fmt(ld)}`:'';}
+  if(!st.eligible){$('bf-loy-earn').textContent='';return;}
+  const e=loyaltyEarn(Math.max(0,total-cg-sg));
+  $('bf-loy-earn').textContent=e>0?`This bill earns ${e} point${e===1?'':'s'} (added once paid)`:'This bill is below the amount needed to earn a point';
+}
+
+// ── Loyalty admin page ──
+function loadLoyaltyForm(){
+  const c=loyaltyCfg();
+  $('loy-on').checked=c.on;$('loy-pts').value=c.pts;$('loy-per').value=c.per;$('loy-val').value=c.value;$('loy-min').value=c.min;
+  loyPreview();
+}
+function loyPreview(){
+  const pts=+$('loy-pts').value||0,per=+$('loy-per').value||0,val=+$('loy-val').value||0;
+  $('loy-preview').innerHTML=per>0?`Spend <b>₹${per}</b> → earn <b>${pts}</b> point${pts===1?'':'s'}. A ₹${per*10} bill earns <b>${Math.floor(pts*10+1e-9)}</b>. Each point is worth <b>₹${val}</b> off a future bill (that is about <b style="color:var(--orange)">${per>0&&pts>0?((pts*val/per)*100).toFixed(1):0}%</b> back).`:'Enter the spend amount.';
+}
+async function saveLoyaltySettings(){
+  if(!isOwner())return;
+  const pts=+$('loy-pts').value,per=+$('loy-per').value,val=+$('loy-val').value,min=+$('loy-min').value||0;
+  if(!(pts>0)||!(per>=1)){alert('Enter points earned (more than 0) and the ₹ amount (1 or more).');return;}
+  if(!(val>=0)){alert('Enter what 1 point is worth in ₹.');return;}
+  config.loyaltyOn=$('loy-on').checked?'1':'0';config.loyaltyPts=String(pts);config.loyaltyPer=String(per);config.loyaltyValue=String(val);config.loyaltyMin=String(Math.max(0,Math.floor(min)));
+  renderLoyalty();await saveConfig();
+}
+let _loyBound=false;
+function renderLoyalty(){
+  if(!isOwner()||!$('loy-tbody'))return;
+  if(!_loyBound){_loyBound=true;['loy-pts','loy-per','loy-val'].forEach(id=>$(id).addEventListener('input',loyPreview));}
+  if(!$('page-loyalty').classList.contains('active')||!$('loy-pts').dataset.init){loadLoyaltyForm();$('loy-pts').dataset.init='1';}
+  const c=loyaltyCfg();
+  const all=[...loyaltyMembers().values()].sort((a,b)=>(b.last||'').localeCompare(a.last||''));
+  const q=($('loy-search').value||'').trim().toLowerCase();
+  const rows=all.filter(e=>!q||e.name.toLowerCase().includes(q)||e.phone.includes(q.replace(/\D/g,'')||'\u0000'));
+  const bal=all.reduce((s,e)=>s+e.balance,0),used=all.reduce((s,e)=>s+e.used,0);
+  $('loy-stats').innerHTML=[
+    {label:'Members',val:all.length,sub:'customers with a phone number',color:'var(--blue)'},
+    {label:'Points Outstanding',val:bal,sub:'worth '+fmt(bal*c.value),color:'var(--orange)'},
+    {label:'Points Redeemed',val:used,sub:fmt(used*c.value)+' given back',color:'var(--green)'},
+    {label:'Status',val:c.on?'ON':'OFF',sub:c.on?`${c.pts} pt per ₹${c.per}`:'turn on above',color:c.on?'var(--green)':'var(--red)'},
+  ].map(s=>`<div class="stat-card" style="--accent:${s.color}"><div class="stat-label">${s.label}</div><div class="stat-val" style="color:${s.color}">${s.val}</div><div class="stat-sub">${s.sub}</div></div>`).join('');
+  $('loy-tbody').innerHTML=rows.length===0?`<tr class="empty-row"><td colspan="8">${all.length?'No match':'No members yet — enter a phone number on a bill and points start building'}</td></tr>`:
+    rows.map(e=>`<tr>
+      <td style="font-weight:600">${esc(e.name||'—')}<div style="font-size:11px;color:var(--muted);font-weight:400">last: ${esc(e.last||'—')}</div></td>
+      <td style="font-family:monospace">${esc(e.phone)}</td>
+      <td>${e.bills}</td><td>${fmt(e.spent)}</td>
+      <td>${e.earned+e.adj}${e.pending>0?`<div style="font-size:10px;color:var(--yellow)">+${e.pending} pending</div>`:''}</td>
+      <td>${e.used}</td>
+      <td style="color:var(--orange);font-weight:700">${e.balance}<div style="font-size:10px;color:var(--muted);font-weight:400">${fmt(e.balance*c.value)}</div></td>
+      <td><div class="btn-group"><button class="btn btn-secondary btn-sm" onclick="openLoyAdj('${e.key}')">Adjust</button></div></td></tr>`).join('');
+}
+function openLoyAdj(key=''){
+  if(!isOwner())return;
+  $('la-phone').value=key;$('la-name').value='';$('la-pts').value='';$('la-note').value='';
+  loyAdjFill();openModal('loyadj-modal');
+}
+function loyAdjFill(){
+  const k=phoneKey($('la-phone').value);const h=$('la-hint');
+  if(k.length!==10){h.style.display='none';return;}
+  const mem=loyaltyMembers().get(k);
+  if(mem&&!$('la-name').value)$('la-name').value=mem.name||'';
+  h.innerHTML=mem?`Current balance: <b>${mem.balance}</b> point${mem.balance===1?'':'s'}`:'New member — no points yet';h.style.display='block';
+}
+async function saveLoyAdj(){
+  if(!isOwner())return;
+  const k=phoneKey($('la-phone').value);
+  if(k.length!==10){alert('Enter a valid 10-digit phone number.');return;}
+  if(customers.some(c=>phoneKey(c.phone)===k)){alert('This phone belongs to a registered referral customer — they do not use loyalty points.');return;}
+  const pts=Math.round(+$('la-pts').value);
+  if(!pts){alert('Enter the points to add (or a negative number to deduct).');return;}
+  const mem=loyaltyMembers().get(k);
+  if(pts<0&&(!mem||mem.rawBalance+pts<0)){alert('That would take the balance below zero.');return;}
+  ladj.push({id:uid(),phone:k,name:$('la-name').value.trim(),date:today(),points:pts,note:$('la-note').value.trim()});
+  closeModal('loyadj-modal');renderAll();await saveLadj();
+}
+
 // ═══ SUPPLIERS ═══
 const normName=s=>(s||'').trim().toLowerCase().replace(/\s+/g,' ');
 const waNumber=ph=>{let d=(ph||'').replace(/\D/g,'').replace(/^0+/,'');if(d.length===10)d='91'+d;return d;};
@@ -1728,7 +1975,13 @@ function supplierBook(){
   parts.forEach(p=>add(p.supplier));
   return[...m.values()].sort((a,b)=>a.name.localeCompare(b.name));
 }
+function brandNames(){
+  const m=new Map();
+  [...parts,...purchases].forEach(x=>{const b=(x.brand||'').trim();if(b&&!m.has(b.toLowerCase()))m.set(b.toLowerCase(),b);});
+  return[...m.values()].sort((a,b)=>a.localeCompare(b));
+}
 function fillSupplierList(){
+  if($('brand-list'))$('brand-list').innerHTML=brandNames().map(n=>`<option value="${esc(n)}"></option>`).join('');
   const names=new Set(supplierBook().map(e=>e.name));
   $('supp-list').innerHTML=[...names].map(n=>`<option value="${esc(n)}"></option>`).join('');
 }
@@ -2042,7 +2295,7 @@ function autoFillContact(){
   }
 }
 function updateBillLinks(){
-  autoFillContact();
+  autoFillContact();updateLoyaltyBox();
   const el=$('bf-link-hint');
   const cu=resolvePartnerByName($('bf-customer').value);
   const rv=$('bf-ref').value.trim();const rf=rv?resolvePartnerRef(rv):null;
@@ -2387,10 +2640,10 @@ function resumeDraft(id,mergeCurrent=false){
     const ex=billItems.find(x=>x.partId===it.partId);
     const want=(ex?ex.qty:0)+it.qty,qty=Math.min(want,p.qty);
     if(qty<want)notes.push(`“${it.name}”: only ${p.qty} in stock now (draft had ${want})`);
-    if(ex)ex.qty=qty;else billItems.push({partId:p.id,sku:p.sku,name:p.name,price:it.price,qty,maxQty:p.qty});
+    if(ex)ex.qty=qty;else billItems.push({partId:p.id,sku:p.sku,name:p.name,brand:p.brand||'',price:it.price,qty,maxQty:p.qty});
   };
   d.items.forEach(add);carry.forEach(add);
-  fillPartnerLists();updateBillLinks();renderBillItems();
+  $('bf-lredeem').value='';fillPartnerLists();updateBillLinks();renderBillItems();
   _billSnap=billSnapshot();
   if(notes.length)setTimeout(()=>alert('Draft updated for current stock:\n\n• '+notes.join('\n• ')),50);
 }
