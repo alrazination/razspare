@@ -3,7 +3,7 @@
  * Paste into: your Spares Pro Google Sheet → Extensions → Apps Script
  * Deploy → New deployment → Web app → Execute as: Me · Who has access: Anyone
  *
- * Exposes ONLY: part name, SKU, category, selling price (incl. GST) and an availability word.
+ * Exposes ONLY: brand, part name, SKU, category, selling price (incl. GST) and an availability word.
  * Never exposes: buying price, supplier, exact quantity, HSN, location, customers, invoices.
  */
 var SHOP_NAME = 'AutoParts Spares Pro';
@@ -64,7 +64,7 @@ function doPost(e) {
       var it = catalog[String(l.id)];
       var qty = Math.max(1, Math.min(MAX_QTY, Math.floor(Number(l.qty) || 0)));
       if (!it || !qty) return;
-      items.push({ id: it.id, sku: it.sku, name: it.name, qty: qty, price: it.price });
+      items.push({ id: it.id, sku: it.sku, name: it.name, brand: it.brand, qty: qty, price: it.price });
       total += it.price * qty;
     });
     if (!items.length) return out_({ ok: false, error: 'Those parts are no longer listed. Please refresh the page.' });
@@ -109,6 +109,7 @@ function readCatalog_() {
       id: String(row[H.id]),
       sku: String(row[H.sku] || ''),
       name: String(row[H.name] || ''),
+      brand: String(row[H.brand] || '').trim(),
       cat: String(row[H.category] || 'Other'),
       price: Math.round(sell * (1 + gst / 100) * 100) / 100,   // price the customer actually pays
       st: qty <= 0 ? 'out' : (qty <= min ? 'low' : 'in')
