@@ -2441,7 +2441,7 @@ async function saveConfig(){showSync('Saving…',false);await clearRewrite(SH.CF
 function loadShopSettings(){
   if(!$('shop-url'))return;
   $('shop-url').value=cfgGet('shopScriptUrl');$('shop-wa').value=cfgGet('shopWhatsApp');
-  $('gas-view').value=$('gas-src').textContent.replace(/^\n/,'');
+  $('gas-view').value=$('gas-src').textContent.replace(/^\n/,'').replace("var SHEET_ID = '';","var SHEET_ID = '"+(spreadsheetId||'')+"';");
   updateShopLinkBox();
 }
 async function saveShopSettings(){
@@ -2479,13 +2479,25 @@ async function testShop(){
   const el=$('shop-test'),u=$('shop-url').value.trim();
   if(!GAS_OK(u)){el.innerHTML='<span style="color:var(--red)">Paste the Web app URL first.</span>';return;}
   el.innerHTML='<span class="spinner"></span> Checking…';
-  try{
-    const d=await (await fetch(u+'?action=catalog')).json();
-    if(!d.ok)throw new Error(d.error||'bad reply');
-    el.innerHTML=`<span style="color:var(--green)">✓ Connected — ${d.items.length} part${d.items.length===1?'':'s'} would be shown to customers.</span>`;
-  }catch(e){
-    el.innerHTML='<span style="color:var(--red)">✗ Could not read the catalog. Check that “Who has access” is set to <b>Anyone</b>, and that you copied the URL ending in /exec.</span>';
+  const tab=u+(u.includes('?')?'&':'?')+'action=catalog';
+  let d=null;
+  try{d=await (await fetch(tab)).json();}catch(e){d=null;}
+  if(d&&d.ok&&Array.isArray(d.items)){
+    el.innerHTML=`<span style="color:var(--green)">✓ Connected — ${d.items.length} part${d.items.length===1?'':'s'} would be shown to customers.</span>`;return;
   }
+  if(d&&d.ok===false){
+    el.innerHTML=`<div style="color:var(--red)">✗ Your web app answered, but reported a problem:</div><div style="margin-top:4px;color:var(--text);font-weight:600">${esc(d.error||'unknown error')}</div>`;return;
+  }
+  // No readable reply: Google sent a page instead of data (browsers report this as a "CORS" error)
+  el.innerHTML=`<div style="color:var(--red);font-weight:600">✗ The browser couldn’t read a proper reply from your web app.</div>
+    <div style="color:var(--subtle);line-height:1.8;margin-top:6px">This means Google sent back a <em>page</em> instead of data. <a href="${esc(tab)}" target="_blank" rel="noopener" style="color:var(--orange);font-weight:700">Open this link in a new tab</a> and see what it shows:
+    <ul style="margin:6px 0 0 18px">
+      <li><b>Text starting <code>{"ok":true</code></b> → the script is fine. Press Save, then try again.</li>
+      <li><b>Text starting <code>{"ok":false</code></b> → it tells you exactly what to fix.</li>
+      <li><b>A Google sign-in page</b> → access isn’t “Anyone”. Deploy → Manage deployments → ✏ Edit → Version: <b>New version</b> → Who has access: <b>Anyone</b> → Deploy.</li>
+      <li><b>“Script function not found: doGet”</b> or <b>“Page not found”</b> → the script wasn’t pasted/saved fully, or an old version is deployed. Paste the latest script, Save, then Deploy → Manage deployments → ✏ → <b>New version</b> → Deploy.</li>
+      <li><b>“Authorization required”</b> → in the Apps Script editor choose <b>doGet</b>, press <b>Run</b> and approve the permissions, then deploy a new version.</li>
+    </ul></div>`;
 }
 
 // ── Owner inbox ──
@@ -2815,11 +2827,20 @@ var MAX_LINES = 30;            // max different parts per order
 var MAX_QTY = 99;              // max quantity per part
 var MAX_PER_PHONE_HOUR = 5;    // orders from one phone number per hour
 var MAX_ORDERS_HOUR = 60;      // orders from everyone per hour (spam brake)
+// Only needed if you created this script at script.google.com instead of from the Sheet's
+// Extensions → Apps Script menu. The Spares Pro app fills this in for you when you press "Copy script".
+var SHEET_ID = '';
 
 function doGet(e) {
-  var action = (e && e.parameter && e.parameter.action) || 'catalog';
-  if (action !== 'catalog') return out_({ ok: false, error: 'unknown action' });
-  return out_({ ok: true, shop: SHOP_NAME, updated: new Date().toISOString(), items: readCatalog_() });
+  // Never let an error escape: an uncaught error makes Google send an HTML page, which browsers
+  // report as a confusing "CORS" failure. Always answer with JSON that says what is wrong.
+  try {
+    var action = (e && e.parameter && e.parameter.action) || 'catalog';
+    if (action !== 'catalog') return out_({ ok: false, error: 'unknown action' });
+    return out_({ ok: true, shop: SHOP_NAME, updated: new Date().toISOString(), items: readCatalog_() });
+  } catch (err) {
+    return out_({ ok: false, error: 'Script problem: ' + (err && err.message ? err.message : err) });
+  }
 }
 
 function doPost(e) {
@@ -2875,9 +2896,17 @@ function doPost(e) {
   }
 }
 
+function ss_() {
+  var active = SpreadsheetApp.getActive();           // works when the script was opened from the Sheet
+  if (active) return active;
+  if (SHEET_ID) return SpreadsheetApp.openById(SHEET_ID);
+  throw new Error('This script is not attached to your Spares Pro sheet. Open the Sheet → Extensions → Apps Script and paste it there.');
+}
+
 function readCatalog_() {
-  var sh = SpreadsheetApp.getActive().getSheetByName(PARTS_SHEET);
-  if (!sh || sh.getLastRow() < 2) return [];
+  var sh = ss_().getSheetByName(PARTS_SHEET);
+  if (!sh) throw new Error('No "' + PARTS_SHEET + '" tab found in the sheet this script is attached to.');
+  if (sh.getLastRow() < 2) return [];
   var v = sh.getDataRange().getValues();
   var H = {};
   v[0].forEach(function (h, i) { H[String(h)] = i; });
@@ -2902,7 +2931,7 @@ function readCatalog_() {
 }
 
 function ordersSheet_() {
-  var ss = SpreadsheetApp.getActive();
+  var ss = ss_();
   var sh = ss.getSheetByName(ORDERS_SHEET);
   if (!sh) { sh = ss.insertSheet(ORDERS_SHEET); sh.appendRow(ORDER_HEADER); }
   return sh;

@@ -14,11 +14,20 @@ var MAX_LINES = 30;            // max different parts per order
 var MAX_QTY = 99;              // max quantity per part
 var MAX_PER_PHONE_HOUR = 5;    // orders from one phone number per hour
 var MAX_ORDERS_HOUR = 60;      // orders from everyone per hour (spam brake)
+// Only needed if you created this script at script.google.com instead of from the Sheet's
+// Extensions → Apps Script menu. The Spares Pro app fills this in for you when you press "Copy script".
+var SHEET_ID = '';
 
 function doGet(e) {
-  var action = (e && e.parameter && e.parameter.action) || 'catalog';
-  if (action !== 'catalog') return out_({ ok: false, error: 'unknown action' });
-  return out_({ ok: true, shop: SHOP_NAME, updated: new Date().toISOString(), items: readCatalog_() });
+  // Never let an error escape: an uncaught error makes Google send an HTML page, which browsers
+  // report as a confusing "CORS" failure. Always answer with JSON that says what is wrong.
+  try {
+    var action = (e && e.parameter && e.parameter.action) || 'catalog';
+    if (action !== 'catalog') return out_({ ok: false, error: 'unknown action' });
+    return out_({ ok: true, shop: SHOP_NAME, updated: new Date().toISOString(), items: readCatalog_() });
+  } catch (err) {
+    return out_({ ok: false, error: 'Script problem: ' + (err && err.message ? err.message : err) });
+  }
 }
 
 function doPost(e) {
@@ -74,9 +83,17 @@ function doPost(e) {
   }
 }
 
+function ss_() {
+  var active = SpreadsheetApp.getActive();           // works when the script was opened from the Sheet
+  if (active) return active;
+  if (SHEET_ID) return SpreadsheetApp.openById(SHEET_ID);
+  throw new Error('This script is not attached to your Spares Pro sheet. Open the Sheet → Extensions → Apps Script and paste it there.');
+}
+
 function readCatalog_() {
-  var sh = SpreadsheetApp.getActive().getSheetByName(PARTS_SHEET);
-  if (!sh || sh.getLastRow() < 2) return [];
+  var sh = ss_().getSheetByName(PARTS_SHEET);
+  if (!sh) throw new Error('No "' + PARTS_SHEET + '" tab found in the sheet this script is attached to.');
+  if (sh.getLastRow() < 2) return [];
   var v = sh.getDataRange().getValues();
   var H = {};
   v[0].forEach(function (h, i) { H[String(h)] = i; });
@@ -101,7 +118,7 @@ function readCatalog_() {
 }
 
 function ordersSheet_() {
-  var ss = SpreadsheetApp.getActive();
+  var ss = ss_();
   var sh = ss.getSheetByName(ORDERS_SHEET);
   if (!sh) { sh = ss.insertSheet(ORDERS_SHEET); sh.appendRow(ORDER_HEADER); }
   return sh;
