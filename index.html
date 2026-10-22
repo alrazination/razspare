@@ -726,6 +726,14 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
     </div>
   </div>
 
+  <!-- Skip login page -->
+  <div class="card">
+    <div class="card-title">🔓 Skip Login Page</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Open the app straight into Admin, with no username or password screen. This applies only to this phone or computer.</p>
+    <label style="display:flex;gap:10px;align-items:center;font-size:14px;cursor:pointer"><input type="checkbox" id="autologin-toggle" onchange="toggleAutoLogin(this)" style="width:18px;height:18px"/> Skip the login page on this device</label>
+    <p style="font-size:12px;color:var(--yellow);margin-top:10px">⚠ Anyone who opens the app on this device gets full Admin access, including buy prices and settings. Leave this off for shared or employee devices.</p>
+  </div>
+
   <!-- Google Sheet -->
   <div class="card">
     <div class="card-title">☁️ Google Sheets Connection</div>
@@ -746,10 +754,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
   <div class="modal">
     <h2 id="part-modal-title">Add New Part</h2>
     <div class="frow">
-      <div class="fg"><label>SKU</label><input type="text" id="pf-sku" placeholder="ENG-001"/></div>
-      <div class="fg"><label>Category</label><select id="pf-cat"><option>Engine</option><option>Brakes</option><option>Suspension</option><option>Electrical</option><option>Body</option><option>Transmission</option><option>Cooling</option><option>Exhaust</option><option>Filters</option><option>Other</option></select></div>
+      <div class="fg"><label>SKU <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(auto)</span></label><input type="text" id="pf-sku" readonly placeholder="Made automatically" style="font-family:monospace;cursor:default"/></div>
+      <div class="fg"><label>Category</label><select id="pf-cat" onchange="updateSkuPreview()"><option>Engine</option><option>Brakes</option><option>Suspension</option><option>Electrical</option><option>Body</option><option>Transmission</option><option>Cooling</option><option>Exhaust</option><option>Filters</option><option>Other</option></select></div>
     </div>
-    <div class="fg"><label>Part Name</label><input type="text" id="pf-name" placeholder="e.g. Oil Filter"/></div>
+    <div class="fg"><label>Part Name</label><input type="text" id="pf-name" placeholder="e.g. Oil Filter" oninput="updateSkuPreview()"/></div>
     <div class="fg"><label>📍 Location (Rack / Shelf)</label><input type="text" id="pf-location" placeholder="e.g. A12" maxlength="12" autocapitalize="characters" style="text-transform:uppercase"/></div>
     <div class="frow">
       <div class="fg"><label>Quantity</label><input type="number" id="pf-qty" min="0" placeholder="0"/></div>
@@ -760,7 +768,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
       <div class="fg"><label>Sell Price (₹)</label><input type="number" id="pf-sell" min="0" step="0.01" placeholder="0.00" oninput="updateMarginHint()"/></div>
     </div>
     <div class="frow">
-      <div class="fg"><label>Brand <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(TVS, Bajaj, Hero…)</span></label><input type="text" id="pf-brand" list="brand-list" placeholder="Make of the part" autocomplete="off"/></div>
+      <div class="fg"><label>Brand <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(TVS, Bajaj, Hero…)</span></label><input type="text" id="pf-brand" oninput="updateSkuPreview()" list="brand-list" placeholder="Make of the part" autocomplete="off"/></div>
       <div class="fg"><label>Usual Supplier <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(who you buy from)</span></label><input type="text" id="pf-supplier" list="supp-list" placeholder="Optional" autocomplete="off"/></div>
     </div>
     <datalist id="brand-list"></datalist>
@@ -1191,6 +1199,20 @@ function doLogin(){
   }
 }
 
+// ── Skip login page (per device; only the Admin can switch it on, from Settings) ──
+const AUTOLOGIN_KEY='ap_autologin';
+function autoLoginOn(){try{return localStorage.getItem(AUTOLOGIN_KEY)==='owner';}catch(e){return false;}}
+function toggleAutoLogin(cb){
+  if(!isOwner()){cb.checked=false;return;}
+  if(cb.checked){
+    if(!confirm('Skip the login page on this device?\n\nAnyone who opens the app here will get full Admin access (buy prices, settings, everything).\n\nOnly do this on your own private device.')){cb.checked=false;return;}
+    try{localStorage.setItem(AUTOLOGIN_KEY,'owner');}catch(e){}
+    showSync('Login page will be skipped on this device ✓');
+  }else{
+    try{localStorage.removeItem(AUTOLOGIN_KEY);}catch(e){}
+    showSync('Login page turned back on ✓');
+  }
+}
 function doLogout(){
   currentRole=null;accessToken=null;spreadsheetId=null;
   parts=[];invoices=[];purchases=[];wishlist=[];customers=[];payouts=[];suppliers=[];requests=[];drafts=[];orders=[];ladj=[];config={};editingDraftId=null;
@@ -1288,6 +1310,7 @@ function loadSettingsDisplay(){
     $('settings-sheet-id').textContent='ID: '+spreadsheetId.slice(0,20)+'…';
     $('shop-sheet-link').href=url;
   }
+  const al=$('autologin-toggle');if(al)al.checked=autoLoginOn();
   loadShopSettings();
 }
 
@@ -1553,13 +1576,18 @@ function renderInventory(){
       }
     }).join('');
 }
+// ── Automatic SKU:  S1-<category 2 letters>-<part 2 letters>-<brand 2 letters>-<running number 0001, 0002…> ──
+function skuLetters(v){return (String(v||'').replace(/[^A-Za-z]/g,'').toUpperCase()+'XX').slice(0,2);}   // XX if there are no letters
+function nextSkuNumber(){let max=0;parts.forEach(p=>{const m=/^S1-[A-Z]{2}-[A-Z]{2}-[A-Z]{2}-(\d+)$/.exec(String(p.sku||''));if(m)max=Math.max(max,+m[1]);});return max+1;}
+function generateSku(cat,name,brand){return `S1-${skuLetters(cat)}-${skuLetters(name)}-${skuLetters(brand)}-${String(nextSkuNumber()).padStart(4,'0')}`;}
+function updateSkuPreview(){if(editingPartId)return;$('pf-sku').value=generateSku($('pf-cat').value,$('pf-name').value,$('pf-brand').value);}
 function openPartModal(id=null){
   if(!isOwner())return;
   editingPartId=id;fillSupplierList();
   $('part-modal-title').textContent=id?'Edit Part':'Add New Part';
   $('part-save-btn').textContent=id?'Save Changes':'Add Part';
   if(id){const p=parts.find(x=>x.id===id);$('pf-sku').value=p.sku;$('pf-name').value=p.name;$('pf-cat').value=p.category;$('pf-qty').value=p.qty;$('pf-minqty').value=p.minQty;$('pf-buy').value=p.buyPrice;$('pf-sell').value=p.sellPrice;$('pf-supplier').value=p.supplier||'';$('pf-brand').value=p.brand||'';$('pf-hsn').value=p.hsn||'';$('pf-mrp').value=p.mrp||'';$('pf-cgst').value=p.cgst||'';$('pf-sgst').value=p.sgst||'';$('pf-location').value=p.location||'';}
-  else{['pf-sku','pf-name','pf-qty','pf-minqty','pf-buy','pf-sell','pf-supplier','pf-brand','pf-hsn','pf-mrp','pf-cgst','pf-sgst','pf-location'].forEach(x=>$(x).value='');$('pf-cat').value='Engine';}
+  else{['pf-sku','pf-name','pf-qty','pf-minqty','pf-buy','pf-sell','pf-supplier','pf-brand','pf-hsn','pf-mrp','pf-cgst','pf-sgst','pf-location'].forEach(x=>$(x).value='');$('pf-cat').value='Engine';updateSkuPreview();}
   $('margin-hint').style.display='none';
   openModal('part-modal');
 }
@@ -1571,8 +1599,9 @@ function updateMarginHint(){
 }
 async function savePart(){
   if(!isOwner())return;
-  const p={id:editingPartId||uid(),sku:$('pf-sku').value.trim(),name:$('pf-name').value.trim(),category:$('pf-cat').value,qty:+$('pf-qty').value,minQty:+$('pf-minqty').value,buyPrice:+$('pf-buy').value,sellPrice:+$('pf-sell').value,supplier:$('pf-supplier').value.trim(),brand:canonBrand($('pf-brand').value),hsn:$('pf-hsn').value.trim(),mrp:+$('pf-mrp').value||0,cgst:+$('pf-cgst').value||0,sgst:+$('pf-sgst').value||0,location:$('pf-location').value.trim().toUpperCase().replace(/\s+/g,'')};
-  if(!p.sku||!p.name){alert('SKU and Part Name required.');return;}
+  const keepSku=editingPartId?((parts.find(x=>x.id===editingPartId)||{}).sku||''):'';
+  const p={id:editingPartId||uid(),sku:keepSku||generateSku($('pf-cat').value,$('pf-name').value,$('pf-brand').value),name:$('pf-name').value.trim(),category:$('pf-cat').value,qty:+$('pf-qty').value,minQty:+$('pf-minqty').value,buyPrice:+$('pf-buy').value,sellPrice:+$('pf-sell').value,supplier:$('pf-supplier').value.trim(),brand:canonBrand($('pf-brand').value),hsn:$('pf-hsn').value.trim(),mrp:+$('pf-mrp').value||0,cgst:+$('pf-cgst').value||0,sgst:+$('pf-sgst').value||0,location:$('pf-location').value.trim().toUpperCase().replace(/\s+/g,'')};
+  if(!p.name){alert('Part Name required.');return;}
   if(editingPartId)parts=parts.map(x=>x.id===editingPartId?p:x);else parts.push(p);
   closeModal('part-modal');renderAll();await saveParts();
 }
@@ -3131,6 +3160,15 @@ window.addEventListener('load',()=>{
   }
 });
 
+// Skipped login: go straight in as Admin (never on the public shop / customer-portal links)
+window.addEventListener('load',()=>{
+  if(!autoLoginOn()||currentRole||portalRoute()||shopRoute())return;
+  currentRole='owner';
+  $('login-screen').style.display='none';
+  applyRoleUI();
+  initApp();
+});
+
 const _origStartAuth=startAuth;
 window.startAuth=function(){
   sessionStorage.setItem('ap_pending_role', currentRole||'owner');
@@ -3157,6 +3195,7 @@ window.addEventListener('online',()=>showSync('Back online ✓'));
 
 // ═══ CUSTOMER PORTAL BOOT (must be last) ═══
 if(portalRoute())bootPortal();else if(shopRoute())bootShop();
+else if(autoLoginOn())$('login-screen').style.display='none';   // no flash of the login page while skipping it
 </script>
 <script type="text/plain" id="gas-src">/**
  * Spares Pro — public catalog & order gateway
