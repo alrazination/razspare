@@ -757,7 +757,13 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
       <div class="fg"><label>SKU <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(auto)</span></label><input type="text" id="pf-sku" readonly placeholder="Made automatically" style="font-family:monospace;cursor:default"/></div>
       <div class="fg"><label>Category</label><select id="pf-cat" onchange="updateSkuPreview()"><option>Engine</option><option>Brakes</option><option>Suspension</option><option>Electrical</option><option>Body</option><option>Transmission</option><option>Cooling</option><option>Exhaust</option><option>Filters</option><option>Other</option></select></div>
     </div>
-    <div class="fg"><label>Part Name</label><input type="text" id="pf-name" placeholder="e.g. Oil Filter" oninput="updateSkuPreview()"/></div>
+    <div class="fg"><label>Part Name</label>
+      <div class="part-search-wrap">
+        <input type="text" id="pf-name" placeholder="e.g. Oil Filter" oninput="updateSkuPreview();partNameSuggest()" onblur="setTimeout(()=>$('pf-name-dropdown').classList.remove('open'),200)" autocomplete="off"/>
+        <div class="part-dropdown" id="pf-name-dropdown"></div>
+      </div>
+      <div class="hint-box" id="pf-existing-hint" style="display:none;margin-top:8px"></div>
+    </div>
     <div class="fg"><label>📍 Location (Rack / Shelf)</label><input type="text" id="pf-location" placeholder="e.g. A12" maxlength="12" autocapitalize="characters" style="text-transform:uppercase"/></div>
     <div class="frow">
       <div class="fg"><label>Quantity</label><input type="number" id="pf-qty" min="0" placeholder="0"/></div>
@@ -1581,9 +1587,28 @@ function skuLetters(v){return (String(v||'').replace(/[^A-Za-z]/g,'').toUpperCas
 function nextSkuNumber(){let max=0;parts.forEach(p=>{const m=/^S1-[A-Z]{2}-[A-Z]{2}-[A-Z]{2}-(\d+)$/.exec(String(p.sku||''));if(m)max=Math.max(max,+m[1]);});return max+1;}
 function generateSku(cat,name,brand){return `S1-${skuLetters(cat)}-${skuLetters(name)}-${skuLetters(brand)}-${String(nextSkuNumber()).padStart(4,'0')}`;}
 function updateSkuPreview(){if(editingPartId)return;$('pf-sku').value=generateSku($('pf-cat').value,$('pf-name').value,$('pf-brand').value);}
+// While typing a NEW part's name, show matching parts already in stock so the same part isn't added twice.
+function partNameSuggest(){
+  const dd=$('pf-name-dropdown'),q=$('pf-name').value.trim();
+  if(editingPartId||q.length<2){dd.classList.remove('open');return;}
+  const res=parts.filter(p=>tokHit(q,[p.brand,p.name,p.sku])).slice(0,7);
+  if(!res.length){dd.classList.remove('open');return;}
+  dd.innerHTML='<div style="padding:7px 14px;font-size:11px;color:var(--yellow);border-bottom:1px solid var(--border)">Already in stock — tap one to edit it instead of adding it again</div>'
+    +res.map(p=>`<div class="pdi" onmousedown="pickExistingPart('${p.id}')"><div><div style="font-weight:600;font-size:13px">${pLabel(p)}</div><div style="font-size:11px;color:var(--muted)">${esc(p.sku)} · ${esc(p.category)} · stock: ${p.qty}${p.location?' · 📍'+esc(p.location):''}</div></div></div>`).join('');
+  dd.classList.add('open');
+}
+// Picking one switches the form over to that part: every field is filled in and saving updates it (no duplicate).
+function pickExistingPart(id){
+  const p=parts.find(x=>x.id===id);if(!p)return;
+  openPartModal(id);
+  const h=$('pf-existing-hint');
+  h.innerHTML=`✏️ <strong>${pLabel(p)}</strong> is already in stock, so you are now <strong>editing it</strong> — no duplicate will be created.<br>In stock now: <strong>${p.qty}</strong>. Changing <em>Quantity</em> here replaces that number. To add newly bought stock, <a href="#" style="color:var(--orange);font-weight:600" onclick="event.preventDefault();closeModal('part-modal');openPurchaseModal();selectPurchPart('${p.id}')">record a purchase instead</a>.`;
+  h.style.display='block';
+}
 function openPartModal(id=null){
   if(!isOwner())return;
   editingPartId=id;fillSupplierList();
+  $('pf-existing-hint').style.display='none';$('pf-name-dropdown').classList.remove('open');
   $('part-modal-title').textContent=id?'Edit Part':'Add New Part';
   $('part-save-btn').textContent=id?'Save Changes':'Add Part';
   if(id){const p=parts.find(x=>x.id===id);$('pf-sku').value=p.sku;$('pf-name').value=p.name;$('pf-cat').value=p.category;$('pf-qty').value=p.qty;$('pf-minqty').value=p.minQty;$('pf-buy').value=p.buyPrice;$('pf-sell').value=p.sellPrice;$('pf-supplier').value=p.supplier||'';$('pf-brand').value=p.brand||'';$('pf-hsn').value=p.hsn||'';$('pf-mrp').value=p.mrp||'';$('pf-cgst').value=p.cgst||'';$('pf-sgst').value=p.sgst||'';$('pf-location').value=p.location||'';}
@@ -1602,6 +1627,10 @@ async function savePart(){
   const keepSku=editingPartId?((parts.find(x=>x.id===editingPartId)||{}).sku||''):'';
   const p={id:editingPartId||uid(),sku:keepSku||generateSku($('pf-cat').value,$('pf-name').value,$('pf-brand').value),name:$('pf-name').value.trim(),category:$('pf-cat').value,qty:+$('pf-qty').value,minQty:+$('pf-minqty').value,buyPrice:+$('pf-buy').value,sellPrice:+$('pf-sell').value,supplier:$('pf-supplier').value.trim(),brand:canonBrand($('pf-brand').value),hsn:$('pf-hsn').value.trim(),mrp:+$('pf-mrp').value||0,cgst:+$('pf-cgst').value||0,sgst:+$('pf-sgst').value||0,location:$('pf-location').value.trim().toUpperCase().replace(/\s+/g,'')};
   if(!p.name){alert('Part Name required.');return;}
+  if(!editingPartId){
+    const dup=parts.find(x=>x.name.trim().toLowerCase()===p.name.toLowerCase()&&(x.brand||'').toLowerCase()===(p.brand||'').toLowerCase());
+    if(dup&&!confirm(`"${pText(dup)}" is already in stock (${dup.sku}, ${dup.qty} pcs).\n\nOK = add it again as a separate part\nCancel = go back`))return;
+  }
   if(editingPartId)parts=parts.map(x=>x.id===editingPartId?p:x);else parts.push(p);
   closeModal('part-modal');renderAll();await saveParts();
 }
