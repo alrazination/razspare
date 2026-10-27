@@ -1597,21 +1597,27 @@ function partNameSuggest(){
     +res.map(p=>`<div class="pdi" onmousedown="pickExistingPart('${p.id}')"><div><div style="font-weight:600;font-size:13px">${pLabel(p)}</div><div style="font-size:11px;color:var(--muted)">${esc(p.sku)} · ${esc(p.category)} · stock: ${p.qty}${p.location?' · 📍'+esc(p.location):''}</div></div></div>`).join('');
   dd.classList.add('open');
 }
-// Picking one switches the form over to that part: every field is filled in and saving updates it (no duplicate).
+// Picking one fills the form from that part as a STARTING POINT. Change any detail and saving adds a NEW part with its own new SKU;
+// the original is never touched. (To really edit the original use "Edit"; to add stock use Record Purchase.)
+let templatePart=null;
+const PF_FIELDS=['pf-name','pf-cat','pf-brand','pf-minqty','pf-buy','pf-sell','pf-supplier','pf-hsn','pf-mrp','pf-cgst','pf-sgst','pf-location'];   // quantity is not a "detail" here
+function pfSnapshot(){return PF_FIELDS.map(id=>String($(id).value||'').trim().toLowerCase());}
 function pickExistingPart(id){
   const p=parts.find(x=>x.id===id);if(!p)return;
-  openPartModal(id);
+  openPartModal(null,id);
+  templatePart={id:p.id,label:pLabel(p),text:pText(p),snap:pfSnapshot()};
   const h=$('pf-existing-hint');
-  h.innerHTML=`✏️ <strong>${pLabel(p)}</strong> is already in stock, so you are now <strong>editing it</strong> — no duplicate will be created.<br>In stock now: <strong>${p.qty}</strong>. Changing <em>Quantity</em> here replaces that number. To add newly bought stock, <a href="#" style="color:var(--orange);font-weight:600" onclick="event.preventDefault();closeModal('part-modal');openPurchaseModal();selectPurchPart('${p.id}')">record a purchase instead</a>.`;
+  h.innerHTML=`📋 Started from <strong>${pLabel(p)}</strong> (${esc(p.sku)}, in stock: <strong>${p.qty}</strong>). Change any detail and save to add it as a <strong>new part with its own new SKU</strong> — the original stays as it is. Quantity is blank because this is a new part.<br>Want something else? <a href="#" style="color:var(--orange);font-weight:600" onclick="event.preventDefault();openPartModal('${p.id}')">Edit the original</a> · <a href="#" style="color:var(--orange);font-weight:600" onclick="event.preventDefault();closeModal('part-modal');openPurchaseModal();selectPurchPart('${p.id}')">Record a purchase (add stock)</a>`;
   h.style.display='block';
 }
-function openPartModal(id=null){
+function openPartModal(id=null,fromId=null){
   if(!isOwner())return;
-  editingPartId=id;fillSupplierList();
+  editingPartId=id;templatePart=null;fillSupplierList();
   $('pf-existing-hint').style.display='none';$('pf-name-dropdown').classList.remove('open');
   $('part-modal-title').textContent=id?'Edit Part':'Add New Part';
   $('part-save-btn').textContent=id?'Save Changes':'Add Part';
-  if(id){const p=parts.find(x=>x.id===id);$('pf-sku').value=p.sku;$('pf-name').value=p.name;$('pf-cat').value=p.category;$('pf-qty').value=p.qty;$('pf-minqty').value=p.minQty;$('pf-buy').value=p.buyPrice;$('pf-sell').value=p.sellPrice;$('pf-supplier').value=p.supplier||'';$('pf-brand').value=p.brand||'';$('pf-hsn').value=p.hsn||'';$('pf-mrp').value=p.mrp||'';$('pf-cgst').value=p.cgst||'';$('pf-sgst').value=p.sgst||'';$('pf-location').value=p.location||'';}
+  if(id||fromId){const p=parts.find(x=>x.id===(id||fromId));$('pf-sku').value=p.sku;$('pf-name').value=p.name;$('pf-cat').value=p.category;$('pf-qty').value=p.qty;$('pf-minqty').value=p.minQty;$('pf-buy').value=p.buyPrice;$('pf-sell').value=p.sellPrice;$('pf-supplier').value=p.supplier||'';$('pf-brand').value=p.brand||'';$('pf-hsn').value=p.hsn||'';$('pf-mrp').value=p.mrp||'';$('pf-cgst').value=p.cgst||'';$('pf-sgst').value=p.sgst||'';$('pf-location').value=p.location||'';
+    if(!id){$('pf-qty').value='';updateSkuPreview();}}   // copy for a NEW part: stock left blank, fresh SKU
   else{['pf-sku','pf-name','pf-qty','pf-minqty','pf-buy','pf-sell','pf-supplier','pf-brand','pf-hsn','pf-mrp','pf-cgst','pf-sgst','pf-location'].forEach(x=>$(x).value='');$('pf-cat').value='Engine';updateSkuPreview();}
   $('margin-hint').style.display='none';
   openModal('part-modal');
@@ -1627,12 +1633,16 @@ async function savePart(){
   const keepSku=editingPartId?((parts.find(x=>x.id===editingPartId)||{}).sku||''):'';
   const p={id:editingPartId||uid(),sku:keepSku||generateSku($('pf-cat').value,$('pf-name').value,$('pf-brand').value),name:$('pf-name').value.trim(),category:$('pf-cat').value,qty:+$('pf-qty').value,minQty:+$('pf-minqty').value,buyPrice:+$('pf-buy').value,sellPrice:+$('pf-sell').value,supplier:$('pf-supplier').value.trim(),brand:canonBrand($('pf-brand').value),hsn:$('pf-hsn').value.trim(),mrp:+$('pf-mrp').value||0,cgst:+$('pf-cgst').value||0,sgst:+$('pf-sgst').value||0,location:$('pf-location').value.trim().toUpperCase().replace(/\s+/g,'')};
   if(!p.name){alert('Part Name required.');return;}
+  if(!editingPartId&&templatePart&&JSON.stringify(pfSnapshot())===JSON.stringify(templatePart.snap)){
+    alert('Nothing was changed from "'+templatePart.text+'", so no new part was added.\n\nChange a detail (name, brand, price, supplier…) to add it as a new part.\nTo add more stock of the same part, use Record Purchase. To correct the original, use Edit.');
+    return;
+  }
   if(!editingPartId){
     const dup=parts.find(x=>x.name.trim().toLowerCase()===p.name.toLowerCase()&&(x.brand||'').toLowerCase()===(p.brand||'').toLowerCase());
     if(dup&&!confirm(`"${pText(dup)}" is already in stock (${dup.sku}, ${dup.qty} pcs).\n\nOK = add it again as a separate part\nCancel = go back`))return;
   }
   if(editingPartId)parts=parts.map(x=>x.id===editingPartId?p:x);else parts.push(p);
-  closeModal('part-modal');renderAll();await saveParts();
+  closeModal('part-modal');templatePart=null;renderAll();await saveParts();
 }
 async function deletePart(id){
   if(!isOwner())return;
