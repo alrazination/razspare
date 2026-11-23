@@ -313,6 +313,94 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
 .sh-cartbar{position:fixed;left:0;right:0;bottom:0;padding:10px calc(14px + var(--sar)) calc(10px + var(--sab)) calc(14px + var(--sal));background:#060a12;border-top:1px solid var(--border2);display:none;align-items:center;justify-content:space-between;gap:12px;z-index:50;}
 .sh-line{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;}
 .sh-empty{text-align:center;color:var(--muted);padding:40px 10px;font-size:14px;}
+
+/* ── QUICK BILL (phone-first counter billing) ── */
+#qb{position:fixed;inset:0;z-index:150;background:var(--bg);display:none;flex-direction:column;padding:var(--sat) var(--sar) 0 var(--sal);}
+#qb.open{display:flex;}
+.qb-top{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);background:var(--surface);}
+.qb-top h2{font-size:22px;flex:1;}
+.qb-x{background:none;border:1px solid var(--border2);color:var(--text);font-size:16px;font-weight:700;border-radius:10px;padding:10px 14px;cursor:pointer;font-family:inherit;}
+.qb-body{flex:1;overflow-y:auto;padding:14px;max-width:720px;width:100%;margin:0 auto;}
+.qb-search{width:100%;font-size:20px!important;padding:16px 16px!important;border-radius:12px!important;border:2px solid var(--orange)!important;background:var(--card)!important;color:var(--text);outline:none;font-family:inherit;}
+.qb-hint{font-size:15px;color:var(--subtle);margin:10px 2px 6px;}
+.qb-res{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
+.qb-pick{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border2);border-radius:12px;padding:14px;cursor:pointer;text-align:left;color:var(--text);font-family:inherit;width:100%;}
+.qb-pick:active{background:var(--card2);border-color:var(--orange);}
+.qb-pick .nm{font-size:17px;font-weight:600;line-height:1.3;}
+.qb-pick .meta{font-size:14px;color:var(--subtle);margin-top:3px;}
+.qb-pick .pr{margin-left:auto;font-size:19px;font-weight:700;color:var(--orange);white-space:nowrap;}
+.qb-pick.out{opacity:.45;}
+.qb-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+.qb-chip{background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:22px;padding:10px 14px;font-size:15px;cursor:pointer;font-family:inherit;}
+.qb-sec{font-size:15px;font-weight:700;color:var(--subtle);margin:20px 2px 8px;}
+.qb-line{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border2);border-radius:12px;padding:12px;margin-bottom:8px;}
+.qb-line .nm{font-size:17px;font-weight:600;line-height:1.3;}
+.qb-line .sub{font-size:14px;color:var(--subtle);margin-top:2px;}
+.qb-step{display:flex;align-items:center;gap:6px;margin-left:auto;}
+.qb-step button{width:44px;height:44px;border-radius:10px;border:1px solid var(--border2);background:var(--surface);color:var(--text);font-size:24px;font-weight:700;cursor:pointer;}
+.qb-step .q{min-width:34px;text-align:center;font-size:20px;font-weight:700;}
+.qb-line .amt{min-width:84px;text-align:right;font-size:17px;font-weight:700;color:var(--orange);}
+.qb-line .del{background:none;border:none;color:var(--red);font-size:22px;cursor:pointer;padding:6px;}
+.qb-line input.qb-price{width:90px;font-size:16px;padding:8px;}
+.qb-field label{display:block;font-size:15px;color:var(--subtle);margin-bottom:6px;font-weight:600;}
+.qb-field input,.qb-field select{width:100%;font-size:18px!important;padding:13px 14px!important;border-radius:10px!important;}
+.qb-field{margin-bottom:12px;}
+.qb-known{font-size:15px;color:var(--green);margin:-4px 2px 10px;}
+.qb-more{margin-top:4px;}
+.qb-more summary{cursor:pointer;font-size:16px;color:var(--orange);font-weight:600;padding:10px 2px;}
+.qb-foot{border-top:1px solid var(--border);background:var(--surface);padding:12px 14px calc(12px + var(--sab));}
+.qb-foot-in{max-width:720px;margin:0 auto;}
+.qb-total{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
+.qb-total .l{font-size:16px;color:var(--subtle);}
+.qb-total .v{font-family:'Rajdhani',sans-serif;font-size:34px;font-weight:700;color:var(--orange);}
+.qb-pay{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.qb-pay button{padding:16px 6px;border-radius:12px;border:none;font-size:18px;font-weight:700;cursor:pointer;font-family:inherit;color:#fff;}
+.qb-pay .cash{background:#16a34a;}.qb-pay .upi{background:#2563eb;}.qb-pay .credit{background:#b45309;}
+.qb-pay button:disabled{opacity:.35;cursor:not-allowed;}
+.qb-done{text-align:center;padding:30px 10px;}
+.qb-done .tick{font-size:64px;}
+.qb-done h3{font-size:28px;margin:8px 0 4px;}
+.qb-done .big{font-family:'Rajdhani',sans-serif;font-size:42px;font-weight:700;color:var(--orange);}
+.qb-done .btns{display:flex;flex-direction:column;gap:10px;margin-top:24px;max-width:380px;margin-left:auto;margin-right:auto;}
+.qb-done .btns button{padding:16px;border-radius:12px;font-size:18px;font-weight:700;cursor:pointer;font-family:inherit;border:1px solid var(--border2);background:var(--card);color:var(--text);}
+.qb-done .btns .pri{background:var(--orange);border-color:var(--orange);color:#fff;}
+.qb-done .btns .wa{background:#16a34a;border-color:#16a34a;color:#fff;}
+#fab-invoice.pill{width:auto!important;padding:0 22px;border-radius:30px!important;font-size:19px!important;font-weight:700;font-family:'Rajdhani',sans-serif;height:58px!important;}
+
+/* ── RECEIPT PRINTING ── */
+#receipt-print{display:none;}
+@media print{
+  body.print-receipt>*:not(#receipt-print){display:none!important;}
+  body.print-receipt{background:#fff!important;display:block!important;}
+  body.print-receipt #receipt-print{display:block!important;color:#000;background:#fff;}
+}
+.rc{font-family:'Courier New',monospace;color:#000;line-height:1.35;}
+.rc.w58{width:48mm;font-size:10.5px;}.rc.w80{width:72mm;font-size:12px;}.rc.a4{width:180mm;font-size:14px;font-family:Arial,sans-serif;}
+.rc .c{text-align:center;}.rc .b{font-weight:700;}.rc .shop{font-size:1.45em;font-weight:700;}
+.rc hr{border:none;border-top:1px dashed #000;margin:5px 0;}
+.rc table{width:100%;border-collapse:collapse;min-width:0!important;font-size:1em;}
+.rc td{padding:1px 0!important;vertical-align:top;border:none!important;color:#000!important;background:#fff!important;}
+.rc td.r{text-align:right;white-space:nowrap;}
+.rc .tot td{font-weight:700;font-size:1.25em;}
+
+/* ── LARGE TEXT (easier to read) ── */
+body.big-text{font-size:17px;}
+body.big-text{--muted:#a3b1c6;--subtle:#cbd5e1;--border2:#3a4e70;}
+body.big-text .nav-item{font-size:17px;padding:12px 14px;}
+body.big-text .btn{font-size:16px!important;padding:12px 18px!important;}
+body.big-text .btn-sm{font-size:15px!important;padding:9px 13px!important;}
+body.big-text input,body.big-text select,body.big-text textarea{font-size:17px!important;padding:12px 13px!important;}
+body.big-text label,body.big-text .fg label{font-size:14px!important;letter-spacing:.02em!important;text-transform:none!important;}
+body.big-text table{font-size:15px!important;}
+body.big-text th{font-size:13px!important;}
+body.big-text .stat-label{font-size:14px!important;}
+body.big-text .stat-sub,body.big-text .hint-box{font-size:14px!important;}
+body.big-text .card-title{font-size:18px!important;}
+body.big-text .badge{font-size:13px!important;}
+body.big-text #mobile-tabbar .mtab{font-size:13px!important;}
+body.big-text #mobile-tabbar .mtab .mtab-icon{font-size:24px!important;}
+body.big-text .qb-pick .nm,body.big-text .qb-line .nm{font-size:19px;}
+body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
 </style>
 </head>
 <body>
@@ -415,8 +503,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
 
 <!-- DASHBOARD -->
 <div id="page-dashboard" class="page active">
-  <div class="ph"><div class="ph-left"><h1>Dashboard</h1><p id="dash-greeting">Welcome back</p></div>
-  <button class="btn btn-primary" onclick="navigate('billing')">＋ New Invoice</button></div>
+  <div class="ph"><div class="ph-left"><h1>Dashboard</h1><p id="dash-greeting">Welcome back</p></div><div class="btn-group no-print"><button class="btn btn-secondary" id="bigtext-btn" onclick="toggleBigText()">A+ Large text</button><button class="btn btn-primary" onclick="qbOpen()" style="font-size:16px;padding:12px 20px">＋ New Bill</button></div>
+  </div>
   <div class="stats-grid" id="dash-stats"></div>
   <div class="two-col" style="margin-bottom:18px">
     <div class="card"><div class="card-title">⚠ Low Stock</div><div id="dash-lowstock"></div></div>
@@ -487,7 +575,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
 <div id="page-billing" class="page">
   <div class="ph">
     <div class="ph-left"><h1>Billing</h1><p id="bill-sub">Loading…</p></div>
-    <button class="btn btn-primary" onclick="openBillModal()">＋ New Invoice</button>
+    <div class="btn-group"><button class="btn btn-primary" onclick="qbOpen()" style="font-size:16px;padding:12px 20px">＋ New Bill</button><button class="btn btn-secondary" onclick="openBillModal()">Full bill form</button></div>
   </div>
   <div id="drafts-wrap"></div>
   <div id="invoice-view-wrap"></div>
@@ -665,6 +753,24 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
       </div>
       <button class="btn btn-primary" onclick="openModal('set-emp-modal')">Set Credentials</button>
     </div>
+  </div>
+
+  <!-- Bill & printer -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title">🖨 Bill &amp; Printer</div>
+    <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:14px">What is printed at the top and bottom of every bill. On a phone, “Print bill” opens the phone’s print menu — choose your printer there. For a Bluetooth thermal printer, install its print app (for example <b>RawBT</b> on Android) and pick it in the print menu.</p>
+    <div class="frow">
+      <div class="fg"><label>Shop name on bill</label><input type="text" id="rc-shop"/></div>
+      <div class="fg"><label>Shop phone</label><input type="text" id="rc-phone"/></div>
+    </div>
+    <div class="fg"><label>Address</label><input type="text" id="rc-addr" placeholder="Shop address"/></div>
+    <div class="frow">
+      <div class="fg"><label>GSTIN (optional)</label><input type="text" id="rc-gst"/></div>
+      <div class="fg"><label>Paper size</label><select id="rc-paper"><option value="58">58 mm thermal (small)</option><option value="80">80 mm thermal</option><option value="a4">A4 / normal printer</option></select></div>
+    </div>
+    <div class="fg"><label>Message at bottom of bill</label><input type="text" id="rc-footer" placeholder="Thank you! Visit again."/></div>
+    <label style="display:flex;gap:8px;align-items:center;font-size:14px;margin:4px 0 14px;cursor:pointer"><input type="checkbox" id="rc-auto" style="width:auto"/> Open print automatically after every bill</label>
+    <div class="btn-group"><button class="btn btn-primary" onclick="saveReceiptSettings()">Save</button><button class="btn btn-secondary" onclick="testReceipt()">🖨 Print a test bill</button></div>
   </div>
 
   <!-- Online Shop (public catalog link) -->
@@ -1091,7 +1197,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
   <div class="mtab" data-mpage="wishlist" onclick="mobileNavigate('wishlist',this)"><span class="mtab-icon">📋</span>Orders<span class="mtab-badge" id="mwish-badge" style="display:none">0</span></div>
   <div class="mtab" id="mtab-more" data-mpage="more" onclick="toggleMoreMenu()"><span class="mtab-icon">⋯</span>More<span class="mtab-badge" id="mmore-badge" style="display:none">0</span></div>
 </div>
-<button id="fab-invoice" onclick="openBillModal()" title="New Invoice" style="display:none">＋</button>
+<button id="fab-invoice" class="pill" onclick="qbOpen()" title="New Bill" style="display:none">＋ New Bill</button>
 
 <!-- More menu (mobile) -->
 <div class="modal-overlay" id="mobile-more-modal">
@@ -1107,12 +1213,53 @@ input:focus,select:focus,textarea:focus{border-color:var(--orange);}
       <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-reports" onclick="closeModal('mobile-more-modal');mobileNavigate('reports')">📊 Reports</button>
       <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-insights" onclick="closeModal('mobile-more-modal');mobileNavigate('insights')">🧠 Insights</button>
       <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-settings" onclick="closeModal('mobile-more-modal');mobileNavigate('settings')">⚙️ Settings</button>
+      <button class="btn btn-secondary" style="justify-content:flex-start" onclick="toggleBigText()">🔠 Large text on / off</button>
       <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-sheet" onclick="window.open($('sheet-link').href,'_blank')">📊 Open Google Sheet</button>
       <button class="btn btn-danger" style="justify-content:flex-start" onclick="closeModal('mobile-more-modal');doLogout()">🚪 Sign Out</button>
     </div>
     <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('mobile-more-modal')">Close</button></div>
   </div>
 </div>
+
+<!-- ═══ QUICK BILL ═══ -->
+<div id="qb">
+  <div class="qb-top"><h2>🧾 New Bill</h2><button class="qb-x" onclick="qbClose()">✕ Close</button></div>
+  <div class="qb-body" id="qb-body">
+    <div id="qb-form">
+      <input type="search" id="qb-search" class="qb-search" placeholder="🔍 Type part name, brand or SKU" oninput="qbSearch()" autocomplete="off" enterkeyhint="search"/>
+      <div id="qb-results" class="qb-res"></div>
+      <div id="qb-popular-wrap"><div class="qb-hint">Most sold — tap to add:</div><div id="qb-popular" class="qb-chips"></div></div>
+
+      <div class="qb-sec" id="qb-items-title" style="display:none">On this bill</div>
+      <div id="qb-items"></div>
+
+      <div class="qb-sec">Customer <span style="font-weight:400">(optional)</span></div>
+      <div class="qb-field"><label for="qb-phone">Mobile number</label><input type="tel" id="qb-phone" inputmode="numeric" placeholder="10-digit mobile" oninput="qbPhone()" autocomplete="off"/></div>
+      <div id="qb-known" class="qb-known" style="display:none"></div>
+      <div class="qb-field"><label for="qb-name">Name</label><input type="text" id="qb-name" placeholder="Leave empty for walk-in" oninput="qbRecalc()" list="cust-list" autocomplete="off"/></div>
+      <div id="qb-loy" class="hint-box" style="display:none;border-left-color:var(--yellow);font-size:15px"></div>
+
+      <details class="qb-more" id="qb-more">
+        <summary>➕ Discount</summary>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <div class="qb-field" style="flex:1"><label for="qb-disc">Discount</label><input type="number" id="qb-disc" inputmode="decimal" min="0" placeholder="0" oninput="qbRecalc()"/></div>
+          <div class="qb-field" style="width:120px"><label for="qb-disc-type">Type</label><select id="qb-disc-type" onchange="qbRecalc()"><option value="flat">₹</option><option value="pct">%</option></select></div>
+        </div>
+      </details>
+      <div style="margin:14px 2px 30px;font-size:15px"><a href="#" onclick="qbFullForm();return false" style="color:var(--subtle)">Need referral or a different date? Open the full bill form →</a></div>
+    </div>
+    <div id="qb-doneview" style="display:none"></div>
+  </div>
+  <div class="qb-foot" id="qb-foot"><div class="qb-foot-in">
+    <div class="qb-total"><span class="l" id="qb-count">No items yet</span><span class="v" id="qb-total">₹0.00</span></div>
+    <div class="qb-pay">
+      <button class="cash" id="qb-cash" onclick="qbSave('cash')" disabled>💵 Cash</button>
+      <button class="upi" id="qb-upi" onclick="qbSave('upi')" disabled>📱 UPI</button>
+      <button class="credit" id="qb-credit" onclick="qbSave('credit')" disabled>📒 Udhaar</button>
+    </div>
+  </div></div>
+</div>
+<div id="receipt-print"></div>
 
 <script>
 // ═══ CONSTANTS ═══
@@ -1122,7 +1269,7 @@ const SH={PARTS:'Parts',INV:'Invoices',PURCH:'Purchases',WISH:'Wishlist',CFG:'Co
 const SHOP_NAME='AutoParts Spares Pro'; // shown on customer links
 const HDR={
   PARTS:['id','sku','name','category','qty','minQty','buyPrice','sellPrice','supplier','hsn','mrp','cgst','sgst','location','brand'],
-  INV:['id','customer','date','items_json','subtotal','discountType','discountVal','cgst','sgst','total','paid','customerId','referrerId','phone','address','loyaltyPts','loyaltyUsed','loyaltyDisc'],
+  INV:['id','customer','date','items_json','subtotal','discountType','discountVal','cgst','sgst','total','paid','customerId','referrerId','phone','address','loyaltyPts','loyaltyUsed','loyaltyDisc','payMode','by'],
   PURCH:['id','date','partId','partName','sku','supplier','qty','unitCost','total','notes','brand'],
   WISH:['id','name','sku','category','qtyNeeded','customer','priority','status','notes','createdAt'],
   CFG:['key','value'],
@@ -1270,7 +1417,7 @@ function mobileNavigate(page,el){
     if(match)match.classList.add('active');
   }
   // Toggle FAB — only show on dashboard/billing for quick invoice creation
-  $('fab-invoice').style.display=['dashboard','billing'].includes(page)?'flex':'none';
+  $('fab-invoice').style.display=['dashboard','billing','inventory'].includes(page)?'flex':'none';
 }
 function toggleMoreMenu(){openModal('mobile-more-modal');}
 
@@ -1317,7 +1464,7 @@ function loadSettingsDisplay(){
     $('shop-sheet-link').href=url;
   }
   const al=$('autologin-toggle');if(al)al.checked=autoLoginOn();
-  loadShopSettings();
+  loadShopSettings();loadReceiptSettings();
 }
 
 // ═══ GOOGLE AUTH ═══
@@ -1427,30 +1574,115 @@ async function clearRewrite(sh,hdr,rows){
 }
 
 // ═══ DATA LOAD / SAVE ═══
+// Each tab: how to turn sheet rows into objects (parse), objects back into rows (row),
+// and which columns are running counts that must be merged as +/- changes (delta) — e.g. stock qty.
+const TABS={
+  PARTS:{get:()=>parts,set:v=>{parts=v;},delta:[4],
+    parse:rows=>rows.slice(1).map(r=>({id:r[0]||uid(),sku:r[1]||'',name:r[2]||'',category:r[3]||'Other',qty:+r[4]||0,minQty:+r[5]||0,buyPrice:+r[6]||0,sellPrice:+r[7]||0,supplier:r[8]||'',hsn:r[9]||'',mrp:+r[10]||0,cgst:+r[11]||0,sgst:+r[12]||0,location:r[13]||'',brand:r[14]||''})),
+    row:p=>[p.id,p.sku,p.name,p.category,p.qty,p.minQty,p.buyPrice,p.sellPrice,p.supplier||'',p.hsn||'',p.mrp||0,p.cgst||0,p.sgst||0,p.location||'',p.brand||'']},
+  INV:{get:()=>invoices,set:v=>{invoices=v;},newFirst:true,
+    parse:rows=>rows.slice(1).map(r=>{let items=[];try{items=JSON.parse(r[3]||'[]');}catch(e){}return{id:r[0]||uid(),customer:r[1]||'',date:r[2]||'',items,subtotal:+r[4]||0,discountType:r[5]||'none',discountVal:+r[6]||0,cgst:+r[7]||0,sgst:+r[8]||0,total:+r[9]||0,paid:r[10]==='TRUE'||r[10]==='true'||r[10]===true,customerId:r[11]||'',referrerId:r[12]||'',phone:r[13]||'',address:r[14]||'',lpts:+r[15]||0,lused:+r[16]||0,ldisc:+r[17]||0,payMode:r[18]||'',by:r[19]||''};}),
+    row:i=>[i.id,i.customer,i.date,JSON.stringify(i.items),i.subtotal,i.discountType,i.discountVal,i.cgst||0,i.sgst||0,i.total,String(i.paid).toUpperCase(),i.customerId||'',i.referrerId||'',i.phone||'',i.address||'',i.lpts||0,i.lused||0,i.ldisc||0,i.payMode||'',i.by||'']},
+  PURCH:{get:()=>purchases,set:v=>{purchases=v;},
+    parse:rows=>rows.slice(1).map(r=>({id:r[0]||uid(),date:r[1]||'',partId:r[2]||'',partName:r[3]||'',sku:r[4]||'',supplier:r[5]||'',qty:+r[6]||0,unitCost:+r[7]||0,total:+r[8]||0,notes:r[9]||'',brand:r[10]||''})),
+    row:p=>[p.id,p.date,p.partId,p.partName,p.sku,p.supplier,p.qty,p.unitCost,p.total,p.notes,p.brand||'']},
+  WISH:{get:()=>wishlist,set:v=>{wishlist=v;},
+    parse:rows=>rows.slice(1).map(r=>({id:r[0]||uid(),name:r[1]||'',sku:r[2]||'',category:r[3]||'Other',qtyNeeded:+r[4]||1,customer:r[5]||'',priority:r[6]||'medium',status:r[7]||'pending',notes:r[8]||'',createdAt:r[9]||today()})),
+    row:w=>[w.id,w.name,w.sku,w.category,w.qtyNeeded,w.customer,w.priority,w.status,w.notes,w.createdAt]},
+  CUST:{get:()=>customers,set:v=>{customers=v;},
+    parse:rows=>rows.slice(1).filter(r=>r[0]).map(r=>({id:r[0],name:r[1]||'',phone:r[2]||'',pct:+r[3]||0,code:String(r[4]||'').toUpperCase(),notes:r[5]||'',createdAt:r[6]||'',address:r[7]||''})),
+    row:c=>[c.id,c.name,c.phone||'',c.pct,c.code,c.notes||'',c.createdAt||'',c.address||'']},
+  PAY:{get:()=>payouts,set:v=>{payouts=v;},
+    parse:rows=>rows.slice(1).filter(r=>r[0]).map(r=>({id:r[0],customerId:r[1]||'',date:r[2]||'',amount:+r[3]||0,note:r[4]||''})),
+    row:p=>[p.id,p.customerId,p.date,p.amount,p.note||'']},
+  SUPP:{get:()=>suppliers,set:v=>{suppliers=v;},
+    parse:rows=>rows.slice(1).filter(r=>r[0]).map(r=>({id:r[0],name:r[1]||'',phone:r[2]||'',address:r[3]||'',createdAt:r[4]||''})),
+    row:s=>[s.id,s.name,s.phone||'',s.address||'',s.createdAt||'']},
+  REQ:{get:()=>requests,set:v=>{requests=v;},
+    parse:rows=>rows.slice(1).filter(r=>r[0]).map(r=>({id:r[0],part:r[1]||'',qty:+r[2]||1,name:r[3]||'',phone:r[4]||'',date:r[5]||'',note:r[6]||'',status:r[7]||'open'})),
+    row:r=>[r.id,r.part,r.qty,r.name||'',r.phone||'',r.date||'',r.note||'',r.status||'open']},
+  LADJ:{get:()=>ladj,set:v=>{ladj=v;},
+    parse:rows=>rows.slice(1).filter(r=>r[0]).map(r=>({id:r[0],phone:r[1]||'',name:r[2]||'',date:r[3]||'',points:+r[4]||0,note:r[5]||''})),
+    row:a=>[a.id,a.phone,a.name||'',a.date||'',a.points,a.note||'']}
+};
+
+// ── Safe saving when several phones use the app at once ──
+// Old way: every save rewrote the whole tab from THIS phone's copy, so a bill or stock change
+// made on another phone in the meantime was silently erased.
+// New way: before writing, read the tab again and merge, row by row and cell by cell:
+//   • rows/cells only this phone changed → this phone's value
+//   • rows/cells only another phone changed → the other phone's value is kept
+//   • stock qty → both changes are added up (2 sold here + 3 sold there = 5 fewer)
+const BASE={};   // tab name → Map(id → row) exactly as last read from / written to the sheet
+const cellS=v=>v==null?'':String(v);
+const normRow=(r,n)=>{const o=[];for(let i=0;i<n;i++)o.push(cellS(r[i]));o[0]=sid(o[0]);return o;};
+const cellEq=(a,b)=>a===b||(a!==''&&b!==''&&!isNaN(a)&&!isNaN(b)&&Math.abs(+a - +b)<0.005);
+const rowEq=(a,b)=>a.length===b.length&&a.every((v,i)=>cellEq(v,b[i]));
+function rowMap(rows,n){const m=new Map();rows.forEach(r=>{const x=normRow(r,n);if(x[0]&&!m.has(x[0]))m.set(x[0],x);});return m;}
+function setBase(sh,dataRows,n){BASE[sh]=rowMap(dataRows,n);}
+function mergeTab(base,local,remote,localOrder,delta,newFirst){
+  const out=[];
+  const one=id=>{
+    const b=base.get(id),l=local.get(id),r=remote.get(id);
+    if(l&&!b)return r?l:l;                                  // added on this phone
+    if(l&&b){
+      if(!r)return rowEq(l,b)?null:l;                       // deleted on another phone (kept only if we edited it)
+      return l.map((lv,i)=>{
+        if(delta.includes(i))return String(Math.round(((+r[i]||0)+(+lv||0)-(+b[i]||0))*1000)/1000);
+        return cellEq(lv,b[i])?r[i]:lv;
+      });
+    }
+    if(b&&!l){if(!r)return null;return rowEq(r,b)?null:r;}  // deleted on this phone (kept if another phone edited it)
+    return r;                                               // added on another phone
+  };
+  const remoteOnly=[...remote.keys()].filter(id=>!local.has(id)&&!base.has(id)).map(one);
+  const mine=localOrder.map(one).filter(Boolean);
+  const gone=[...base.keys()].filter(id=>!local.has(id)).map(one).filter(Boolean);  // deleted here but edited elsewhere
+  return newFirst?[...remoteOnly,...mine,...gone]:[...mine,...gone,...remoteOnly];
+}
+// One save at a time on this phone, so two saves can never interleave.
+let _saveChain=Promise.resolve();
+function queued(fn){const p=_saveChain.then(fn,fn);_saveChain=p.catch(()=>{});return p;}
+async function readSheetExact(sh){const r=await shReq(`/${spreadsheetId}/values/${encodeURIComponent(sh+'!A:Z')}?valueRenderOption=UNFORMATTED_VALUE`);return r.values||[];}
+function saveTab(key){return queued(async()=>{
+  const sh=SH[key],hdr=HDR[key],n=hdr.length,T=TABS[key];
+  showSync('Saving…',false);
+  const objs=T.get();
+  const localRows=objs.map(o=>normRow(T.row(o),n));
+  const local=new Map();localRows.forEach(r=>{if(r[0])local.set(r[0],r);});
+  const fresh=await readSheetExact(sh);                     // if this fails we stop: never write blind
+  const remote=rowMap(fresh.slice(1),n);
+  const merged=mergeTab(BASE[sh]||new Map(),local,remote,localRows.map(r=>r[0]).filter(Boolean),T.delta||[],!!T.newFirst);
+  await clearRewrite(sh,hdr,merged);
+  BASE[sh]=rowMap(merged,n);
+  // Bring in anything another phone changed, keeping this phone's objects where nothing changed.
+  const byId=new Map(objs.map(o=>[sid(o.id),o]));
+  let changed=merged.length!==objs.length;
+  const next=merged.map(r=>{const l=local.get(r[0]);const o=byId.get(r[0]);if(o&&l&&rowEq(l,r))return o;changed=true;return T.parse([hdr,r])[0];});
+  T.set(next);
+  if(changed){cleanIds();try{renderAll();}catch(e){}}
+  showSync('Saved ✓');
+});}
+
 async function loadAll(){
   const[pr,ir,pur,wr,cr,pyr,sur,rqr,dfr,cfr,orr,lar]=await Promise.all([readSheet(SH.PARTS),readSheet(SH.INV),readSheet(SH.PURCH),readSheet(SH.WISH),readSheet(SH.CUST),readSheet(SH.PAY),readSheet(SH.SUPP),readSheet(SH.REQ),readSheet(SH.DRAFT),readSheet(SH.CFG),readSheet(SH.ORD),readSheet(SH.LADJ)]);
-  parts=pr.slice(1).map(r=>({id:r[0]||uid(),sku:r[1]||'',name:r[2]||'',category:r[3]||'Other',qty:+r[4]||0,minQty:+r[5]||0,buyPrice:+r[6]||0,sellPrice:+r[7]||0,supplier:r[8]||'',hsn:r[9]||'',mrp:+r[10]||0,cgst:+r[11]||0,sgst:+r[12]||0,location:r[13]||'',brand:r[14]||''}));
-  invoices=ir.slice(1).map(r=>({id:r[0]||uid(),customer:r[1]||'',date:r[2]||'',items:JSON.parse(r[3]||'[]'),subtotal:+r[4]||0,discountType:r[5]||'none',discountVal:+r[6]||0,cgst:+r[7]||0,sgst:+r[8]||0,total:+r[9]||0,paid:r[10]==='TRUE'||r[10]==='true',customerId:r[11]||'',referrerId:r[12]||'',phone:r[13]||'',address:r[14]||'',lpts:+r[15]||0,lused:+r[16]||0,ldisc:+r[17]||0}));
-  purchases=pur.slice(1).map(r=>({id:r[0]||uid(),date:r[1]||'',partId:r[2]||'',partName:r[3]||'',sku:r[4]||'',supplier:r[5]||'',qty:+r[6]||0,unitCost:+r[7]||0,total:+r[8]||0,notes:r[9]||'',brand:r[10]||''}));
-  wishlist=wr.slice(1).map(r=>({id:r[0]||uid(),name:r[1]||'',sku:r[2]||'',category:r[3]||'Other',qtyNeeded:+r[4]||1,customer:r[5]||'',priority:r[6]||'medium',status:r[7]||'pending',notes:r[8]||'',createdAt:r[9]||today()}));
-  customers=cr.slice(1).filter(r=>r[0]).map(r=>({id:r[0],name:r[1]||'',phone:r[2]||'',pct:+r[3]||0,code:(r[4]||'').toUpperCase(),notes:r[5]||'',createdAt:r[6]||'',address:r[7]||''}));
-  payouts=pyr.slice(1).filter(r=>r[0]).map(r=>({id:r[0],customerId:r[1]||'',date:r[2]||'',amount:+r[3]||0,note:r[4]||''}));
+  const raw={PARTS:pr,INV:ir,PURCH:pur,WISH:wr,CUST:cr,PAY:pyr,SUPP:sur,REQ:rqr,LADJ:lar};
+  for(const k in TABS){TABS[k].set(TABS[k].parse(raw[k]));setBase(SH[k],raw[k].slice(1),HDR[k].length);}
   drafts=mapDrafts(dfr);orders=mapOrders(orr);
-  ladj=lar.slice(1).filter(r=>r[0]).map(r=>({id:r[0],phone:r[1]||'',name:r[2]||'',date:r[3]||'',points:+r[4]||0,note:r[5]||''}));
   config={};(cfr||[]).slice(1).forEach(r=>{if(r[0])config[r[0]]=r[1]??'';});
-  suppliers=sur.slice(1).filter(r=>r[0]).map(r=>({id:r[0],name:r[1]||'',phone:r[2]||'',address:r[3]||'',createdAt:r[4]||''}));
-  requests=rqr.slice(1).filter(r=>r[0]).map(r=>({id:r[0],part:r[1]||'',qty:+r[2]||1,name:r[3]||'',phone:r[4]||'',date:r[5]||'',note:r[6]||'',status:r[7]||'open'}));
+  setBase(SH.CFG,(cfr||[]).slice(1),2);
   cleanIds();
 }
-async function saveParts(){showSync('Saving…',false);await clearRewrite(SH.PARTS,HDR.PARTS,parts.map(p=>[p.id,p.sku,p.name,p.category,p.qty,p.minQty,p.buyPrice,p.sellPrice,p.supplier||'',p.hsn||'',p.mrp||0,p.cgst||0,p.sgst||0,p.location||'',p.brand||'']));showSync('Saved ✓');}
-async function saveInvoices(){showSync('Saving…',false);await clearRewrite(SH.INV,HDR.INV,invoices.map(i=>[i.id,i.customer,i.date,JSON.stringify(i.items),i.subtotal,i.discountType,i.discountVal,i.cgst||0,i.sgst||0,i.total,String(i.paid).toUpperCase(),i.customerId||'',i.referrerId||'',i.phone||'',i.address||'',i.lpts||0,i.lused||0,i.ldisc||0]));await saveLoyaltySummary();showSync('Saved ✓');}
-async function savePurchases(){showSync('Saving…',false);await clearRewrite(SH.PURCH,HDR.PURCH,purchases.map(p=>[p.id,p.date,p.partId,p.partName,p.sku,p.supplier,p.qty,p.unitCost,p.total,p.notes,p.brand||'']));showSync('Saved ✓');}
-async function saveWishlist(){showSync('Saving…',false);await clearRewrite(SH.WISH,HDR.WISH,wishlist.map(w=>[w.id,w.name,w.sku,w.category,w.qtyNeeded,w.customer,w.priority,w.status,w.notes,w.createdAt]));showSync('Saved ✓');}
+// Base for the merge must hold the same ids the app uses (cleanIds may tidy them), so loadAll seeds it from the sheet rows.
+async function saveParts(){await saveTab('PARTS');}
+async function saveInvoices(){await saveTab('INV');await saveLoyaltySummary();}
+async function savePurchases(){await saveTab('PURCH');}
+async function saveWishlist(){await saveTab('WISH');}
 
-async function saveCustomers(){showSync('Saving…',false);await clearRewrite(SH.CUST,HDR.CUST,customers.map(c=>[c.id,c.name,c.phone||'',c.pct,c.code,c.notes||'',c.createdAt||'',c.address||'']));showSync('Saved ✓');}
-async function savePayouts(){showSync('Saving…',false);await clearRewrite(SH.PAY,HDR.PAY,payouts.map(p=>[p.id,p.customerId,p.date,p.amount,p.note||'']));showSync('Saved ✓');}
+async function saveCustomers(){await saveTab('CUST');}
+async function savePayouts(){await saveTab('PAY');}
 
-async function saveLadj(){showSync('Saving…',false);await clearRewrite(SH.LADJ,HDR.LADJ,ladj.map(a=>[a.id,a.phone,a.name||'',a.date||'',a.points,a.note||'']));await saveLoyaltySummary();showSync('Saved ✓');}
+async function saveLadj(){await saveTab('LADJ');await saveLoyaltySummary();}
 // Read-only summary of every member's points, so balances are visible in the Google Sheet
 async function saveLoyaltySummary(){
   try{
@@ -1458,8 +1690,8 @@ async function saveLoyaltySummary(){
     await clearRewrite(SH.LBAL,HDR.LBAL,rows);
   }catch(e){console.warn('Loyalty summary not saved',e);}
 }
-async function saveSuppliers(){showSync('Saving…',false);await clearRewrite(SH.SUPP,HDR.SUPP,suppliers.map(s=>[s.id,s.name,s.phone||'',s.address||'',s.createdAt||'']));showSync('Saved ✓');}
-async function saveRequests(){showSync('Saving…',false);await clearRewrite(SH.REQ,HDR.REQ,requests.map(r=>[r.id,r.part,r.qty,r.name||'',r.phone||'',r.date||'',r.note||'',r.status||'open']));showSync('Saved ✓');}
+async function saveSuppliers(){await saveTab('SUPP');}
+async function saveRequests(){await saveTab('REQ');}
 
 // ═══ NAVIGATION ═══
 function navigate(page){
@@ -1480,11 +1712,16 @@ function renderAll(){
   if(isOwner()){renderSuppliers();renderPartners();renderLoyalty();renderReports();renderInsights();}
 }
 function lowStockParts(){return parts.filter(p=>p.qty<=p.minQty);}
+// Cost of what was sold: buy price saved on the bill line (bills made from now on),
+// or the part's current buy price for older bills that didn't save it.
+function itemCost(item){if(item.cost!=null&&item.cost!=='')return +item.cost||0;const p=parts.find(x=>x.id===item.partId);return p?(+p.buyPrice||0):0;}
+// Profit on a bill = what the customer paid, minus GST (that goes to the government), minus cost of the parts.
+function invProfit(inv){const net=(inv.total||0)-(inv.cgst||0)-(inv.sgst||0);return net-inv.items.reduce((s,i)=>s+itemCost(i)*(+i.qty||0),0);}
 function partSalesMap(){
   const m={},pb={};parts.forEach(p=>pb[p.id]=p.brand||'');
   invoices.forEach(inv=>inv.items.forEach(item=>{
     if(!m[item.partId])m[item.partId]={qty:0,rev:0,name:item.name,brand:item.brand||pb[item.partId]||''};
-    m[item.partId].qty+=item.qty;m[item.partId].rev+=item.price*item.qty;
+    m[item.partId].qty+=item.qty;m[item.partId].rev+=item.price*item.qty;m[item.partId].cost=(m[item.partId].cost||0)+itemCost(item)*item.qty;
   }));
   return m;
 }
@@ -1776,7 +2013,7 @@ function addToBill(partId){
   const p=parts.find(x=>x.id===partId);
   const ex=billItems.find(i=>i.partId===partId);
   if(ex)billItems=billItems.map(i=>i.partId===partId?{...i,qty:Math.min(i.qty+1,p.qty)}:i);
-  else billItems.push({partId,sku:p.sku,name:p.name,brand:p.brand||'',price:p.sellPrice,qty:1,maxQty:p.qty});
+  else billItems.push({partId,sku:p.sku,name:p.name,brand:p.brand||'',price:p.sellPrice,cost:p.buyPrice||0,qty:1,maxQty:p.qty});
   $('bf-part-search').value='';$('bill-part-dropdown').classList.remove('open');renderBillItems();
 }
 function renderBillItems(){
@@ -1831,7 +2068,7 @@ function calcBillTotal(){
   updateLoyaltyPreview(total,cgstAmt,sgstAmt,lpts,ld);
   return{subtotal,disc,dtype,dval,cgst:cgstAmt,sgst:sgstAmt,total,lpts,ld};
 }
-async function saveInvoice(paid){
+async function saveInvoice(paid,opt={}){
   const customer=$('bf-customer').value.trim();if(!customer||!billItems.length){alert('Enter customer name and add at least one part.');return;}
   const cu=resolvePartnerByName(customer);
   const refRaw=$('bf-ref').value.trim();const rf=refRaw?resolvePartnerRef(refRaw):null;
@@ -1840,12 +2077,13 @@ async function saveInvoice(paid){
   const{subtotal,disc,dtype,dval,cgst,sgst,total,lpts,ld}=calcBillTotal();
   const lst=loyaltyState();
   const learn=lst.eligible?loyaltyEarn(Math.max(0,total-cgst-sgst)):0;
-  const inv={id:uid(),customer,date:$('bf-date').value||today(),items:billItems.map(i=>({...i})),subtotal,discountType:dtype,discountVal:dval,cgst,sgst,total,paid,customerId:cu?cu.id:'',referrerId:rf?rf.id:'',phone:$('bf-phone').value.trim(),address:$('bf-addr').value.trim(),lpts:learn,lused:lpts,ldisc:ld};
+  const inv={id:uid(),customer,date:$('bf-date').value||today(),items:billItems.map(i=>({...i,cost:i.cost!=null?i.cost:(parts.find(x=>x.id===i.partId)?.buyPrice||0)})),subtotal,discountType:dtype,discountVal:dval,cgst,sgst,total,paid,customerId:cu?cu.id:'',referrerId:rf?rf.id:'',phone:$('bf-phone').value.trim(),address:$('bf-addr').value.trim(),lpts:learn,lused:lpts,ldisc:ld,payMode:opt.payMode||'',by:(isOwner()?getCredentials().owner.user:getCredentials().employee.user)||''};
   invoices.unshift(inv);
   parts=parts.map(p=>{const item=billItems.find(i=>i.partId===p.id);return item?{...p,qty:p.qty-item.qty}:p;});
   const wasDraft=editingDraftId;editingDraftId=null;
   if(wasDraft)drafts=drafts.filter(d=>d.id!==wasDraft);
-  closeModal('bill-modal');renderAll();navigate('billing');viewInvoice(inv.id);
+  closeModal('bill-modal');renderAll();
+  if(opt.quick)qbDone(inv);else{navigate('billing');viewInvoice(inv.id);}
   await Promise.all([saveInvoices(),saveParts(),...(wasDraft?[removeDraftRemote(wasDraft)]:[])]);
 }
 function viewInvoice(id){
@@ -1861,7 +2099,7 @@ function viewInvoice(id){
         </div>
         <div style="text-align:right">
           <div style="font-family:'Rajdhani',sans-serif;font-size:30px;font-weight:700;color:var(--orange)">${fmt(inv.total)}</div>${disc?`<div style="font-size:12px;color:var(--green)">Discount: -${inv.discountType==='pct'?inv.discountVal+'%':fmt(inv.discountVal)}</div>`:''}
-          <span class="badge ${inv.paid?'badge-green':'badge-yellow'}" style="margin-top:6px">${inv.paid?'Paid':'Pending'}</span>
+          <span class="badge ${inv.paid?'badge-green':'badge-yellow'}" style="margin-top:6px">${inv.paid?'Paid':(inv.payMode==='credit'?'Udhaar':'Pending')}${inv.paid&&inv.payMode?' · '+({cash:'Cash',upi:'UPI',credit:'Udhaar'}[inv.payMode]||''):''}</span>
         </div>
       </div>
       <table><thead><tr><th>Part</th><th>HSN</th><th>SKU</th><th>MRP</th><th>Qty</th><th>Unit ₹</th><th>CGST%</th><th>SGST%</th><th>Subtotal</th></tr></thead>
@@ -1877,7 +2115,9 @@ function viewInvoice(id){
         ${inv.lpts>0?`<div style="margin-top:8px;font-size:12px;color:var(--yellow)">⭐ ${inv.lpts} loyalty point${inv.lpts===1?'':'s'} ${inv.paid?'earned':'will be added once paid'}</div>`:''}
       </div>
       <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
-        <button class="btn btn-secondary" onclick="window.print()">🖨 Print</button>
+        <button class="btn btn-primary" onclick="printReceipt('${inv.id}')">🖨 Print bill</button>
+        ${validPhone(inv.phone)?`<button class="btn btn-success" onclick="waBill('${inv.id}')">💬 WhatsApp</button>`:''}
+        <button class="btn btn-secondary" onclick="window.print()">Print full page</button>
         <button class="btn btn-secondary" onclick="$('invoice-view-wrap').innerHTML=''">Close</button>
       </div>
     </div>`;
@@ -1901,10 +2141,11 @@ function renderReports(){
   const paidRev=invoices.filter(i=>i.paid).reduce((s,i)=>s+i.total,0);
   const totalDisc=invoices.reduce((s,i)=>{if(i.discountType==='pct')return s+(i.subtotal||i.total)*(i.discountVal/100);if(i.discountType==='flat')return s+i.discountVal;return s;},0)+invoices.reduce((s,i)=>s+(i.ldisc||0),0);
   const totalPurch=purchases.reduce((s,p)=>s+p.total,0);
-  const grossProfit=totalRev-totalPurch;
+  const netSales=invoices.reduce((s,i)=>s+(i.total||0)-(i.cgst||0)-(i.sgst||0),0);   // sales without GST
+  const grossProfit=invoices.reduce((s,i)=>s+invProfit(i),0);                      // sales − cost of parts sold
   $('rep-stats').innerHTML=[
     {label:'Revenue Collected',val:fmt(paidRev),sub:'paid invoices only',color:'var(--orange)'},
-    {label:'Gross Profit',val:fmt(grossProfit),sub:`${totalRev>0?((grossProfit/totalRev)*100).toFixed(1):0}% margin`,color:'var(--green)'},
+    {label:'Gross Profit',val:fmt(grossProfit),sub:`${netSales>0?((grossProfit/netSales)*100).toFixed(1):0}% margin · sales minus cost of parts sold`,color:'var(--green)'},
     {label:'Total Discounts',val:fmt(totalDisc),sub:'given to customers',color:'var(--yellow)'},
     {label:'Outstanding',val:fmt(totalRev-paidRev),sub:invoices.filter(i=>!i.paid).length+' unpaid',color:'var(--red)'},
   ].map(s=>`<div class="stat-card" style="--accent:${s.color}"><div class="stat-label">${s.label}</div><div class="stat-val" style="color:${s.color}">${s.val}</div><div class="stat-sub">${s.sub}</div></div>`).join('');
@@ -2842,7 +3083,20 @@ const GAS_OK=u=>/^https:\/\/script\.google(usercontent)?\.com\//.test(u||'');
 const cfgGet=(k,d='')=>(config[k]??d);
 const waNum=ph=>{let n=String(ph||'').replace(/\D/g,'').replace(/^0+/,'');return n.length===10?'91'+n:n;};
 const cleanText=s=>String(s||'').replace(/[<>&"'`\\]/g,'').replace(/[\u0000-\u001f]/g,' ').trim();
-async function saveConfig(){showSync('Saving…',false);await clearRewrite(SH.CFG,HDR.CFG,Object.entries(config));showSync('Saved ✓');}
+// Settings: only the keys changed on this phone are written; other phones' setting changes are kept.
+function saveConfig(){return queued(async()=>{
+  showSync('Saving…',false);
+  const base=BASE[SH.CFG]||new Map();
+  const remote=rowMap((await readSheetExact(SH.CFG)).slice(1),2);
+  const out=new Map();remote.forEach((r,k)=>out.set(k,r[1]));
+  Object.entries(config).forEach(([k,v])=>{const b=base.get(sid(k));if(!b||!cellEq(cellS(v),b[1]))out.set(k,cellS(v));});
+  base.forEach((b,k)=>{if(!(k in config)&&remote.has(k)&&cellEq(remote.get(k)[1],b[1]))out.delete(k);});
+  const rows=[...out.entries()];
+  await clearRewrite(SH.CFG,HDR.CFG,rows);
+  BASE[SH.CFG]=rowMap(rows,2);
+  rows.forEach(([k,v])=>{config[k]=v;});
+  showSync('Saved ✓');
+});}
 
 function loadShopSettings(){
   if(!$('shop-url'))return;
@@ -3235,6 +3489,224 @@ window.addEventListener('online',()=>showSync('Back online ✓'));
 // ═══ CUSTOMER PORTAL BOOT (must be last) ═══
 if(portalRoute())bootPortal();else if(shopRoute())bootShop();
 else if(autoLoginOn())$('login-screen').style.display='none';   // no flash of the login page while skipping it
+
+// ═══ QUICK BILL — phone-first counter billing ═══
+// Uses the same bill engine as the full form (same GST, discount, loyalty and stock rules):
+// it fills the full form's fields behind the scenes and saves through saveInvoice().
+let _qbLast=null;
+function qbOpen(){
+  if(!spreadsheetId){alert('Still connecting to Google Sheets — please wait a moment.');return;}
+  editingDraftId=null;billItems=[];fillPartnerLists();
+  ['bf-customer','bf-ref','bf-phone','bf-addr','bf-lredeem','bf-disc-val','bf-part-search'].forEach(id=>{if($(id))$(id).value='';});
+  $('bf-disc-type').value='none';$('bf-date').value=today();_autoFilledFor=null;
+  ['qb-search','qb-phone','qb-name','qb-disc'].forEach(id=>$(id).value='');$('qb-disc-type').value='flat';$('qb-more').open=false;
+  $('qb-form').style.display='block';$('qb-doneview').style.display='none';$('qb-foot').style.display='block';
+  $('qb-known').style.display='none';$('qb-results').innerHTML='';
+  qbPopular();qbRender();$('qb').classList.add('open');
+  setTimeout(()=>$('qb-search').focus(),80);
+}
+function qbClose(){
+  if(billItems.length&&$('qb-form').style.display!=='none'&&!confirm('Close this bill? The items you added will be removed.'))return;
+  billItems=[];$('qb').classList.remove('open');
+}
+function qbPartCard(p){
+  const out=p.qty<=0;
+  return `<button type="button" class="qb-pick${out?' out':''}" onclick="${out?"alert('Out of stock')":`qbAdd('${p.id}')`}">
+    <div style="min-width:0"><div class="nm">${pLabel(p)}</div>
+    <div class="meta">${out?'<b style="color:var(--red)">Out of stock</b>':p.qty+' in stock'}${p.location?' · 📍 '+esc(p.location):''}</div></div>
+    <div class="pr">${fmt(p.sellPrice)}</div></button>`;
+}
+function qbSearch(){
+  const q=$('qb-search').value.trim();
+  $('qb-popular-wrap').style.display=q?'none':'block';
+  if(!q){$('qb-results').innerHTML='';return;}
+  const res=parts.filter(p=>tokHit(q.toLowerCase(),[p.brand,p.name,p.sku,p.location,p.category]))
+    .sort((a,b)=>(b.qty>0)-(a.qty>0)).slice(0,12);
+  $('qb-results').innerHTML=res.length?res.map(qbPartCard).join(''):`<div class="qb-hint">No part found for “${esc(q)}”. Try a shorter word.</div>`;
+}
+function qbPopular(){
+  const sm=partSalesMap();
+  const top=Object.entries(sm).sort((a,b)=>b[1].qty-a[1].qty).map(([id])=>parts.find(p=>p.id===id)).filter(p=>p&&p.qty>0).slice(0,10);
+  $('qb-popular-wrap').style.display=top.length?'block':'none';
+  $('qb-popular').innerHTML=top.map(p=>`<button type="button" class="qb-chip" onclick="qbAdd('${p.id}')">${esc(pText(p))}</button>`).join('');
+}
+function qbAdd(id){
+  const p=parts.find(x=>x.id===id);if(!p)return;
+  const ex=billItems.find(i=>i.partId===id);
+  if(ex&&ex.qty>=p.qty){alert(`Only ${p.qty} in stock.`);return;}
+  addToBill(id);                                 // same as the full form (records buy price for profit)
+  $('qb-search').value='';$('qb-results').innerHTML='';$('qb-popular-wrap').style.display='block';
+  qbRender();
+  if(navigator.vibrate)try{navigator.vibrate(30);}catch(e){}
+}
+function qbStep(id,d){
+  const it=billItems.find(i=>i.partId===id);if(!it)return;
+  const q=it.qty+d;
+  if(q<1){qbRemove(id);return;}
+  if(q>it.maxQty){alert(`Only ${it.maxQty} in stock.`);return;}
+  it.qty=q;qbRender();
+}
+function qbRemove(id){billItems=billItems.filter(i=>i.partId!==id);qbRender();}
+function qbPrice(id,v){if(!isOwner())return;const it=billItems.find(i=>i.partId===id);if(it){it.price=Math.max(0,+v||0);qbRender();}}
+function qbRender(){
+  $('qb-items-title').style.display=billItems.length?'block':'none';
+  $('qb-items').innerHTML=billItems.map(it=>`<div class="qb-line">
+    <div style="flex:1;min-width:0"><div class="nm">${pLabel(it)}</div>
+      <div class="sub">${isOwner()?`₹ <input class="qb-price" type="number" inputmode="decimal" value="${it.price}" onchange="qbPrice('${it.partId}',this.value)"/>`:fmt(it.price)} each</div></div>
+    <div class="qb-step"><button type="button" onclick="qbStep('${it.partId}',-1)" aria-label="One less">−</button><span class="q">${it.qty}</span><button type="button" onclick="qbStep('${it.partId}',1)" aria-label="One more">+</button></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:-4px 4px 10px"><button class="del" type="button" onclick="qbRemove('${it.partId}')" style="background:none;border:none;color:var(--red);font-size:15px;cursor:pointer">✕ Remove</button><span class="amt" style="font-size:17px;font-weight:700;color:var(--orange)">${fmt(it.price*it.qty)}</span></div>`).join('');
+  qbRecalc();
+}
+// Copy quick-bill fields into the full form's fields, then let the normal engine total it.
+function qbSync(){
+  $('bf-customer').value=$('qb-name').value.trim();
+  $('bf-phone').value=$('qb-phone').value.trim();
+  $('bf-date').value=today();
+  const dv=+$('qb-disc').value||0;
+  $('bf-disc-type').value=dv>0?$('qb-disc-type').value:'none';$('bf-disc-val').value=dv>0?dv:'';
+}
+function qbRecalc(){
+  qbSync();
+  const has=billItems.length>0;
+  ['qb-cash','qb-upi','qb-credit'].forEach(id=>$(id).disabled=!has);
+  const units=billItems.reduce((s,i)=>s+i.qty,0);
+  $('qb-count').textContent=has?`${billItems.length} part${billItems.length>1?'s':''} · ${units} pc${units>1?'s':''}`:'No items yet';
+  qbLoyalty();
+  $('qb-total').textContent=has?fmt(calcBillTotal().total):fmt(0);
+}
+function qbLoyalty(){
+  const box=$('qb-loy');const st=loyaltyState();const c=loyaltyCfg();
+  if(!st.eligible){box.style.display='none';$('bf-lredeem').value='';return;}
+  let h=`⭐ ${st.balance} loyalty point${st.balance===1?'':'s'}${c.value>0?` (worth ${fmt(st.balance*c.value)})`:''}`;
+  const using=+$('bf-lredeem').value||0;
+  if(st.canRedeem&&billItems.length)h+=using>0
+    ?` — using ${using} <button class="btn btn-secondary btn-sm" type="button" onclick="$('bf-lredeem').value='';qbRecalc()">Don't use</button>`
+    :` <button class="btn btn-secondary btn-sm" type="button" onclick="redeemMax();qbRecalc()">Use points</button>`;
+  box.innerHTML=h;box.style.display='block';
+}
+// Recognise a returning customer from their phone number and fill the name.
+function qbPhone(){
+  const k=phoneKey($('qb-phone').value);const el=$('qb-known');
+  if(k.length!==10){el.style.display='none';qbRecalc();return;}
+  const c=customers.find(x=>phoneKey(x.phone)===k);
+  const last=invoices.find(i=>phoneKey(i.phone)===k&&i.customer&&i.customer!=='Walk-in');
+  const name=c?c.name:last?last.customer:'';
+  if(name&&!$('qb-name').value.trim())$('qb-name').value=name;
+  const owe=invoices.filter(i=>phoneKey(i.phone)===k&&!i.paid).reduce((s,i)=>s+i.total,0);
+  if(name||owe){el.innerHTML=(name?`✓ Regular customer: <b>${esc(name)}</b>`:'')+(owe>0?` <span style="color:var(--yellow)">· Udhaar due: <b>${fmt(owe)}</b></span>`:'');el.style.display='block';}
+  else el.style.display='none';
+  qbRecalc();
+}
+async function qbSave(mode){
+  if(!billItems.length)return;
+  qbSync();
+  if(mode==='credit'&&!$('qb-name').value.trim()&&!validPhone($('qb-phone').value)){
+    alert('For Udhaar, enter the customer’s mobile number or name, so you know who owes the money.');$('qb-phone').focus();return;
+  }
+  if(!$('bf-customer').value)$('bf-customer').value='Walk-in';
+  ['qb-cash','qb-upi','qb-credit'].forEach(id=>$(id).disabled=true);
+  await saveInvoice(mode!=='credit',{payMode:mode,quick:true});
+}
+function qbDone(inv){
+  _qbLast=inv.id;billItems=[];
+  $('qb-form').style.display='none';$('qb-foot').style.display='none';
+  const modeTxt={cash:'💵 Paid by Cash',upi:'📱 Paid by UPI',credit:'📒 Udhaar — not paid yet'}[inv.payMode]||'';
+  $('qb-doneview').innerHTML=`<div class="qb-done"><div class="tick">✅</div><h3>Bill saved</h3>
+    <div class="big">${fmt(inv.total)}</div><div style="font-size:17px;margin-top:4px">${esc(inv.customer)} · ${modeTxt}</div>
+    <div class="btns">
+      <button class="pri" onclick="printReceipt('${inv.id}')">🖨 Print bill</button>
+      ${validPhone(inv.phone)?`<button class="wa" onclick="waBill('${inv.id}')">💬 Send bill on WhatsApp</button>`:''}
+      <button onclick="qbOpen()">➕ Next bill</button>
+      <button onclick="$('qb').classList.remove('open')">Done</button>
+    </div></div>`;
+  $('qb-doneview').style.display='block';
+  if(cfgGet('rcAuto')==='1')setTimeout(()=>printReceipt(inv.id),300);
+}
+// Hand the items over to the full form (referral, other date, address…)
+function qbFullForm(){
+  const items=billItems.map(i=>({...i}));const name=$('qb-name').value,ph=$('qb-phone').value;
+  $('qb').classList.remove('open');openBillModal();
+  billItems=items;$('bf-customer').value=name;$('bf-phone').value=ph;updateBillLinks();renderBillItems();
+}
+
+// ═══ RECEIPT PRINTING ═══
+// Works with any printer the phone can print to (Android/iPhone print menu, or a Bluetooth
+// thermal printer through its print app, e.g. RawBT). Paper size is set in Settings → Bill & Printer.
+const RC_W=()=>({'58':'w58','80':'w80','a4':'a4'}[cfgGet('rcPaper','80')]||'w80');
+function receiptHTML(inv){
+  const shop=cfgGet('rcShop')||SHOP_NAME;
+  const line=(l,r,cls='')=>`<tr class="${cls}"><td>${l}</td><td class="r">${r}</td></tr>`;
+  const disc=inv.discountType==='pct'?(inv.subtotal*(inv.discountVal/100)):inv.discountType==='flat'?inv.discountVal:0;
+  const mode={cash:'Cash',upi:'UPI',credit:'UDHAAR (credit)'}[inv.payMode]||(inv.paid?'Paid':'Pending');
+  const n=new Date();const time=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+  return `<div class="rc ${RC_W()}">
+    <div class="c shop">${esc(shop)}</div>
+    ${cfgGet('rcAddr')?`<div class="c">${esc(cfgGet('rcAddr'))}</div>`:''}
+    ${cfgGet('rcPhone')?`<div class="c">Ph: ${esc(cfgGet('rcPhone'))}</div>`:''}
+    ${cfgGet('rcGst')?`<div class="c">GSTIN: ${esc(cfgGet('rcGst'))}</div>`:''}
+    <hr/>
+    <div>Bill #${esc(inv.id.slice(-5).toUpperCase())}<span style="float:right">${esc(inv.date)}${inv.date===today()?' '+time:''}</span></div>
+    <div>${esc(inv.customer)}${inv.phone?' · '+esc(inv.phone):''}</div>
+    <hr/>
+    <table>${inv.items.map(i=>`<tr><td colspan="2" class="b">${esc(pText({brand:i.brand},i.name))}</td></tr>`+line(`&nbsp;${i.qty} × ${fmt(i.price)}`,fmt(i.price*i.qty))).join('')}</table>
+    <hr/>
+    <table>
+      ${line('Subtotal',fmt(inv.subtotal))}
+      ${disc>0?line('Discount','-'+fmt(disc)):''}
+      ${inv.ldisc>0?line(`Points used (${inv.lused})`,'-'+fmt(inv.ldisc)):''}
+      ${inv.cgst>0?line('CGST',fmt(inv.cgst)):''}
+      ${inv.sgst>0?line('SGST',fmt(inv.sgst)):''}
+      ${line('TOTAL',fmt(inv.total),'tot')}
+    </table>
+    <hr/>
+    <div class="b">Payment: ${esc(mode)}</div>
+    ${inv.lpts>0?`<div>Loyalty points earned: ${inv.lpts}</div>`:''}
+    <hr/>
+    <div class="c">${esc(cfgGet('rcFooter')||'Thank you! Visit again.')}</div>
+    <div style="height:10mm"></div>
+  </div>`;
+}
+function printReceipt(id){
+  const inv=invoices.find(i=>i.id===id);if(!inv)return;
+  $('receipt-print').innerHTML=receiptHTML(inv);
+  const w=cfgGet('rcPaper','80');
+  let st=$('rc-page-style');if(!st){st=document.createElement('style');st.id='rc-page-style';document.head.appendChild(st);}
+  st.textContent=w==='a4'?'@media print{@page{size:A4;margin:12mm;}}':'@media print{@page{margin:1mm;}}';
+  document.body.classList.add('print-receipt');
+  const done=()=>{document.body.classList.remove('print-receipt');window.removeEventListener('afterprint',done);};
+  window.addEventListener('afterprint',done);
+  setTimeout(()=>{window.print();setTimeout(done,1500);},50);
+}
+function waBill(id){
+  const inv=invoices.find(i=>i.id===id);if(!inv)return;
+  const shop=cfgGet('rcShop')||SHOP_NAME;
+  const mode={cash:'Paid by cash',upi:'Paid by UPI',credit:'Udhaar — balance due'}[inv.payMode]||(inv.paid?'Paid':'Pending');
+  const t=`*${shop}*\nBill #${inv.id.slice(-5).toUpperCase()} · ${inv.date}\n\n`+
+    inv.items.map(i=>`${pText({brand:i.brand},i.name)}\n  ${i.qty} × ${fmt(i.price)} = ${fmt(i.price*i.qty)}`).join('\n')+
+    `\n\n*Total: ${fmt(inv.total)}*\n${mode}`+(inv.lpts>0?`\n⭐ You earned ${inv.lpts} loyalty points`:'')+`\n\n${cfgGet('rcFooter')||'Thank you! Visit again.'}`;
+  window.open(`https://wa.me/${waNumber(inv.phone)}?text=${encodeURIComponent(t)}`,'_blank');
+}
+function loadReceiptSettings(){
+  if(!$('rc-shop'))return;
+  $('rc-shop').value=cfgGet('rcShop')||SHOP_NAME;$('rc-addr').value=cfgGet('rcAddr');$('rc-phone').value=cfgGet('rcPhone');
+  $('rc-gst').value=cfgGet('rcGst');$('rc-footer').value=cfgGet('rcFooter');$('rc-paper').value=cfgGet('rcPaper','80');$('rc-auto').checked=cfgGet('rcAuto')==='1';
+}
+async function saveReceiptSettings(){
+  if(!isOwner())return;
+  config.rcShop=$('rc-shop').value.trim();config.rcAddr=$('rc-addr').value.trim();config.rcPhone=$('rc-phone').value.trim();
+  config.rcGst=$('rc-gst').value.trim().toUpperCase();config.rcFooter=$('rc-footer').value.trim();config.rcPaper=$('rc-paper').value;config.rcAuto=$('rc-auto').checked?'1':'0';
+  await saveConfig();
+}
+function testReceipt(){
+  const inv={id:'TEST0',customer:'Test customer',phone:'',date:today(),items:[{name:'Sample brake pad',brand:'',qty:2,price:250},{name:'Sample oil filter',brand:'',qty:1,price:180}],subtotal:680,discountType:'none',discountVal:0,cgst:0,sgst:0,total:680,paid:true,payMode:'cash',lpts:0,ldisc:0};
+  invoices.push(inv);try{printReceipt('TEST0');}finally{invoices=invoices.filter(i=>i.id!=='TEST0');}
+}
+
+// ═══ LARGE TEXT (per phone) ═══
+function applyBigText(){let on=false;try{on=localStorage.getItem('ap_bigtext')==='1';}catch(e){}document.body.classList.toggle('big-text',on);const t=$('bigtext-toggle');if(t)t.checked=on;const b=$('bigtext-btn');if(b)b.textContent=on?'A− Normal text':'A+ Large text';}
+function toggleBigText(force){let on=document.body.classList.contains('big-text');on=typeof force==='boolean'?force:!on;try{localStorage.setItem('ap_bigtext',on?'1':'0');}catch(e){}applyBigText();}
+applyBigText();
 </script>
 <script type="text/plain" id="gas-src">/**
  * Spares Pro — public catalog & order gateway
