@@ -405,6 +405,7 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
 /* ── DECLUTTER / FASTER USE ── */
 .sub-line{font-size:11px;color:var(--muted);font-weight:400;margin-top:2px;line-height:1.4;}
 .sub-line .mono{font-family:monospace;}
+.cv{display:contents;}
 .nowrap{white-space:nowrap;}
 .btn-icon{padding:5px 9px;font-size:13px;line-height:1;}
 .row-link{cursor:pointer;}
@@ -430,6 +431,25 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
 @media (max-width:860px){
   .hide-m{display:none!important;}
   .table-wrap.fit-m table{min-width:0;}
+  /* Other tables become stacked cards on phones: one card per row, each value labelled, no sideways scroll */
+  .table-wrap.stack{overflow-x:visible;}
+  .table-wrap.stack table,table.stack{min-width:0!important;}
+  .stack thead{display:none;}
+  .stack tbody tr{display:block;padding:10px 12px;border-bottom:1px solid var(--border);}
+  .stack tbody tr:last-child{border-bottom:none;}
+  .stack tbody tr:hover td{background:none;}
+  .stack tbody td{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:3px 0!important;border:none!important;max-width:none!important;white-space:normal!important;}
+  .stack tbody td::before{content:attr(data-label);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;flex-shrink:0;text-align:left;}
+  .stack tbody td>.cv{display:block;text-align:right;min-width:0;word-break:break-word;}
+  .stack tbody td.lead{display:block;font-size:14px;padding-bottom:5px!important;}
+  .stack tbody td.lead::before,.stack tbody td.nolabel::before{display:none;}
+  .stack tbody td.lead>.cv{text-align:left;}
+  .stack tbody td.nolabel{justify-content:flex-end;padding-top:6px!important;}
+  .stack tbody td.nolabel>.cv .btn-group{justify-content:flex-end;}
+  .stack tbody td:empty,.stack tbody td.blank{display:none;}
+  .invoice-view>div:last-child{flex-wrap:wrap;}
+  .show-m{display:block!important;margin-top:3px;}
+  .stack tr.empty-row td{display:block;text-align:center;}
   .loc-m{display:inline!important;}
   #sidebar>.side-tools{display:none;}
   .kbd-hint{display:none;}
@@ -1462,6 +1482,33 @@ function mobileNavigate(page,el){
   $('fab-invoice').style.display=['dashboard','billing','inventory'].includes(page)?'flex':'none';
 }
 function toggleMoreMenu(){openModal('mobile-more-modal');}
+// Label every table cell with its column name so wide tables can be shown as cards on phones (see .stack CSS)
+const STACK_SEL='.table-wrap:not(.fit-m) table, .invoice-view table';
+function stackTables(){
+  document.querySelectorAll(STACK_SEL).forEach(t=>{
+    const wrap=t.closest('.table-wrap');(wrap||t).classList.add('stack');
+    const heads=[...t.querySelectorAll('thead th')].map(th=>th.textContent.trim());
+    if(!heads.length)return;
+    const leadIdx=heads.findIndex(h=>h!=='#'&&h.toLowerCase()!=='class');
+    t.querySelectorAll('tbody tr').forEach(tr=>{
+      if(tr.dataset.lb||tr.classList.contains('empty-row'))return;
+      tr.dataset.lb='1';
+      [...tr.children].forEach((td,i)=>{
+        const h=heads[i]||'';
+        if(i!==leadIdx&&/^[—–\-]?$/.test(td.textContent.trim())&&!td.querySelector('button,input,select'))td.classList.add('blank');
+        if(i===leadIdx)td.classList.add('lead');
+        else if(!h||/^actions?$/i.test(h))td.classList.add('nolabel');
+        else td.dataset.label=h;
+        if(td.childNodes.length&&!(td.children.length===1&&td.firstElementChild.classList.contains('cv'))){
+          const cv=document.createElement('span');cv.className='cv';
+          while(td.firstChild)cv.appendChild(td.firstChild);td.appendChild(cv);
+        }
+      });
+    });
+  });
+}
+let _stackQ=false;
+new MutationObserver(()=>{if(_stackQ)return;_stackQ=true;requestAnimationFrame(()=>{_stackQ=false;stackTables();});}).observe(document.body,{childList:true,subtree:true});
 // Go to a page from anywhere (keeps the phone tab bar in step)
 function navTo(page){if(window.matchMedia('(max-width:860px)').matches)mobileNavigate(page);else navigate(page);window.scrollTo(0,0);}
 function goLowStock(){$('inv-search').value='';$('inv-cat').value='';$('inv-brand').value='';$('inv-status').value='low';navTo('inventory');}
@@ -2064,7 +2111,7 @@ function renderBilling(){
     filtered.map(inv=>{
       const disc=inv.discountType!=='none'&&inv.discountVal>0?`<div class="sub-line" style="color:var(--green)">-${inv.discountType==='pct'?inv.discountVal+'%':fmt(inv.discountVal)} off</div>`:'';
       const actions=`<button class="btn ${inv.paid?'btn-secondary':'btn-success'} btn-sm" onclick="togglePaid('${inv.id}')">${inv.paid?'Unpay':'Mark Paid'}</button>${isOwner()?` <button class="btn btn-danger btn-icon" onclick="deleteInvoice('${inv.id}')" title="Delete">🗑</button>`:''}`;
-      return`<tr class="row-link" onclick="if(!event.target.closest('button'))openInvoice('${inv.id}')"><td class="hide-m" style="font-family:'Rajdhani',sans-serif;color:var(--orange);font-weight:700">#${inv.id.slice(-5)}</td><td style="font-weight:600">${esc(inv.customer)}<div class="sub-line">${esc(inv.date)} · ${inv.items.length} item${inv.items.length>1?'s':''}</div></td><td class="nowrap"><span style="font-weight:700;color:var(--orange)">${fmt(inv.total)}</span>${disc}<div class="loc-m" style="display:none"><span class="badge ${inv.paid?'badge-green':'badge-yellow'}">${inv.paid?'Paid':'Pending'}</span></div></td><td class="hide-m"><span class="badge ${inv.paid?'badge-green':'badge-yellow'}">${inv.paid?'Paid':'Pending'}</span></td><td class="nowrap">${actions}</td></tr>`;
+      return`<tr class="row-link" onclick="if(!event.target.closest('button'))openInvoice('${inv.id}')"><td class="hide-m" style="font-family:'Rajdhani',sans-serif;color:var(--orange);font-weight:700">#${inv.id.slice(-5)}</td><td style="font-weight:600">${esc(inv.customer)}<div class="sub-line">${esc(inv.date)} · ${inv.items.length} item${inv.items.length>1?'s':''}</div></td><td class="nowrap"><span style="font-weight:700;color:var(--orange)">${fmt(inv.total)}</span>${disc}<div class="show-m" style="display:none"><span class="badge ${inv.paid?'badge-green':'badge-yellow'}">${inv.paid?'Paid':'Pending'}</span></div></td><td class="hide-m"><span class="badge ${inv.paid?'badge-green':'badge-yellow'}">${inv.paid?'Paid':'Pending'}</span></td><td class="nowrap">${actions}</td></tr>`;
     }).join('');
 }
 function openBillModal(){
