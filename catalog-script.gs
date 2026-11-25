@@ -112,6 +112,7 @@ function readCatalog_() {
       brand: String(row[H.brand] || '').trim(),
       cat: String(row[H.category] || 'Other'),
       price: Math.round(sell * (1 + gst / 100) * 100) / 100,   // price the customer actually pays
+      fits: H.fits === undefined ? '' : String(row[H.fits] || '').trim(),   // vehicle models, for searching by vehicle
       st: qty <= 0 ? 'out' : (qty <= min ? 'low' : 'in')
     });
   }
