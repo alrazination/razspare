@@ -401,6 +401,41 @@ body.big-text #mobile-tabbar .mtab{font-size:13px!important;}
 body.big-text #mobile-tabbar .mtab .mtab-icon{font-size:24px!important;}
 body.big-text .qb-pick .nm,body.big-text .qb-line .nm{font-size:19px;}
 body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
+
+/* ── DECLUTTER / FASTER USE ── */
+.sub-line{font-size:11px;color:var(--muted);font-weight:400;margin-top:2px;line-height:1.4;}
+.sub-line .mono{font-family:monospace;}
+.nowrap{white-space:nowrap;}
+.btn-icon{padding:5px 9px;font-size:13px;line-height:1;}
+.row-link{cursor:pointer;}
+.dash-row{cursor:pointer;border-radius:6px;transition:background .12s;}
+.dash-row:hover{background:var(--surface);}
+.card-title .more{float:right;font-size:11px;font-weight:600;color:var(--orange);cursor:pointer;letter-spacing:.04em;font-family:'Barlow',sans-serif;}
+.card-title .more:hover{text-decoration:underline;}
+.stat-card.clickable{cursor:pointer;transition:border-color .15s;}
+.stat-card.clickable:hover{border-color:var(--border2);}
+#sidebar .nav-item.locked{display:none;}
+.side-tools{display:flex;gap:6px;margin:8px 10px 0;}
+.side-tools .logout-btn{margin:0;flex:1;width:auto;}
+.side-tools .tool-btn{padding:7px 10px;background:var(--border);border:none;border-radius:6px;color:var(--subtle);font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;cursor:pointer;}
+.side-tools .tool-btn:hover{background:var(--border2);color:var(--text);}
+.kbd-hint{font-size:10px;color:var(--muted);padding:6px 10px 0;line-height:1.6;}
+.kbd-hint kbd{font-family:monospace;background:var(--border);border-radius:3px;padding:0 4px;color:var(--subtle);}
+.more-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.more-grid button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:14px 6px;background:var(--surface);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;cursor:pointer;text-align:center;line-height:1.2;}
+.more-grid button .ic{font-size:22px;}
+.more-grid button .ct{color:var(--orange);font-size:12px;}
+.more-foot{display:flex;gap:8px;margin-top:12px;}
+.more-foot button{flex:1;}
+@media (max-width:860px){
+  .hide-m{display:none!important;}
+  .table-wrap.fit-m table{min-width:0;}
+  .loc-m{display:inline!important;}
+  #sidebar>.side-tools{display:none;}
+  .kbd-hint{display:none;}
+  .ph .ph-left p.long{display:none;}
+  .dash-newbill{display:none!important;}
+}
 </style>
 </head>
 <body>
@@ -485,7 +520,7 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
   <div class="nav-section" id="nav-settings-section">Settings</div>
   <div class="nav-item" id="nav-settings" data-page="settings" onclick="navigate('settings')"><span class="nav-icon">⚙️</span> Settings</div>
   <div id="sidebar-alerts">
-    <div class="alert-chip" id="chip-lowstock" onclick="navigate('inventory')">
+    <div class="alert-chip" id="chip-lowstock" onclick="goLowStock()">
       <div class="alert-chip-title">⚠ Low Stock</div>
       <div class="alert-chip-body" id="chip-ls-text">—</div>
     </div>
@@ -495,7 +530,11 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
     <div id="user-label"></div>
     <div id="sheet-link-wrap" style="display:none"><a id="sheet-link" href="#" target="_blank">📊 Open Google Sheet →</a></div>
   </div>
-  <button class="logout-btn" onclick="doLogout()">🚪 Sign Out</button>
+  <div class="side-tools">
+    <button class="tool-btn" id="bigtext-btn" onclick="toggleBigText()" title="Larger, easier-to-read text">A+</button>
+    <button class="logout-btn" onclick="doLogout()">🚪 Sign Out</button>
+  </div>
+  <div class="kbd-hint"><kbd>N</kbd> new bill · <kbd>/</kbd> search · <kbd>Esc</kbd> close</div>
 </div>
 
 <!-- ═══ MAIN ═══ -->
@@ -503,16 +542,16 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
 
 <!-- DASHBOARD -->
 <div id="page-dashboard" class="page active">
-  <div class="ph"><div class="ph-left"><h1>Dashboard</h1><p id="dash-greeting">Welcome back</p></div><div class="btn-group no-print"><button class="btn btn-secondary" id="bigtext-btn" onclick="toggleBigText()">A+ Large text</button><button class="btn btn-primary" onclick="qbOpen()" style="font-size:16px;padding:12px 20px">＋ New Bill</button></div>
+  <div class="ph"><div class="ph-left"><h1>Dashboard</h1><p id="dash-greeting">Welcome back</p></div><div class="btn-group no-print dash-newbill"><button class="btn btn-primary" onclick="qbOpen()" style="font-size:16px;padding:12px 20px">＋ New Bill</button></div>
   </div>
   <div class="stats-grid" id="dash-stats"></div>
   <div class="two-col" style="margin-bottom:18px">
-    <div class="card"><div class="card-title">⚠ Low Stock</div><div id="dash-lowstock"></div></div>
-    <div class="card"><div class="card-title">🧾 Recent Invoices</div><div id="dash-recent-inv"></div></div>
+    <div class="card"><div class="card-title">⚠ Low Stock <span class="more" onclick="goLowStock()">View all →</span></div><div id="dash-lowstock"></div></div>
+    <div class="card"><div class="card-title">🧾 Recent Invoices <span class="more" onclick="navTo('billing')">All bills →</span></div><div id="dash-recent-inv"></div></div>
   </div>
   <div class="two-col">
-    <div class="card"><div class="card-title">📋 Pending Orders</div><div id="dash-wishlist"></div></div>
-    <div class="card"><div class="card-title">🛒 Recent Purchases</div><div id="dash-purchases"></div></div>
+    <div class="card"><div class="card-title">📋 Pending Orders <span class="more" onclick="navTo('wishlist')">Order list →</span></div><div id="dash-wishlist"></div></div>
+    <div class="card"><div class="card-title">🛒 Recent Purchases <span class="more" onclick="navTo('purchases')">All purchases →</span></div><div id="dash-purchases"></div></div>
   </div>
 </div>
 
@@ -533,7 +572,7 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
       <option value="">All Status</option><option value="low">Low Stock</option><option value="ok">In Stock</option><option value="dead">Dead Stock</option>
     </select>
   </div>
-  <div class="table-wrap"><table>
+  <div class="table-wrap fit-m"><table>
     <thead><tr id="inv-thead"></tr></thead>
     <tbody id="inv-tbody"></tbody>
   </table></div>
@@ -546,8 +585,8 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
     <button class="btn btn-primary" onclick="openPurchaseModal()">＋ Record Purchase</button>
   </div>
   <div class="toolbar"><input type="text" class="search-box" id="pur-search" placeholder="Search supplier, brand or part…" oninput="renderPurchases()"/></div>
-  <div class="table-wrap"><table>
-    <thead><tr><th>Date</th><th>Part</th><th>SKU</th><th>Supplier</th><th>Qty</th><th id="th-unit-cost">Unit Cost ₹</th><th id="th-total-cost">Total ₹</th><th>Notes</th></tr></thead>
+  <div class="table-wrap fit-m"><table>
+    <thead><tr><th class="hide-m">Date</th><th>Part</th><th class="hide-m">Supplier</th><th>Qty</th><th id="th-unit-cost" class="hide-m">Unit ₹</th><th id="th-total-cost">Total ₹</th></tr></thead>
     <tbody id="pur-tbody"></tbody>
   </table></div>
 </div>
@@ -555,7 +594,7 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
 <!-- ORDER LIST -->
 <div id="page-wishlist" class="page">
   <div class="ph">
-    <div class="ph-left"><h1>Order List</h1><p>Parts to order, customer requests & don't-reorder notes</p></div>
+    <div class="ph-left"><h1>Order List</h1><p class="long">Parts to order and don't-reorder notes</p></div>
     <button class="btn btn-primary" onclick="openWishModal()">＋ Add Item</button>
   </div>
   <div class="tab-bar">
@@ -565,8 +604,8 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
     <div class="tab" onclick="setWishTab('skip',this)">Don't Order</div>
     <div class="tab" onclick="setWishTab('all',this)">All</div>
   </div>
-  <div class="table-wrap"><table>
-    <thead><tr><th>Part Name</th><th>SKU</th><th>Category</th><th>Qty</th><th>Customer</th><th>Priority</th><th>Status</th><th>Notes</th><th>Actions</th></tr></thead>
+  <div class="table-wrap fit-m"><table>
+    <thead><tr><th>Part</th><th>Qty</th><th class="hide-m">Customer</th><th class="hide-m">Priority</th><th id="wish-th-status">Status</th><th></th></tr></thead>
     <tbody id="wish-tbody"></tbody>
   </table></div>
 </div>
@@ -585,8 +624,8 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
       <option value="">All</option><option value="paid">Paid</option><option value="pending">Pending</option>
     </select>
   </div>
-  <div class="table-wrap"><table>
-    <thead><tr><th>#</th><th>Customer</th><th>Date</th><th>Items</th><th>Subtotal</th><th>Discount</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
+  <div class="table-wrap fit-m"><table>
+    <thead><tr><th class="hide-m">#</th><th>Customer</th><th>Total</th><th class="hide-m">Status</th><th></th></tr></thead>
     <tbody id="bill-tbody"></tbody>
   </table></div>
 </div>
@@ -594,7 +633,7 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
 <!-- SUPPLIERS (owner only) -->
 <div id="page-suppliers" class="page">
   <div class="ph">
-    <div class="ph-left"><h1>Suppliers</h1><p>Contact details and purchase history. Phone &amp; address are optional.</p></div>
+    <div class="ph-left"><h1>Suppliers</h1><p class="long">Contacts and purchase history</p></div>
     <button class="btn btn-primary" onclick="openSuppModal(-1)">＋ Add Supplier</button>
   </div>
   <div class="toolbar"><input type="text" class="search-box" id="supp-search" placeholder="Search name, phone or address…" oninput="renderSuppliers()"/></div>
@@ -607,7 +646,7 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
 <!-- PART REQUESTS -->
 <div id="page-requests" class="page">
   <div class="ph">
-    <div class="ph-left"><h1>Part Requests</h1><p>Record who asked for a part you didn't have — see which parts are in demand</p></div>
+    <div class="ph-left"><h1>Part Requests</h1><p class="long">Parts customers asked for that you didn't have</p></div>
     <button class="btn btn-primary" onclick="openReqModal()">＋ Record Request</button>
   </div>
   <div class="stats-grid" id="req-stats"></div>
@@ -640,7 +679,7 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
 <!-- CUSTOMERS & REFERRALS (owner only) -->
 <div id="page-partners" class="page">
   <div class="ph">
-    <div class="ph-left"><h1>Customers &amp; Referrals</h1><p>Bonus customers, referral codes and shareable customer links</p></div>
+    <div class="ph-left"><h1>Customers &amp; Referrals</h1><p class="long">Bonus customers, referral codes and links</p></div>
     <button class="btn btn-primary" onclick="openCustModal()">＋ Add Customer</button>
   </div>
   <div class="stats-grid" id="cust-stats"></div>
@@ -655,7 +694,7 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
 <!-- LOYALTY POINTS (owner only) -->
 <div id="page-loyalty" class="page">
   <div class="ph">
-    <div class="ph-left"><h1>Loyalty Points</h1><p>Points for walk-in customers, tracked by phone number. Referral customers earn bonus instead.</p></div>
+    <div class="ph-left"><h1>Loyalty Points</h1><p class="long">Walk-in customer points, tracked by phone</p></div>
     <button class="btn btn-primary" onclick="openLoyAdj()">＋ Adjust Points</button>
   </div>
   <div class="card" style="margin-bottom:20px">
@@ -686,7 +725,7 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
 
 <!-- REPORTS (owner only) -->
 <div id="page-reports" class="page">
-  <div class="ph"><div class="ph-left"><h1>Sales Reports</h1><p>Revenue, payments & top performers</p></div></div>
+  <div class="ph"><div class="ph-left"><h1>Sales Reports</h1><p class="long">Revenue, payments & top performers</p></div></div>
   <div class="stats-grid" id="rep-stats"></div>
   <div class="two-col" style="margin-bottom:18px">
     <div class="card"><div class="card-title">📊 Revenue by Category</div><div id="rep-category"></div></div>
@@ -708,7 +747,7 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
 
 <!-- INSIGHTS (owner only) -->
 <div id="page-insights" class="page">
-  <div class="ph"><div class="ph-left"><h1>Inventory Insights</h1><p>Smart analysis for better stocking decisions</p></div></div>
+  <div class="ph"><div class="ph-left"><h1>Inventory Insights</h1><p class="long">What to stock more of, and what to stop</p></div></div>
   <div class="two-col" style="margin-bottom:18px">
     <div class="card">
       <div class="card-title">🔤 ABC Analysis <span style="font-size:11px;color:var(--muted);font-weight:400;margin-left:4px">by sales revenue</span></div>
@@ -1203,19 +1242,21 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
 <div class="modal-overlay" id="mobile-more-modal">
   <div class="modal" style="width:88vw;max-width:360px">
     <h2>Menu</h2>
-    <div class="btn-group" style="flex-direction:column;align-items:stretch;gap:10px">
-      <button class="btn btn-secondary" style="justify-content:flex-start" onclick="closeModal('mobile-more-modal');mobileNavigate('purchases')">🛒 Purchases</button>
-      <button class="btn btn-secondary" style="justify-content:flex-start" onclick="closeModal('mobile-more-modal');mobileNavigate('requests')">🙋 Part Requests</button>
-      <button class="btn btn-secondary" style="justify-content:flex-start" onclick="closeModal('mobile-more-modal');mobileNavigate('online')">🌐 Online Orders <span id="mmenu-online-count" style="margin-left:6px;color:var(--orange);font-weight:700"></span></button>
-      <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-suppliers" onclick="closeModal('mobile-more-modal');mobileNavigate('suppliers')">🏭 Suppliers</button>
-      <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-partners" onclick="closeModal('mobile-more-modal');mobileNavigate('partners')">🤝 Customers &amp; Referrals</button>
-      <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-loyalty" onclick="closeModal('mobile-more-modal');mobileNavigate('loyalty')">⭐ Loyalty Points</button>
-      <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-reports" onclick="closeModal('mobile-more-modal');mobileNavigate('reports')">📊 Reports</button>
-      <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-insights" onclick="closeModal('mobile-more-modal');mobileNavigate('insights')">🧠 Insights</button>
-      <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-settings" onclick="closeModal('mobile-more-modal');mobileNavigate('settings')">⚙️ Settings</button>
-      <button class="btn btn-secondary" style="justify-content:flex-start" onclick="toggleBigText()">🔠 Large text on / off</button>
-      <button class="btn btn-secondary" style="justify-content:flex-start" id="mmenu-sheet" onclick="window.open($('sheet-link').href,'_blank')">📊 Open Google Sheet</button>
-      <button class="btn btn-danger" style="justify-content:flex-start" onclick="closeModal('mobile-more-modal');doLogout()">🚪 Sign Out</button>
+    <div class="more-grid">
+      <button onclick="closeModal('mobile-more-modal');mobileNavigate('purchases')"><span class="ic">🛒</span>Purchases</button>
+      <button onclick="closeModal('mobile-more-modal');mobileNavigate('online')"><span class="ic">🌐</span>Online Orders <span class="ct" id="mmenu-online-count"></span></button>
+      <button onclick="closeModal('mobile-more-modal');mobileNavigate('requests')"><span class="ic">🙋</span>Part Requests</button>
+      <button id="mmenu-suppliers" onclick="closeModal('mobile-more-modal');mobileNavigate('suppliers')"><span class="ic">🏭</span>Suppliers</button>
+      <button id="mmenu-partners" onclick="closeModal('mobile-more-modal');mobileNavigate('partners')"><span class="ic">🤝</span>Customers</button>
+      <button id="mmenu-loyalty" onclick="closeModal('mobile-more-modal');mobileNavigate('loyalty')"><span class="ic">⭐</span>Loyalty</button>
+      <button id="mmenu-reports" onclick="closeModal('mobile-more-modal');mobileNavigate('reports')"><span class="ic">📊</span>Reports</button>
+      <button id="mmenu-insights" onclick="closeModal('mobile-more-modal');mobileNavigate('insights')"><span class="ic">🧠</span>Insights</button>
+      <button id="mmenu-settings" onclick="closeModal('mobile-more-modal');mobileNavigate('settings')"><span class="ic">⚙️</span>Settings</button>
+      <button id="mmenu-sheet" onclick="window.open($('sheet-link').href,'_blank')"><span class="ic">📄</span>Google Sheet</button>
+    </div>
+    <div class="more-foot">
+      <button class="btn btn-secondary" style="justify-content:center" onclick="toggleBigText()">🔠 Text size</button>
+      <button class="btn btn-danger" style="justify-content:center" onclick="closeModal('mobile-more-modal');doLogout()">🚪 Sign Out</button>
     </div>
     <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('mobile-more-modal')">Close</button></div>
   </div>
@@ -1387,8 +1428,9 @@ function applyRoleUI(){
   ['nav-suppliers','nav-partners','nav-loyalty','nav-reports','nav-insights','nav-settings'].forEach(id=>{
     $(id).classList.toggle('locked',!isOwn);
   });
-  $('nav-analytics-section').style.opacity=isOwn?'1':'0.3';
-  $('nav-settings-section').style.opacity=isOwn?'1':'0.3';
+  // Employees don't see owner-only sections at all (less clutter than greyed-out items)
+  $('nav-analytics-section').style.display=isOwn?'':'none';
+  $('nav-settings-section').style.display=isOwn?'':'none';
   // Mobile "More" menu locks
   ['mmenu-suppliers','mmenu-partners','mmenu-loyalty','mmenu-reports','mmenu-insights','mmenu-settings','mmenu-sheet'].forEach(id=>{
     $(id).style.display=isOwn?'flex':'none';
@@ -1420,6 +1462,29 @@ function mobileNavigate(page,el){
   $('fab-invoice').style.display=['dashboard','billing','inventory'].includes(page)?'flex':'none';
 }
 function toggleMoreMenu(){openModal('mobile-more-modal');}
+// Go to a page from anywhere (keeps the phone tab bar in step)
+function navTo(page){if(window.matchMedia('(max-width:860px)').matches)mobileNavigate(page);else navigate(page);window.scrollTo(0,0);}
+function goLowStock(){$('inv-search').value='';$('inv-cat').value='';$('inv-brand').value='';$('inv-status').value='low';navTo('inventory');}
+function goBills(f){$('bill-search').value='';$('bill-filter').value=f||'';navTo('billing');}
+function openInvoice(id){if(!$('page-billing').classList.contains('active'))navTo('billing');viewInvoice(id);$('invoice-view-wrap').scrollIntoView({behavior:'smooth',block:'start'});}
+
+// Keyboard shortcuts (computer): N = new bill, / = search this page, Esc = close
+document.addEventListener('keydown',e=>{
+  if(!currentRole||$('main').style.display==='none')return;
+  const tag=(e.target.tagName||'').toLowerCase(),typing=tag==='input'||tag==='textarea'||tag==='select'||e.target.isContentEditable;
+  if(e.key==='Escape'){
+    const m=[...document.querySelectorAll('.modal-overlay.open')].pop();
+    if(m){m.classList.remove('open');e.preventDefault();return;}
+    if($('qb').classList.contains('open')){qbClose();e.preventDefault();return;}
+    if(typing){e.target.blur();return;}
+    if($('invoice-view-wrap').innerHTML){$('invoice-view-wrap').innerHTML='';}
+    return;
+  }
+  if(typing||e.ctrlKey||e.metaKey||e.altKey)return;
+  if(document.querySelector('.modal-overlay.open')||$('qb').classList.contains('open'))return;
+  if(e.key==='n'||e.key==='N'){e.preventDefault();qbOpen();}
+  else if(e.key==='/'){const box=document.querySelector('.page.active .search-box');if(box){e.preventDefault();box.focus();box.select();}}
+});
 
 // ═══ PASSWORD MANAGEMENT ═══
 function saveOwnerPassword(){
@@ -1738,42 +1803,42 @@ function renderDashboard(){
   // Stats — hide financial details from employee
   if(isOwner()){
     $('dash-stats').innerHTML=[
-      {label:'Revenue Collected',val:fmt(paidRev),sub:invoices.filter(i=>i.paid).length+' paid invoices',color:'var(--orange)'},
-      {label:'Outstanding',val:fmt(totalRev-paidRev),sub:invoices.filter(i=>!i.paid).length+' unpaid',color:'var(--yellow)'}, 
-      {label:'Stock Value',val:fmt(invVal),sub:totalUnits+' units · '+parts.length+' types',color:'var(--blue)'},
-      {label:'Total Purchased',val:fmt(totalPurch),sub:purchases.length+' records',color:'var(--purple)'},
-    ].map(s=>`<div class="stat-card" style="--accent:${s.color}"><div class="stat-label">${s.label}</div><div class="stat-val" style="color:${s.color}">${s.val}</div><div class="stat-sub">${s.sub}</div></div>`).join('');
+      {label:'Revenue Collected',val:fmt(paidRev),sub:invoices.filter(i=>i.paid).length+' paid invoices',color:'var(--orange)',go:"goBills('paid')"},
+      {label:'Outstanding',val:fmt(totalRev-paidRev),sub:invoices.filter(i=>!i.paid).length+' unpaid',color:'var(--yellow)',go:"goBills('pending')"},
+      {label:'Stock Value',val:fmt(invVal),sub:totalUnits+' units · '+parts.length+' types',color:'var(--blue)',go:"navTo('inventory')"},
+      {label:'Total Purchased',val:fmt(totalPurch),sub:purchases.length+' records',color:'var(--purple)',go:"navTo('purchases')"},
+    ].map(s=>`<div class="stat-card clickable" onclick="${s.go}" style="--accent:${s.color}"><div class="stat-label">${s.label}</div><div class="stat-val" style="color:${s.color}">${s.val}</div><div class="stat-sub">${s.sub}</div></div>`).join('');
   }else{
     $('dash-stats').innerHTML=[
-      {label:'Revenue Collected',val:fmt(paidRev),sub:invoices.filter(i=>i.paid).length+' paid invoices',color:'var(--orange)'},
-      {label:'Outstanding',val:fmt(totalRev-paidRev),sub:invoices.filter(i=>!i.paid).length+' unpaid',color:'var(--yellow)'},
-      {label:'Low Stock Items',val:ls.length,sub:'need restocking',color:ls.length>0?'var(--red)':'var(--green)'},
-      {label:'Invoices Today',val:invoices.filter(i=>i.date===today()).length,sub:'created today',color:'var(--orange)'},
-    ].map(s=>`<div class="stat-card" style="--accent:${s.color}"><div class="stat-label">${s.label}</div><div class="stat-val" style="color:${s.color}">${s.val}</div><div class="stat-sub">${s.sub}</div></div>`).join('');
+      {label:'Revenue Collected',val:fmt(paidRev),sub:invoices.filter(i=>i.paid).length+' paid invoices',color:'var(--orange)',go:"goBills('paid')"},
+      {label:'Outstanding',val:fmt(totalRev-paidRev),sub:invoices.filter(i=>!i.paid).length+' unpaid',color:'var(--yellow)',go:"goBills('pending')"},
+      {label:'Low Stock Items',val:ls.length,sub:'need restocking',color:ls.length>0?'var(--red)':'var(--green)',go:"goLowStock()"},
+      {label:'Invoices Today',val:invoices.filter(i=>i.date===today()).length,sub:'created today',color:'var(--orange)',go:"navTo('billing')"},
+    ].map(s=>`<div class="stat-card clickable" onclick="${s.go}" style="--accent:${s.color}"><div class="stat-label">${s.label}</div><div class="stat-val" style="color:${s.color}">${s.val}</div><div class="stat-sub">${s.sub}</div></div>`).join('');
   }
   // Low stock
   const lsEl=$('dash-lowstock');
   if(ls.length===0)lsEl.innerHTML='<div style="color:var(--muted);font-size:13px">✓ All parts well stocked</div>';
-  else lsEl.innerHTML=ls.slice(0,6).map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:600;font-size:13px">${pLabel(p)}</div><div style="font-size:11px;color:var(--muted)">${esc(p.sku)}${p.location?' · 📍'+esc(p.location):''}</div></div><span class="badge badge-red">${p.qty}/${p.minQty}</span></div>`).join('');
+  else lsEl.innerHTML=ls.slice(0,6).map(p=>`<div class="dash-row" onclick="${isOwner()?`openPartModal('${p.id}')`:'goLowStock()'}" style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:600;font-size:13px">${pLabel(p)}</div><div style="font-size:11px;color:var(--muted)">${esc(p.sku)}${p.location?' · 📍'+esc(p.location):''}</div></div><span class="badge badge-red">${p.qty}/${p.minQty}</span></div>`).join('');
   // Low stock alerts chip
   if(ls.length>0){$('chip-lowstock').style.display='block';$('chip-ls-text').textContent=ls.length+' part'+(ls.length>1?'s':'')+' low';}
   else $('chip-lowstock').style.display='none';
   // Recent invoices — hide totals from employee
   const invEl=$('dash-recent-inv');
   if(invoices.length===0)invEl.innerHTML='<div style="color:var(--muted);font-size:13px">No invoices yet</div>';
-  else invEl.innerHTML=invoices.slice(0,5).map(inv=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:600;font-size:13px">${esc(inv.customer)}</div><div style="font-size:11px;color:var(--muted)">#${inv.id.slice(-5)} · ${esc(inv.date)}</div></div><div style="text-align:right">${isOwner()?`<div style="font-weight:700;color:var(--orange)">${fmt(inv.total)}</div>`:''}<span class="badge ${inv.paid?'badge-green':'badge-yellow'}">${inv.paid?'Paid':'Pending'}</span></div></div>`).join('');
+  else invEl.innerHTML=invoices.slice(0,5).map(inv=>`<div class="dash-row" onclick="openInvoice('${inv.id}')" style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:600;font-size:13px">${esc(inv.customer)}</div><div style="font-size:11px;color:var(--muted)">#${inv.id.slice(-5)} · ${esc(inv.date)}</div></div><div style="text-align:right">${isOwner()?`<div style="font-weight:700;color:var(--orange)">${fmt(inv.total)}</div>`:''}<span class="badge ${inv.paid?'badge-green':'badge-yellow'}">${inv.paid?'Paid':'Pending'}</span></div></div>`).join('');
   // Wishlist
   const wEl=$('dash-wishlist');
   const pw=wishlist.filter(w=>w.status==='pending').slice(0,4);
   if(pw.length===0)wEl.innerHTML='<div style="color:var(--muted);font-size:13px">No pending orders</div>';
-  else wEl.innerHTML=pw.map(w=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:600;font-size:13px">${esc(w.name)}</div><div style="font-size:11px;color:var(--muted)">${w.customer?'For: '+esc(w.customer):esc(w.category)}</div></div><span class="badge ${w.priority==='high'?'badge-red':w.priority==='medium'?'badge-yellow':'badge-green'}">${esc(w.priority)}</span></div>`).join('');
+  else wEl.innerHTML=pw.map(w=>`<div class="dash-row" onclick="openWishModal('${w.id}')" style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:600;font-size:13px">${esc(w.name)}</div><div style="font-size:11px;color:var(--muted)">${w.customer?'For: '+esc(w.customer):esc(w.category)}</div></div><span class="badge ${w.priority==='high'?'badge-red':w.priority==='medium'?'badge-yellow':'badge-green'}">${esc(w.priority)}</span></div>`).join('');
   // Wish badge
   if(pendingWish>0){$('wish-badge').style.display='inline';$('wish-badge').textContent=pendingWish;}
   else $('wish-badge').style.display='none';
   // Purchases
   const purchEl=$('dash-purchases');
   if(purchases.length===0)purchEl.innerHTML='<div style="color:var(--muted);font-size:13px">No purchases recorded</div>';
-  else purchEl.innerHTML=purchases.slice(-4).reverse().map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:600;font-size:13px">${pLabel(p,p.partName)}</div><div style="font-size:11px;color:var(--muted)">${esc(p.supplier||'—')} · ${esc(p.date)}</div></div>${isOwner()?`<div style="font-weight:700;color:var(--orange)">${fmt(p.total)}</div>`:`<div style="color:var(--muted);font-size:12px">Qty: ${p.qty}</div>`}</div>`).join('');
+  else purchEl.innerHTML=purchases.slice(-4).reverse().map(p=>`<div class="dash-row" onclick="navTo('purchases')" style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:600;font-size:13px">${pLabel(p,p.partName)}</div><div style="font-size:11px;color:var(--muted)">${esc(p.supplier||'—')} · ${esc(p.date)}</div></div>${isOwner()?`<div style="font-weight:700;color:var(--orange)">${fmt(p.total)}</div>`:`<div style="color:var(--muted);font-size:12px">Qty: ${p.qty}</div>`}</div>`).join('');
 }
 
 // ═══ INVENTORY ═══
@@ -1804,19 +1869,25 @@ function renderInventory(){
   $('inv-actions').innerHTML=isOwner()?
     `<button class="btn btn-secondary" onclick="exportCSV()">⬇ Export CSV</button><button class="btn btn-primary" onclick="openPartModal()">＋ Add Part</button>`:
     `<button class="btn btn-secondary" onclick="exportCSV()">⬇ Export CSV</button>`;
-  // Header — hide buy price from employee
-  $('inv-thead').innerHTML=isOwner()?
-    '<th>SKU</th><th>Location</th><th>Part</th><th>Category</th><th>Supplier</th><th>Qty</th><th>Min</th><th>Buy ₹</th><th>Sell ₹</th><th>Margin</th><th>Status</th><th>Actions</th>':
-    '<th>SKU</th><th>Location</th><th>Part</th><th>Category</th><th>Supplier</th><th>Qty</th><th>Min</th><th>Sell ₹</th><th>Status</th>';
-  $('inv-tbody').innerHTML=filtered.length===0?'<tr class="empty-row"><td colspan="12">No parts found</td></tr>':
+  // Header — hide buy price from employee. SKU & supplier live under the part name; qty colour replaces the status column.
+  const own=isOwner();
+  $('inv-thead').innerHTML=`<th class="hide-m">Location</th><th>Part</th><th class="hide-m">Category</th><th>Qty</th>${own?'<th class="hide-m">Buy ₹</th>':''}<th>Sell ₹</th>${own?'<th></th>':''}`;
+  $('inv-tbody').innerHTML=filtered.length===0?`<tr class="empty-row"><td colspan="7">No parts found</td></tr>`:
     filtered.map(p=>{
-      const margin=p.buyPrice>0?(((p.sellPrice-p.buyPrice)/p.sellPrice)*100).toFixed(0)+'%':'—';
-      const statusBadge=p.qty===0?'<span class="badge badge-red">Out</span>':p.qty<=p.minQty?'<span class="badge badge-yellow">Low</span>':'<span class="badge badge-green">OK</span>';
-      if(isOwner()){
-        return`<tr><td style="font-family:monospace;font-size:11px;color:var(--subtle)">${esc(p.sku)}</td><td><span class="loc-tag">${esc(p.location||'—')}</span></td><td style="font-weight:600">${pLabel(p)}</td><td><span class="badge badge-blue">${esc(p.category)}</span></td><td style="font-size:12px;color:var(--muted)">${esc(p.supplier||'—')}</td><td style="font-weight:700;color:${p.qty===0?'var(--red)':p.qty<=p.minQty?'var(--yellow)':'var(--green)'}">${p.qty}</td><td style="color:var(--muted)">${p.minQty}</td><td style="color:var(--subtle)">${fmt(p.buyPrice)}</td><td style="font-weight:600;color:var(--orange)">${fmt(p.sellPrice)}</td><td style="color:var(--green)">${margin}</td><td>${statusBadge}</td><td><div class="btn-group"><button class="btn btn-secondary btn-sm" onclick="openPartModal('${p.id}')">Edit</button><button class="btn btn-danger btn-sm" onclick="deletePart('${p.id}')">Del</button></div></td></tr>`;
-      }else{
-        return`<tr><td style="font-family:monospace;font-size:11px;color:var(--subtle)">${esc(p.sku)}</td><td><span class="loc-tag">${esc(p.location||'—')}</span></td><td style="font-weight:600">${pLabel(p)}</td><td><span class="badge badge-blue">${esc(p.category)}</span></td><td style="font-size:12px;color:var(--muted)">${esc(p.supplier||'—')}</td><td style="font-weight:700;color:${p.qty===0?'var(--red)':p.qty<=p.minQty?'var(--yellow)':'var(--green)'}">${p.qty}</td><td style="color:var(--muted)">${p.minQty}</td><td style="font-weight:600;color:var(--orange)">${fmt(p.sellPrice)}</td><td>${statusBadge}</td></tr>`;
-      }
+      const margin=p.buyPrice>0&&p.sellPrice>0?(((p.sellPrice-p.buyPrice)/p.sellPrice)*100).toFixed(0)+'% margin':'';
+      const qc=p.qty===0?'var(--red)':p.qty<=p.minQty?'var(--yellow)':'var(--green)';
+      const tag=p.qty===0?' <span class="badge badge-red">Out</span>':p.qty<=p.minQty?' <span class="badge badge-yellow">Low</span>':'';
+      const sub=[p.sku?`<span class="mono">${esc(p.sku)}</span>`:'',p.supplier?esc(p.supplier):''].filter(Boolean).join(' · ');
+      const locM=p.location?`<span class="loc-tag" style="font-size:10px;padding:0 5px;margin-right:4px">${esc(p.location)}</span>`:'';
+      return`<tr${own?` class="row-link" onclick="if(!event.target.closest('button'))openPartModal('${p.id}')"`:''}>
+        <td class="hide-m"><span class="loc-tag">${esc(p.location||'—')}</span></td>
+        <td style="font-weight:600">${pLabel(p)}<div class="sub-line"><span style="display:none" class="loc-m">${locM}</span>${sub}</div></td>
+        <td class="hide-m"><span class="badge badge-blue">${esc(p.category)}</span></td>
+        <td class="nowrap"><span style="font-weight:700;color:${qc}">${p.qty}</span>${tag}<div class="sub-line">min ${p.minQty}</div></td>
+        ${own?`<td class="hide-m" style="color:var(--subtle)">${fmt(p.buyPrice)}</td>`:''}
+        <td class="nowrap"><span style="font-weight:600;color:var(--orange)">${fmt(p.sellPrice)}</span>${own&&margin?`<div class="sub-line" style="color:var(--green)">${margin}</div>`:''}</td>
+        ${own?`<td class="nowrap"><button class="btn btn-secondary btn-icon" onclick="openPartModal('${p.id}')" title="Edit">✎</button> <button class="btn btn-danger btn-icon" onclick="deletePart('${p.id}')" title="Delete">🗑</button></td>`:''}
+      </tr>`;
     }).join('');
 }
 // ── Automatic SKU:  S1-<category 2 letters>-<part 2 letters>-<brand 2 letters>-<running number 0001, 0002…> ──
@@ -1904,8 +1975,9 @@ function renderPurchases(){
   $('th-unit-cost').style.display=isOwner()?'':'none';
   $('th-total-cost').style.display=isOwner()?'':'none';
   $('pur-sub').textContent=isOwner()?`${purchases.length} records · ${fmt(purchases.reduce((s,p)=>s+p.total,0))} total`:`${purchases.length} purchase records`;
-  $('pur-tbody').innerHTML=filtered.length===0?'<tr class="empty-row"><td colspan="8">No purchases found</td></tr>':
-    filtered.slice().reverse().map(p=>`<tr><td style="color:var(--subtle)">${esc(p.date)}</td><td style="font-weight:600">${pLabel(p,p.partName)}</td><td style="font-family:monospace;font-size:11px;color:var(--subtle)">${esc(p.sku)}</td><td>${esc(p.supplier||'—')}</td><td style="font-weight:700;color:var(--blue)">${p.qty}</td><td style="display:${isOwner()?'':'none'};color:var(--muted)">${fmt(p.unitCost)}</td><td style="display:${isOwner()?'':'none'};font-weight:700;color:var(--orange)">${fmt(p.total)}</td><td style="font-size:12px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.notes||'—')}</td></tr>`).join('');
+  $('pur-tbody').innerHTML=filtered.length===0?'<tr class="empty-row"><td colspan="6">No purchases found</td></tr>':
+    filtered.slice().reverse().map(p=>{const sub=[p.sku?`<span class="mono">${esc(p.sku)}</span>`:'',p.notes?esc(p.notes):''].filter(Boolean).join(' · ');
+      return`<tr><td class="hide-m nowrap" style="color:var(--subtle)">${esc(p.date)}</td><td style="font-weight:600">${pLabel(p,p.partName)}<div class="sub-line">${sub}${sub?'<span class="loc-m" style="display:none"> · </span>':''}<span class="loc-m" style="display:none">${esc(p.supplier||'')} ${esc(p.date)}</span></div></td><td class="hide-m">${esc(p.supplier||'—')}</td><td style="font-weight:700;color:var(--blue)">${p.qty}</td><td class="hide-m" style="display:${isOwner()?'':'none'};color:var(--muted)">${fmt(p.unitCost)}</td><td class="nowrap" style="display:${isOwner()?'':'none'};font-weight:700;color:var(--orange)">${fmt(p.total)}</td></tr>`;}).join('');
 }
 function openPurchaseModal(){
   selectedPurchPartId=null;$('purch-part-search').value='';$('purch-selected-wrap').style.display='none';
@@ -1949,14 +2021,15 @@ async function savePurchase(){
 }
 
 // ═══ WISHLIST ═══
-function setWishTab(tab,el){currentWishTab=tab;document.querySelectorAll('.tab-bar .tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderWishlist(tab);}
+function setWishTab(tab,el){currentWishTab=tab;document.querySelectorAll('#page-wishlist .tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderWishlist(tab);}
 function renderWishlist(tab){
   const filtered=tab==='all'?wishlist:wishlist.filter(w=>w.status===tab);
   const pb={high:'badge-red',medium:'badge-yellow',low:'badge-green'};
   const sb={pending:'badge-orange',ordered:'badge-blue',received:'badge-green',skip:'badge-gray'};
   const sl={pending:'Pending',ordered:'Ordered',received:'Received',skip:"Don't Order"};
-  $('wish-tbody').innerHTML=filtered.length===0?'<tr class="empty-row"><td colspan="9">No items here</td></tr>':
-    filtered.slice().reverse().map(w=>`<tr><td style="font-weight:600">${esc(w.name)}</td><td style="font-family:monospace;font-size:11px;color:var(--subtle)">${esc(w.sku||'—')}</td><td><span class="badge badge-blue">${esc(w.category)}</span></td><td style="font-weight:700">${w.qtyNeeded}</td><td style="font-size:12px;color:var(--muted)">${esc(w.customer||'—')}</td><td><span class="badge ${pb[w.priority]}">${esc(w.priority)}</span></td><td><span class="badge ${sb[w.status]}">${sl[w.status]}</span></td><td style="font-size:11px;color:var(--muted);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(w.notes||'—')}</td><td><div class="btn-group"><button class="btn btn-secondary btn-sm" onclick="openWishModal('${w.id}')">Edit</button><button class="btn btn-danger btn-sm" onclick="deleteWish('${w.id}')" ${!isOwner()?'style="display:none"':''}>Del</button></div></td></tr>`).join('');
+  $('wish-tbody').innerHTML=filtered.length===0?'<tr class="empty-row"><td colspan="6">No items here</td></tr>':
+    filtered.slice().reverse().map(w=>{const sub=[w.sku?`<span class="mono">${esc(w.sku)}</span>`:'',esc(w.category||''),w.notes?esc(w.notes):''].filter(Boolean).join(' · ');
+      return`<tr class="row-link" onclick="if(!event.target.closest('button'))openWishModal('${w.id}')"><td style="font-weight:600">${esc(w.name)}<div class="sub-line">${sub}${w.customer?`<span class="loc-m" style="display:none"> · For ${esc(w.customer)}</span>`:''}</div></td><td style="font-weight:700">${w.qtyNeeded}</td><td class="hide-m" style="font-size:12px;color:var(--muted)">${esc(w.customer||'—')}</td><td class="hide-m"><span class="badge ${pb[w.priority]}">${esc(w.priority)}</span></td><td><span class="badge ${sb[w.status]}">${sl[w.status]}</span></td><td class="nowrap"><button class="btn btn-secondary btn-icon" onclick="openWishModal('${w.id}')" title="Edit">✎</button>${isOwner()?` <button class="btn btn-danger btn-icon" onclick="deleteWish('${w.id}')" title="Remove">🗑</button>`:''}</td></tr>`;}).join('');
 }
 function openWishModal(id=null){
   editingWishId=id;$('wish-modal-title').textContent=id?'Edit Item':'Add to Order List';$('wish-save-btn').textContent=id?'Save Changes':'Add to List';
@@ -1987,12 +2060,11 @@ function renderBilling(){
     return true;
   });
   $('bill-sub').textContent=`${invoices.length} invoices · ${fmt(invoices.filter(i=>i.paid).reduce((s,i)=>s+i.total,0))} collected`;
-  $('bill-tbody').innerHTML=filtered.length===0?'<tr class="empty-row"><td colspan="9">No invoices found</td></tr>':
+  $('bill-tbody').innerHTML=filtered.length===0?'<tr class="empty-row"><td colspan="5">No invoices found</td></tr>':
     filtered.map(inv=>{
-      const actions=isOwner()
-        ?`<div class="btn-group"><button class="btn btn-secondary btn-sm" onclick="viewInvoice('${inv.id}')">View</button><button class="btn ${inv.paid?'btn-secondary':'btn-success'} btn-sm" onclick="togglePaid('${inv.id}')">${inv.paid?'Unpay':'Mark Paid'}</button><button class="btn btn-danger btn-sm" onclick="deleteInvoice('${inv.id}')">Del</button></div>`
-        :`<div class="btn-group"><button class="btn btn-secondary btn-sm" onclick="viewInvoice('${inv.id}')">View</button><button class="btn ${inv.paid?'btn-secondary':'btn-success'} btn-sm" onclick="togglePaid('${inv.id}')">${inv.paid?'Unpay':'Mark Paid'}</button></div>`;
-      return`<tr><td style="font-family:'Rajdhani',sans-serif;color:var(--orange);font-weight:700">#${inv.id.slice(-5)}</td><td style="font-weight:600">${esc(inv.customer)}</td><td style="color:var(--subtle);font-size:12px">${esc(inv.date)}</td><td style="color:var(--muted)">${inv.items.length} item${inv.items.length>1?'s':''}</td><td>${fmt(inv.subtotal||inv.total)}</td><td>${inv.discountType!=='none'&&inv.discountVal>0?`<span class="badge badge-green">-${inv.discountType==='pct'?inv.discountVal+'%':fmt(inv.discountVal)}</span>`:'<span style="color:var(--muted);font-size:12px">—</span>'}</td><td style="font-weight:700;color:var(--orange)">${fmt(inv.total)}</td><td><span class="badge ${inv.paid?'badge-green':'badge-yellow'}">${inv.paid?'Paid':'Pending'}</span></td><td>${actions}</td></tr>`;
+      const disc=inv.discountType!=='none'&&inv.discountVal>0?`<div class="sub-line" style="color:var(--green)">-${inv.discountType==='pct'?inv.discountVal+'%':fmt(inv.discountVal)} off</div>`:'';
+      const actions=`<button class="btn ${inv.paid?'btn-secondary':'btn-success'} btn-sm" onclick="togglePaid('${inv.id}')">${inv.paid?'Unpay':'Mark Paid'}</button>${isOwner()?` <button class="btn btn-danger btn-icon" onclick="deleteInvoice('${inv.id}')" title="Delete">🗑</button>`:''}`;
+      return`<tr class="row-link" onclick="if(!event.target.closest('button'))openInvoice('${inv.id}')"><td class="hide-m" style="font-family:'Rajdhani',sans-serif;color:var(--orange);font-weight:700">#${inv.id.slice(-5)}</td><td style="font-weight:600">${esc(inv.customer)}<div class="sub-line">${esc(inv.date)} · ${inv.items.length} item${inv.items.length>1?'s':''}</div></td><td class="nowrap"><span style="font-weight:700;color:var(--orange)">${fmt(inv.total)}</span>${disc}<div class="loc-m" style="display:none"><span class="badge ${inv.paid?'badge-green':'badge-yellow'}">${inv.paid?'Paid':'Pending'}</span></div></td><td class="hide-m"><span class="badge ${inv.paid?'badge-green':'badge-yellow'}">${inv.paid?'Paid':'Pending'}</span></td><td class="nowrap">${actions}</td></tr>`;
     }).join('');
 }
 function openBillModal(){
@@ -3704,7 +3776,7 @@ function testReceipt(){
 }
 
 // ═══ LARGE TEXT (per phone) ═══
-function applyBigText(){let on=false;try{on=localStorage.getItem('ap_bigtext')==='1';}catch(e){}document.body.classList.toggle('big-text',on);const t=$('bigtext-toggle');if(t)t.checked=on;const b=$('bigtext-btn');if(b)b.textContent=on?'A− Normal text':'A+ Large text';}
+function applyBigText(){let on=false;try{on=localStorage.getItem('ap_bigtext')==='1';}catch(e){}document.body.classList.toggle('big-text',on);const t=$('bigtext-toggle');if(t)t.checked=on;const b=$('bigtext-btn');if(b){b.textContent=on?'A−':'A+';b.title=on?'Normal text':'Larger text';}}
 function toggleBigText(force){let on=document.body.classList.contains('big-text');on=typeof force==='boolean'?force:!on;try{localStorage.setItem('ap_bigtext',on?'1':'0');}catch(e){}applyBigText();}
 applyBigText();
 </script>
