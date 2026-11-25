@@ -402,6 +402,14 @@ body.big-text #mobile-tabbar .mtab .mtab-icon{font-size:24px!important;}
 body.big-text .qb-pick .nm,body.big-text .qb-line .nm{font-size:19px;}
 body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
 
+/* ── SALES HELPERS ── */
+.sugg-wrap{margin:6px 0 12px;padding:10px 12px;border:1px dashed var(--border2);border-radius:10px;background:var(--surface);}
+.sugg-title{font-size:13px;color:var(--subtle);font-weight:600;}
+.sugg-wrap .qb-chip{font-size:13px;padding:7px 11px;}
+#qb .sugg-wrap .qb-chip{font-size:15px;padding:10px 13px;}
+.margin-warn{margin:6px 0 12px;padding:10px 12px;border-radius:8px;background:#71350922;border-left:3px solid var(--yellow);font-size:12px;color:#fde68a;line-height:1.6;}
+.margin-warn.loss{background:#7f1d1d33;border-left-color:var(--red);color:#fca5a5;}
+
 /* ── DECLUTTER / FASTER USE ── */
 .sub-line{font-size:11px;color:var(--muted);font-weight:400;margin-top:2px;line-height:1.4;}
 .sub-line .mono{font-family:monospace;}
@@ -532,6 +540,7 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
   <div class="nav-section">Sales</div>
   <div class="nav-item" data-page="billing" onclick="navigate('billing')"><span class="nav-icon">🧾</span> Billing <span class="nav-badge" id="draft-badge" style="display:none">0</span></div>
   <div class="nav-item" data-page="online" onclick="navigate('online')"><span class="nav-icon">🌐</span> Online Orders <span class="nav-badge" id="online-badge" style="display:none">0</span></div>
+  <div class="nav-item" data-page="followups" onclick="navigate('followups')"><span class="nav-icon">📞</span> Follow-ups <span class="nav-badge" id="fu-badge" style="display:none">0</span></div>
   <div class="nav-item" id="nav-partners" data-page="partners" onclick="navigate('partners')"><span class="nav-icon">🤝</span> Customers &amp; Referrals</div>
   <div class="nav-item" id="nav-loyalty" data-page="loyalty" onclick="navigate('loyalty')"><span class="nav-icon">⭐</span> Loyalty Points</div>
   <div class="nav-section" id="nav-analytics-section">Analytics</div>
@@ -540,6 +549,10 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
   <div class="nav-section" id="nav-settings-section">Settings</div>
   <div class="nav-item" id="nav-settings" data-page="settings" onclick="navigate('settings')"><span class="nav-icon">⚙️</span> Settings</div>
   <div id="sidebar-alerts">
+    <div class="alert-chip" id="chip-price" onclick="navTo('insights')" style="background:#71350922;border-color:#a1620755">
+      <div class="alert-chip-title" style="color:#fde68a">💸 Price Check</div>
+      <div class="alert-chip-body" id="chip-pr-text" style="color:#fde68a">—</div>
+    </div>
     <div class="alert-chip" id="chip-lowstock" onclick="goLowStock()">
       <div class="alert-chip-title">⚠ Low Stock</div>
       <div class="alert-chip-body" id="chip-ls-text">—</div>
@@ -582,7 +595,7 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
     <div class="btn-group" id="inv-actions"></div>
   </div>
   <div class="toolbar">
-    <input type="text" class="search-box" id="inv-search" placeholder="Search name, SKU, brand or location…" oninput="renderInventory()"/>
+    <input type="text" class="search-box" id="inv-search" placeholder="Search name, SKU, brand, vehicle or location…" oninput="renderInventory()"/>
     <select id="inv-brand" onchange="renderInventory()" style="width:150px"><option value="">All Brands</option></select>
     <select id="inv-cat" onchange="renderInventory()" style="width:160px">
       <option value="">All Categories</option>
@@ -639,7 +652,7 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
   <div id="drafts-wrap"></div>
   <div id="invoice-view-wrap"></div>
   <div class="toolbar">
-    <input type="text" class="search-box" id="bill-search" placeholder="Search customer or invoice #…" oninput="renderBilling()"/>
+    <input type="text" class="search-box" id="bill-search" placeholder="Search customer, phone, vehicle or bill #…" oninput="renderBilling()"/>
     <select id="bill-filter" onchange="renderBilling()" style="width:140px">
       <option value="">All</option><option value="paid">Paid</option><option value="pending">Pending</option>
     </select>
@@ -696,10 +709,26 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
   <div id="online-list"></div>
 </div>
 
+<!-- FOLLOW-UPS: udhaar collection + service reminders -->
+<div id="page-followups" class="page">
+  <div class="ph"><div class="ph-left"><h1>Follow-ups</h1><p class="long">Collect udhaar and bring customers back — one tap opens WhatsApp</p></div></div>
+  <div class="stats-grid" id="fu-stats"></div>
+  <div class="tab-bar">
+    <div class="tab active" id="futab-dues" onclick="setFuTab('dues')">📒 Udhaar</div>
+    <div class="tab" id="futab-service" onclick="setFuTab('service')">🔧 Service due</div>
+  </div>
+  <div class="toolbar"><input type="text" class="search-box" id="fu-search" placeholder="Search name, phone or vehicle…" oninput="renderFollowups()"/></div>
+  <div id="fu-hint" style="font-size:12px;color:var(--muted);margin:-6px 0 12px;line-height:1.6"></div>
+  <div class="table-wrap"><table>
+    <thead><tr id="fu-thead"></tr></thead>
+    <tbody id="fu-tbody"></tbody>
+  </table></div>
+</div>
+
 <!-- CUSTOMERS & REFERRALS (owner only) -->
 <div id="page-partners" class="page">
   <div class="ph">
-    <div class="ph-left"><h1>Customers &amp; Referrals</h1><p class="long">Bonus customers, referral codes and links</p></div>
+    <div class="ph-left"><h1>Customers &amp; Referrals</h1><p class="long">Garage accounts, bonus customers and referral links</p></div>
     <button class="btn btn-primary" onclick="openCustModal()">＋ Add Customer</button>
   </div>
   <div class="stats-grid" id="cust-stats"></div>
@@ -768,6 +797,10 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
 <!-- INSIGHTS (owner only) -->
 <div id="page-insights" class="page">
   <div class="ph"><div class="ph-left"><h1>Inventory Insights</h1><p class="long">What to stock more of, and what to stop</p></div></div>
+  <div class="card" style="margin-bottom:18px" id="ins-price-card">
+    <div class="card-title">💸 Price Check <span style="font-size:11px;color:var(--muted);font-weight:400;margin-left:4px" id="ins-price-sub"></span></div>
+    <div id="ins-price"></div>
+  </div>
   <div class="two-col" style="margin-bottom:18px">
     <div class="card">
       <div class="card-title">🔤 ABC Analysis <span style="font-size:11px;color:var(--muted);font-weight:400;margin-left:4px">by sales revenue</span></div>
@@ -830,6 +863,22 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
     <div class="fg"><label>Message at bottom of bill</label><input type="text" id="rc-footer" placeholder="Thank you! Visit again."/></div>
     <label style="display:flex;gap:8px;align-items:center;font-size:14px;margin:4px 0 14px;cursor:pointer"><input type="checkbox" id="rc-auto" style="width:auto"/> Open print automatically after every bill</label>
     <div class="btn-group"><button class="btn btn-primary" onclick="saveReceiptSettings()">Save</button><button class="btn btn-secondary" onclick="testReceipt()">🖨 Print a test bill</button></div>
+  </div>
+
+  <!-- Growth tools -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title">📈 Sales &amp; Follow-up Settings</div>
+    <div class="frow">
+      <div class="fg"><label>Minimum margin % <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(warn when a bill sells below this)</span></label><input type="number" id="gs-margin" min="0" max="90" step="1" placeholder="10"/></div>
+      <div class="fg"><label>Service reminder after <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(days since last visit)</span></label><input type="number" id="gs-svcdays" min="15" max="720" step="1" placeholder="90"/></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Udhaar is overdue after <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(days)</span></label><input type="number" id="gs-duedays" min="1" max="365" step="1" placeholder="30"/></div>
+      <div class="fg"><label>Your UPI ID <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(shown in udhaar reminders)</span></label><input type="text" id="gs-upi" placeholder="e.g. shopname@okaxis" autocomplete="off"/></div>
+    </div>
+    <div class="fg"><label>Google review link <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(added to WhatsApp bills)</span></label><input type="text" id="gs-review" placeholder="https://g.page/r/…/review" autocomplete="off"/></div>
+    <p style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:12px">Get the review link free: open <b>Google Business Profile</b> (search your shop name on Google while signed in) → <b>Ask for reviews</b> → copy the link. Leave empty to not ask.</p>
+    <button class="btn btn-primary" onclick="saveGrowthSettings()">Save</button>
   </div>
 
   <!-- Online Shop (public catalog link) -->
@@ -943,6 +992,7 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
       <div class="fg"><label>Usual Supplier <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(who you buy from)</span></label><input type="text" id="pf-supplier" list="supp-list" placeholder="Optional" autocomplete="off"/></div>
     </div>
     <datalist id="brand-list"></datalist>
+    <div class="fg"><label>🏍 Fits vehicles <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(models, separated by commas — used by search)</span></label><input type="text" id="pf-fits" placeholder="e.g. Activa, Jupiter, Access 125" list="vmodel-list" autocomplete="off"/></div>
     <div class="frow">
       <div class="fg"><label>HSN Code</label><input type="text" id="pf-hsn" placeholder="e.g. 87089900"/></div>
       <div class="fg"><label>MRP (₹)</label><input type="number" id="pf-mrp" min="0" step="0.01" placeholder="0.00"/></div>
@@ -1039,9 +1089,14 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
       <div class="fg"><label>Date</label><input type="date" id="bf-date"/></div>
     </div>
     <div class="frow">
-      <div class="fg"><label>Phone <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(optional)</span></label><input type="text" id="bf-phone" placeholder="Mobile number" oninput="_autoFilledFor=null;updateLoyaltyBox()"/></div>
+      <div class="fg"><label>Phone <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(optional)</span></label><input type="text" id="bf-phone" placeholder="Mobile number" oninput="_autoFilledFor=null;updateLoyaltyBox();bfPhoneFill()"/></div>
       <div class="fg"><label>Address <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(optional)</span></label><input type="text" id="bf-addr" placeholder="Area / address" oninput="_autoFilledFor=null"/></div>
     </div>
+    <div class="frow">
+      <div class="fg"><label>🏍 Vehicle number <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(optional)</span></label><input type="text" id="bf-vehicle" placeholder="e.g. MH12 AB 1234" autocapitalize="characters" style="text-transform:uppercase" autocomplete="off"/></div>
+      <div class="fg"><label>Vehicle model <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(optional)</span></label><input type="text" id="bf-vmodel" placeholder="e.g. Activa 6G" list="vmodel-list" autocomplete="off"/></div>
+    </div>
+    <datalist id="vmodel-list"></datalist>
     <div class="fg">
       <label>🤝 Referred By <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(optional)</span></label>
       <input type="text" id="bf-ref" list="ref-list" placeholder="Search customer name or referral code…" oninput="updateBillLinks()" autocomplete="off" style="width:100%"/>
@@ -1067,6 +1122,8 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
       </div>
     </div>
     <div id="bill-items-list"></div>
+    <div id="bf-suggest" class="sugg-wrap" style="display:none"></div>
+    <div id="bf-margin" class="margin-warn" style="display:none"></div>
     <div class="bill-total-section" id="bill-total-section" style="display:none">
       <div id="bf-loy-line" style="display:none;font-size:12px;color:var(--yellow);margin-bottom:8px;font-weight:600"></div>
       <div class="discount-row">
@@ -1169,12 +1226,17 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
     <div class="fg"><label>Name</label><input type="text" id="cf-name" placeholder="Full name (must be unique)"/></div>
     <div class="frow">
       <div class="fg"><label>Phone / WhatsApp</label><input type="text" id="cf-phone" placeholder="10-digit mobile"/></div>
-      <div class="fg"><label>Bonus %</label><input type="number" id="cf-pct" min="0" max="100" step="0.1" placeholder="e.g. 5"/></div>
+      <div class="fg"><label>Bonus % <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(0 = none)</span></label><input type="number" id="cf-pct" min="0" max="100" step="0.1" placeholder="0"/></div>
     </div>
     <div class="fg"><label>Address <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(optional)</span></label><input type="text" id="cf-addr" placeholder="Area / address"/></div>
+    <div class="fg"><label>Account type</label><select id="cf-type" onchange="custTypeUI()"><option value="">Regular customer</option><option value="garage">🔧 Garage / mechanic</option></select></div>
+    <div class="frow" id="cf-garage-row" style="display:none">
+      <div class="fg"><label>Garage price <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(% below counter price)</span></label><input type="number" id="cf-off" min="0" max="50" step="0.5" placeholder="e.g. 5"/></div>
+      <div class="fg"><label>Credit limit ₹ <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(0 = no limit)</span></label><input type="number" id="cf-limit" min="0" step="100" placeholder="e.g. 20000"/></div>
+    </div>
     <div class="fg"><label>Referral Code</label><input type="text" id="cf-code" maxlength="12" placeholder="Auto-generated if left empty" style="text-transform:uppercase"/></div>
     <div class="fg"><label>Notes</label><textarea id="cf-notes" placeholder="Optional"></textarea></div>
-    <div class="hint-box">This customer earns their Bonus % on their own purchases, and on every purchase made by someone they are picked as <em>Referred By</em> on the invoice.</div>
+    <div class="hint-box"><b>Garage</b> accounts automatically get their garage price on every bill and a warning when udhaar goes over their limit. <b>Bonus %</b> is earned on their own purchases and on purchases by people they refer.</div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('cust-modal')">Cancel</button>
       <button class="btn btn-primary" id="cust-save-btn" onclick="saveCustomer()">Add Customer</button>
@@ -1246,6 +1308,14 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
   </div>
 </div>
 
+<div class="modal-overlay" id="notify-modal">
+  <div class="modal" style="width:480px">
+    <h2>📣 Customers are waiting for this part</h2>
+    <div id="notify-body"></div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('notify-modal')">Done</button></div>
+  </div>
+</div>
+
 <div id="sync-status"></div>
 
 <!-- ═══ MOBILE BOTTOM NAV (PWA) ═══ -->
@@ -1265,6 +1335,7 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
     <div class="more-grid">
       <button onclick="closeModal('mobile-more-modal');mobileNavigate('purchases')"><span class="ic">🛒</span>Purchases</button>
       <button onclick="closeModal('mobile-more-modal');mobileNavigate('online')"><span class="ic">🌐</span>Online Orders <span class="ct" id="mmenu-online-count"></span></button>
+      <button onclick="closeModal('mobile-more-modal');mobileNavigate('followups')"><span class="ic">📞</span>Follow-ups <span class="ct" id="mmenu-fu-count"></span></button>
       <button onclick="closeModal('mobile-more-modal');mobileNavigate('requests')"><span class="ic">🙋</span>Part Requests</button>
       <button id="mmenu-suppliers" onclick="closeModal('mobile-more-modal');mobileNavigate('suppliers')"><span class="ic">🏭</span>Suppliers</button>
       <button id="mmenu-partners" onclick="closeModal('mobile-more-modal');mobileNavigate('partners')"><span class="ic">🤝</span>Customers</button>
@@ -1287,17 +1358,24 @@ body.big-text .qb-pick .meta,body.big-text .qb-line .sub{font-size:16px;}
   <div class="qb-top"><h2>🧾 New Bill</h2><button class="qb-x" onclick="qbClose()">✕ Close</button></div>
   <div class="qb-body" id="qb-body">
     <div id="qb-form">
-      <input type="search" id="qb-search" class="qb-search" placeholder="🔍 Type part name, brand or SKU" oninput="qbSearch()" autocomplete="off" enterkeyhint="search"/>
+      <input type="search" id="qb-search" class="qb-search" placeholder="🔍 Part name, brand, SKU or vehicle" oninput="qbSearch()" autocomplete="off" enterkeyhint="search"/>
       <div id="qb-results" class="qb-res"></div>
-      <div id="qb-popular-wrap"><div class="qb-hint">Most sold — tap to add:</div><div id="qb-popular" class="qb-chips"></div></div>
+      <div id="qb-popular-wrap"><div class="qb-hint" id="qb-pop-title">Most sold — tap to add:</div><div id="qb-popular" class="qb-chips"></div></div>
 
       <div class="qb-sec" id="qb-items-title" style="display:none">On this bill</div>
       <div id="qb-items"></div>
+      <div id="qb-suggest" class="sugg-wrap" style="display:none"></div>
+      <div id="qb-margin" class="margin-warn" style="display:none;font-size:15px"></div>
 
       <div class="qb-sec">Customer <span style="font-weight:400">(optional)</span></div>
       <div class="qb-field"><label for="qb-phone">Mobile number</label><input type="tel" id="qb-phone" inputmode="numeric" placeholder="10-digit mobile" oninput="qbPhone()" autocomplete="off"/></div>
       <div id="qb-known" class="qb-known" style="display:none"></div>
-      <div class="qb-field"><label for="qb-name">Name</label><input type="text" id="qb-name" placeholder="Leave empty for walk-in" oninput="qbRecalc()" list="cust-list" autocomplete="off"/></div>
+      <div id="qb-garage" class="qb-known" style="display:none;color:var(--blue)"></div>
+      <div class="qb-field"><label for="qb-name">Name</label><input type="text" id="qb-name" placeholder="Leave empty for walk-in" oninput="qbCustomerChanged()" list="cust-list" autocomplete="off"/></div>
+      <div style="display:flex;gap:8px">
+        <div class="qb-field" style="flex:1"><label for="qb-vehicle">Vehicle no. <span style="font-weight:400">(optional)</span></label><input type="text" id="qb-vehicle" placeholder="MH12 AB 1234" autocapitalize="characters" style="text-transform:uppercase" autocomplete="off"/></div>
+        <div class="qb-field" style="flex:1"><label for="qb-vmodel">Model</label><input type="text" id="qb-vmodel" placeholder="e.g. Activa" list="vmodel-list" oninput="qbPopular()" autocomplete="off"/></div>
+      </div>
       <div id="qb-loy" class="hint-box" style="display:none;border-left-color:var(--yellow);font-size:15px"></div>
 
       <details class="qb-more" id="qb-more">
@@ -1329,12 +1407,12 @@ const SCOPES='https://www.googleapis.com/auth/drive.file openid email';
 const SH={PARTS:'Parts',INV:'Invoices',PURCH:'Purchases',WISH:'Wishlist',CFG:'Config',CUST:'Customers',PAY:'Payouts',SUPP:'Suppliers',REQ:'Requests',DRAFT:'Drafts',ORD:'OnlineOrders',LADJ:'LoyaltyAdj',LBAL:'LoyaltyBalances'};
 const SHOP_NAME='AutoParts Spares Pro'; // shown on customer links
 const HDR={
-  PARTS:['id','sku','name','category','qty','minQty','buyPrice','sellPrice','supplier','hsn','mrp','cgst','sgst','location','brand'],
-  INV:['id','customer','date','items_json','subtotal','discountType','discountVal','cgst','sgst','total','paid','customerId','referrerId','phone','address','loyaltyPts','loyaltyUsed','loyaltyDisc','payMode','by'],
+  PARTS:['id','sku','name','category','qty','minQty','buyPrice','sellPrice','supplier','hsn','mrp','cgst','sgst','location','brand','fits'],
+  INV:['id','customer','date','items_json','subtotal','discountType','discountVal','cgst','sgst','total','paid','customerId','referrerId','phone','address','loyaltyPts','loyaltyUsed','loyaltyDisc','payMode','by','vehicle','vmodel'],
   PURCH:['id','date','partId','partName','sku','supplier','qty','unitCost','total','notes','brand'],
   WISH:['id','name','sku','category','qtyNeeded','customer','priority','status','notes','createdAt'],
   CFG:['key','value'],
-  CUST:['id','name','phone','bonusPct','code','notes','createdAt','address'],
+  CUST:['id','name','phone','bonusPct','code','notes','createdAt','address','type','priceOff','creditLimit'],
   PAY:['id','customerId','date','amount','note'],
   SUPP:['id','name','phone','address','createdAt'],
   REQ:['id','part','qty','name','phone','date','note','status'],
@@ -1512,6 +1590,7 @@ new MutationObserver(()=>{if(_stackQ)return;_stackQ=true;requestAnimationFrame((
 // Go to a page from anywhere (keeps the phone tab bar in step)
 function navTo(page){if(window.matchMedia('(max-width:860px)').matches)mobileNavigate(page);else navigate(page);window.scrollTo(0,0);}
 function goLowStock(){$('inv-search').value='';$('inv-cat').value='';$('inv-brand').value='';$('inv-status').value='low';navTo('inventory');}
+function goFollowups(t){navTo('followups');setFuTab(t);}
 function goBills(f){$('bill-search').value='';$('bill-filter').value=f||'';navTo('billing');}
 function openInvoice(id){if(!$('page-billing').classList.contains('active'))navTo('billing');viewInvoice(id);$('invoice-view-wrap').scrollIntoView({behavior:'smooth',block:'start'});}
 
@@ -1576,7 +1655,7 @@ function loadSettingsDisplay(){
     $('shop-sheet-link').href=url;
   }
   const al=$('autologin-toggle');if(al)al.checked=autoLoginOn();
-  loadShopSettings();loadReceiptSettings();
+  loadShopSettings();loadReceiptSettings();loadGrowthSettings();
 }
 
 // ═══ GOOGLE AUTH ═══
@@ -1690,11 +1769,11 @@ async function clearRewrite(sh,hdr,rows){
 // and which columns are running counts that must be merged as +/- changes (delta) — e.g. stock qty.
 const TABS={
   PARTS:{get:()=>parts,set:v=>{parts=v;},delta:[4],
-    parse:rows=>rows.slice(1).map(r=>({id:r[0]||uid(),sku:r[1]||'',name:r[2]||'',category:r[3]||'Other',qty:+r[4]||0,minQty:+r[5]||0,buyPrice:+r[6]||0,sellPrice:+r[7]||0,supplier:r[8]||'',hsn:r[9]||'',mrp:+r[10]||0,cgst:+r[11]||0,sgst:+r[12]||0,location:r[13]||'',brand:r[14]||''})),
-    row:p=>[p.id,p.sku,p.name,p.category,p.qty,p.minQty,p.buyPrice,p.sellPrice,p.supplier||'',p.hsn||'',p.mrp||0,p.cgst||0,p.sgst||0,p.location||'',p.brand||'']},
+    parse:rows=>rows.slice(1).map(r=>({id:r[0]||uid(),sku:r[1]||'',name:r[2]||'',category:r[3]||'Other',qty:+r[4]||0,minQty:+r[5]||0,buyPrice:+r[6]||0,sellPrice:+r[7]||0,supplier:r[8]||'',hsn:r[9]||'',mrp:+r[10]||0,cgst:+r[11]||0,sgst:+r[12]||0,location:r[13]||'',brand:r[14]||'',fits:r[15]||''})),
+    row:p=>[p.id,p.sku,p.name,p.category,p.qty,p.minQty,p.buyPrice,p.sellPrice,p.supplier||'',p.hsn||'',p.mrp||0,p.cgst||0,p.sgst||0,p.location||'',p.brand||'',p.fits||'']},
   INV:{get:()=>invoices,set:v=>{invoices=v;},newFirst:true,
-    parse:rows=>rows.slice(1).map(r=>{let items=[];try{items=JSON.parse(r[3]||'[]');}catch(e){}return{id:r[0]||uid(),customer:r[1]||'',date:r[2]||'',items,subtotal:+r[4]||0,discountType:r[5]||'none',discountVal:+r[6]||0,cgst:+r[7]||0,sgst:+r[8]||0,total:+r[9]||0,paid:r[10]==='TRUE'||r[10]==='true'||r[10]===true,customerId:r[11]||'',referrerId:r[12]||'',phone:r[13]||'',address:r[14]||'',lpts:+r[15]||0,lused:+r[16]||0,ldisc:+r[17]||0,payMode:r[18]||'',by:r[19]||''};}),
-    row:i=>[i.id,i.customer,i.date,JSON.stringify(i.items),i.subtotal,i.discountType,i.discountVal,i.cgst||0,i.sgst||0,i.total,String(i.paid).toUpperCase(),i.customerId||'',i.referrerId||'',i.phone||'',i.address||'',i.lpts||0,i.lused||0,i.ldisc||0,i.payMode||'',i.by||'']},
+    parse:rows=>rows.slice(1).map(r=>{let items=[];try{items=JSON.parse(r[3]||'[]');}catch(e){}return{id:r[0]||uid(),customer:r[1]||'',date:r[2]||'',items,subtotal:+r[4]||0,discountType:r[5]||'none',discountVal:+r[6]||0,cgst:+r[7]||0,sgst:+r[8]||0,total:+r[9]||0,paid:r[10]==='TRUE'||r[10]==='true'||r[10]===true,customerId:r[11]||'',referrerId:r[12]||'',phone:r[13]||'',address:r[14]||'',lpts:+r[15]||0,lused:+r[16]||0,ldisc:+r[17]||0,payMode:r[18]||'',by:r[19]||'',vehicle:r[20]||'',vmodel:r[21]||''};}),
+    row:i=>[i.id,i.customer,i.date,JSON.stringify(i.items),i.subtotal,i.discountType,i.discountVal,i.cgst||0,i.sgst||0,i.total,String(i.paid).toUpperCase(),i.customerId||'',i.referrerId||'',i.phone||'',i.address||'',i.lpts||0,i.lused||0,i.ldisc||0,i.payMode||'',i.by||'',i.vehicle||'',i.vmodel||'']},
   PURCH:{get:()=>purchases,set:v=>{purchases=v;},
     parse:rows=>rows.slice(1).map(r=>({id:r[0]||uid(),date:r[1]||'',partId:r[2]||'',partName:r[3]||'',sku:r[4]||'',supplier:r[5]||'',qty:+r[6]||0,unitCost:+r[7]||0,total:+r[8]||0,notes:r[9]||'',brand:r[10]||''})),
     row:p=>[p.id,p.date,p.partId,p.partName,p.sku,p.supplier,p.qty,p.unitCost,p.total,p.notes,p.brand||'']},
@@ -1702,8 +1781,8 @@ const TABS={
     parse:rows=>rows.slice(1).map(r=>({id:r[0]||uid(),name:r[1]||'',sku:r[2]||'',category:r[3]||'Other',qtyNeeded:+r[4]||1,customer:r[5]||'',priority:r[6]||'medium',status:r[7]||'pending',notes:r[8]||'',createdAt:r[9]||today()})),
     row:w=>[w.id,w.name,w.sku,w.category,w.qtyNeeded,w.customer,w.priority,w.status,w.notes,w.createdAt]},
   CUST:{get:()=>customers,set:v=>{customers=v;},
-    parse:rows=>rows.slice(1).filter(r=>r[0]).map(r=>({id:r[0],name:r[1]||'',phone:r[2]||'',pct:+r[3]||0,code:String(r[4]||'').toUpperCase(),notes:r[5]||'',createdAt:r[6]||'',address:r[7]||''})),
-    row:c=>[c.id,c.name,c.phone||'',c.pct,c.code,c.notes||'',c.createdAt||'',c.address||'']},
+    parse:rows=>rows.slice(1).filter(r=>r[0]).map(r=>({id:r[0],name:r[1]||'',phone:r[2]||'',pct:+r[3]||0,code:String(r[4]||'').toUpperCase(),notes:r[5]||'',createdAt:r[6]||'',address:r[7]||'',type:r[8]||'',off:+r[9]||0,limit:+r[10]||0})),
+    row:c=>[c.id,c.name,c.phone||'',c.pct,c.code,c.notes||'',c.createdAt||'',c.address||'',c.type||'',c.off||0,c.limit||0]},
   PAY:{get:()=>payouts,set:v=>{payouts=v;},
     parse:rows=>rows.slice(1).filter(r=>r[0]).map(r=>({id:r[0],customerId:r[1]||'',date:r[2]||'',amount:+r[3]||0,note:r[4]||''})),
     row:p=>[p.id,p.customerId,p.date,p.amount,p.note||'']},
@@ -1814,13 +1893,13 @@ function navigate(page){
   document.querySelector(`[data-page="${page}"]`)?.classList.add('active');
   const map={dashboard:renderDashboard,inventory:renderInventory,purchases:renderPurchases,
     wishlist:()=>renderWishlist(currentWishTab),billing:()=>{renderBilling();renderDrafts();$('invoice-view-wrap').innerHTML='';refreshDrafts();},
-    online:()=>{renderOnline();refreshOrders();},suppliers:renderSuppliers,requests:renderRequests,partners:renderPartners,loyalty:renderLoyalty,reports:renderReports,insights:renderInsights,settings:loadSettingsDisplay};
+    online:()=>{renderOnline();refreshOrders();},suppliers:renderSuppliers,requests:renderRequests,partners:renderPartners,loyalty:renderLoyalty,reports:renderReports,insights:renderInsights,settings:loadSettingsDisplay,followups:renderFollowups};
   map[page]?.();
 }
 function renderAll(){
   renderDashboard();renderInventory();renderPurchases();
   renderWishlist(currentWishTab);renderBilling();renderDrafts();renderOnline();
-  renderRequests();
+  renderRequests();renderFollowups();
   if(isOwner()){renderSuppliers();renderPartners();renderLoyalty();renderReports();renderInsights();}
 }
 function lowStockParts(){return parts.filter(p=>p.qty<=p.minQty);}
@@ -1851,14 +1930,14 @@ function renderDashboard(){
   if(isOwner()){
     $('dash-stats').innerHTML=[
       {label:'Revenue Collected',val:fmt(paidRev),sub:invoices.filter(i=>i.paid).length+' paid invoices',color:'var(--orange)',go:"goBills('paid')"},
-      {label:'Outstanding',val:fmt(totalRev-paidRev),sub:invoices.filter(i=>!i.paid).length+' unpaid',color:'var(--yellow)',go:"goBills('pending')"},
+      {label:'Udhaar / Outstanding',val:fmt(totalRev-paidRev),sub:invoices.filter(i=>!i.paid).length+' unpaid · tap to collect',color:'var(--yellow)',go:"goFollowups('dues')"},
       {label:'Stock Value',val:fmt(invVal),sub:totalUnits+' units · '+parts.length+' types',color:'var(--blue)',go:"navTo('inventory')"},
       {label:'Total Purchased',val:fmt(totalPurch),sub:purchases.length+' records',color:'var(--purple)',go:"navTo('purchases')"},
     ].map(s=>`<div class="stat-card clickable" onclick="${s.go}" style="--accent:${s.color}"><div class="stat-label">${s.label}</div><div class="stat-val" style="color:${s.color}">${s.val}</div><div class="stat-sub">${s.sub}</div></div>`).join('');
   }else{
     $('dash-stats').innerHTML=[
       {label:'Revenue Collected',val:fmt(paidRev),sub:invoices.filter(i=>i.paid).length+' paid invoices',color:'var(--orange)',go:"goBills('paid')"},
-      {label:'Outstanding',val:fmt(totalRev-paidRev),sub:invoices.filter(i=>!i.paid).length+' unpaid',color:'var(--yellow)',go:"goBills('pending')"},
+      {label:'Udhaar / Outstanding',val:fmt(totalRev-paidRev),sub:invoices.filter(i=>!i.paid).length+' unpaid · tap to collect',color:'var(--yellow)',go:"goFollowups('dues')"},
       {label:'Low Stock Items',val:ls.length,sub:'need restocking',color:ls.length>0?'var(--red)':'var(--green)',go:"goLowStock()"},
       {label:'Invoices Today',val:invoices.filter(i=>i.date===today()).length,sub:'created today',color:'var(--orange)',go:"navTo('billing')"},
     ].map(s=>`<div class="stat-card clickable" onclick="${s.go}" style="--accent:${s.color}"><div class="stat-label">${s.label}</div><div class="stat-val" style="color:${s.color}">${s.val}</div><div class="stat-sub">${s.sub}</div></div>`).join('');
@@ -1870,6 +1949,8 @@ function renderDashboard(){
   // Low stock alerts chip
   if(ls.length>0){$('chip-lowstock').style.display='block';$('chip-ls-text').textContent=ls.length+' part'+(ls.length>1?'s':'')+' low';}
   else $('chip-lowstock').style.display='none';
+  const pc=isOwner()?priceCheckList().length:0;
+  $('chip-price').style.display=pc?'block':'none';$('chip-pr-text').textContent=pc+' part'+(pc>1?'s':'')+' below minimum margin';
   // Recent invoices — hide totals from employee
   const invEl=$('dash-recent-inv');
   if(invoices.length===0)invEl.innerHTML='<div style="color:var(--muted);font-size:13px">No invoices yet</div>';
@@ -1905,7 +1986,7 @@ function renderInventory(){
   const filtered=parts.filter(p=>{
     if(cat&&p.category!==cat)return false;
     if(brandSel&&(p.brand||'').toLowerCase()!==brandSel.toLowerCase())return false;
-    if(!tokHit(q,[p.brand,p.name,p.sku,p.location]))return false;
+    if(!tokHit(q,[p.brand,p.name,p.sku,p.location,p.fits]))return false;
     if(st==='low'&&p.qty>p.minQty)return false;
     if(st==='ok'&&p.qty<=p.minQty)return false;
     if(st==='dead'&&(sm[p.id]?.qty||0)>0)return false;
@@ -1924,7 +2005,7 @@ function renderInventory(){
       const margin=p.buyPrice>0&&p.sellPrice>0?(((p.sellPrice-p.buyPrice)/p.sellPrice)*100).toFixed(0)+'% margin':'';
       const qc=p.qty===0?'var(--red)':p.qty<=p.minQty?'var(--yellow)':'var(--green)';
       const tag=p.qty===0?' <span class="badge badge-red">Out</span>':p.qty<=p.minQty?' <span class="badge badge-yellow">Low</span>':'';
-      const sub=[p.sku?`<span class="mono">${esc(p.sku)}</span>`:'',p.supplier?esc(p.supplier):''].filter(Boolean).join(' · ');
+      const sub=[p.sku?`<span class="mono">${esc(p.sku)}</span>`:'',p.supplier?esc(p.supplier):'',p.fits?'🏍 '+esc(p.fits):''].filter(Boolean).join(' · ');
       const locM=p.location?`<span class="loc-tag" style="font-size:10px;padding:0 5px;margin-right:4px">${esc(p.location)}</span>`:'';
       return`<tr${own?` class="row-link" onclick="if(!event.target.closest('button'))openPartModal('${p.id}')"`:''}>
         <td class="hide-m"><span class="loc-tag">${esc(p.location||'—')}</span></td>
@@ -1971,10 +2052,10 @@ function openPartModal(id=null,fromId=null){
   $('pf-existing-hint').style.display='none';$('pf-name-dropdown').classList.remove('open');
   $('part-modal-title').textContent=id?'Edit Part':'Add New Part';
   $('part-save-btn').textContent=id?'Save Changes':'Add Part';
-  if(id||fromId){const p=parts.find(x=>x.id===(id||fromId));$('pf-sku').value=p.sku;$('pf-name').value=p.name;$('pf-cat').value=p.category;$('pf-qty').value=p.qty;$('pf-minqty').value=p.minQty;$('pf-buy').value=p.buyPrice;$('pf-sell').value=p.sellPrice;$('pf-supplier').value=p.supplier||'';$('pf-brand').value=p.brand||'';$('pf-hsn').value=p.hsn||'';$('pf-mrp').value=p.mrp||'';$('pf-cgst').value=p.cgst||'';$('pf-sgst').value=p.sgst||'';$('pf-location').value=p.location||'';
+  if(id||fromId){const p=parts.find(x=>x.id===(id||fromId));$('pf-sku').value=p.sku;$('pf-name').value=p.name;$('pf-cat').value=p.category;$('pf-qty').value=p.qty;$('pf-minqty').value=p.minQty;$('pf-buy').value=p.buyPrice;$('pf-sell').value=p.sellPrice;$('pf-supplier').value=p.supplier||'';$('pf-brand').value=p.brand||'';$('pf-hsn').value=p.hsn||'';$('pf-mrp').value=p.mrp||'';$('pf-cgst').value=p.cgst||'';$('pf-sgst').value=p.sgst||'';$('pf-location').value=p.location||'';$('pf-fits').value=p.fits||'';
     if(!id){$('pf-qty').value='';updateSkuPreview();}}   // copy for a NEW part: stock left blank, fresh SKU
-  else{['pf-sku','pf-name','pf-qty','pf-minqty','pf-buy','pf-sell','pf-supplier','pf-brand','pf-hsn','pf-mrp','pf-cgst','pf-sgst','pf-location'].forEach(x=>$(x).value='');$('pf-cat').value='Engine';updateSkuPreview();}
-  $('margin-hint').style.display='none';
+  else{['pf-sku','pf-name','pf-qty','pf-minqty','pf-buy','pf-sell','pf-supplier','pf-brand','pf-hsn','pf-mrp','pf-cgst','pf-sgst','pf-location','pf-fits'].forEach(x=>$(x).value='');$('pf-cat').value='Engine';updateSkuPreview();}
+  $('margin-hint').style.display='none';fillVModelList();
   openModal('part-modal');
 }
 function updateMarginHint(){
@@ -1986,7 +2067,7 @@ function updateMarginHint(){
 async function savePart(){
   if(!isOwner())return;
   const keepSku=editingPartId?((parts.find(x=>x.id===editingPartId)||{}).sku||''):'';
-  const p={id:editingPartId||uid(),sku:keepSku||generateSku($('pf-cat').value,$('pf-name').value,$('pf-brand').value),name:$('pf-name').value.trim(),category:$('pf-cat').value,qty:+$('pf-qty').value,minQty:+$('pf-minqty').value,buyPrice:+$('pf-buy').value,sellPrice:+$('pf-sell').value,supplier:$('pf-supplier').value.trim(),brand:canonBrand($('pf-brand').value),hsn:$('pf-hsn').value.trim(),mrp:+$('pf-mrp').value||0,cgst:+$('pf-cgst').value||0,sgst:+$('pf-sgst').value||0,location:$('pf-location').value.trim().toUpperCase().replace(/\s+/g,'')};
+  const p={id:editingPartId||uid(),sku:keepSku||generateSku($('pf-cat').value,$('pf-name').value,$('pf-brand').value),name:$('pf-name').value.trim(),category:$('pf-cat').value,qty:+$('pf-qty').value,minQty:+$('pf-minqty').value,buyPrice:+$('pf-buy').value,sellPrice:+$('pf-sell').value,supplier:$('pf-supplier').value.trim(),brand:canonBrand($('pf-brand').value),hsn:$('pf-hsn').value.trim(),mrp:+$('pf-mrp').value||0,cgst:+$('pf-cgst').value||0,sgst:+$('pf-sgst').value||0,location:$('pf-location').value.trim().toUpperCase().replace(/\s+/g,''),fits:$('pf-fits').value.split(',').map(x=>x.trim()).filter(Boolean).join(', ')};
   if(!p.name){alert('Part Name required.');return;}
   if(!editingPartId&&templatePart&&JSON.stringify(pfSnapshot())===JSON.stringify(templatePart.snap)){
     alert('Nothing was changed from "'+templatePart.text+'", so no new part was added.\n\nChange a detail (name, brand, price, supplier…) to add it as a new part.\nTo add more stock of the same part, use Record Purchase. To correct the original, use Edit.');
@@ -2062,9 +2143,18 @@ async function savePurchase(){
   const qty=+$('purch-qty').value,cost=+$('purch-cost').value;
   if(!qty||!cost){alert('Enter quantity and cost.');return;}
   purchases.push({id:uid(),date:$('purch-date').value,partId:p.id,partName:p.name,sku:p.sku,supplier:$('purch-supplier').value.trim(),brand:canonBrand($('purch-brand').value),qty,unitCost:cost,total:qty*cost,notes:$('purch-notes').value.trim()});
-  parts=parts.map(x=>{if(x.id!==p.id)return x;const u={...x,qty:x.qty+qty};if(!x.brand&&$('purch-brand').value.trim())u.brand=canonBrand($('purch-brand').value);if($('purch-update-buy').checked&&isOwner())u.buyPrice=cost;return u;});
+  // Buying price went up? Offer to raise the selling price so the margin is kept.
+  let newSell=null;
+  if($('purch-update-buy').checked&&isOwner()&&p.sellPrice>0&&cost>(+p.buyPrice||0)){
+    const oldM=p.buyPrice>0?(p.sellPrice-p.buyPrice)/p.sellPrice:0;
+    const nowM=(p.sellPrice-cost)/p.sellPrice*100;
+    const keep=Math.max(oldM,minMargin()/100);
+    const sug=Math.ceil(cost/(1-Math.min(keep,0.9)));
+    if(sug>p.sellPrice&&confirm(`Buying price went up: ${fmt(p.buyPrice||0)} → ${fmt(cost)}.\nSelling at ${fmt(p.sellPrice)} now gives only ${nowM.toFixed(0)}% margin.\n\nOK = change selling price to ${fmt(sug)} (keeps a ${(keep*100).toFixed(0)}% margin)\nCancel = keep ${fmt(p.sellPrice)}`))newSell=sug;
+  }
+  parts=parts.map(x=>{if(x.id!==p.id)return x;const u={...x,qty:x.qty+qty};if(!x.brand&&$('purch-brand').value.trim())u.brand=canonBrand($('purch-brand').value);if($('purch-update-buy').checked&&isOwner())u.buyPrice=cost;if(newSell)u.sellPrice=newSell;return u;});
   const suppChanged=upsertSupplier($('purch-supplier').value,$('purch-sphone').value.trim(),$('purch-saddr').value.trim());
-  closeModal('purchase-modal');renderAll();await Promise.all([savePurchases(),saveParts(),...(suppChanged?[saveSuppliers()]:[])]);
+  closeModal('purchase-modal');renderAll();showWaiting(p.id);await Promise.all([savePurchases(),saveParts(),...(suppChanged?[saveSuppliers()]:[])]);
 }
 
 // ═══ WISHLIST ═══
@@ -2101,7 +2191,7 @@ function renderBilling(){
   const q=$('bill-search').value.toLowerCase();
   const f=$('bill-filter').value;
   const filtered=invoices.filter(i=>{
-    if(q&&!i.customer.toLowerCase().includes(q)&&!i.id.includes(q))return false;
+    if(q&&!i.customer.toLowerCase().includes(q)&&!i.id.includes(q)&&!vehKey(i.vehicle).includes(vehKey(q)||'\u0000')&&!(i.phone||'').includes(q))return false;
     if(f==='paid'&&!i.paid)return false;
     if(f==='pending'&&i.paid)return false;
     return true;
@@ -2111,19 +2201,20 @@ function renderBilling(){
     filtered.map(inv=>{
       const disc=inv.discountType!=='none'&&inv.discountVal>0?`<div class="sub-line" style="color:var(--green)">-${inv.discountType==='pct'?inv.discountVal+'%':fmt(inv.discountVal)} off</div>`:'';
       const actions=`<button class="btn ${inv.paid?'btn-secondary':'btn-success'} btn-sm" onclick="togglePaid('${inv.id}')">${inv.paid?'Unpay':'Mark Paid'}</button>${isOwner()?` <button class="btn btn-danger btn-icon" onclick="deleteInvoice('${inv.id}')" title="Delete">🗑</button>`:''}`;
-      return`<tr class="row-link" onclick="if(!event.target.closest('button'))openInvoice('${inv.id}')"><td class="hide-m" style="font-family:'Rajdhani',sans-serif;color:var(--orange);font-weight:700">#${inv.id.slice(-5)}</td><td style="font-weight:600">${esc(inv.customer)}<div class="sub-line">${esc(inv.date)} · ${inv.items.length} item${inv.items.length>1?'s':''}</div></td><td class="nowrap"><span style="font-weight:700;color:var(--orange)">${fmt(inv.total)}</span>${disc}<div class="show-m" style="display:none"><span class="badge ${inv.paid?'badge-green':'badge-yellow'}">${inv.paid?'Paid':'Pending'}</span></div></td><td class="hide-m"><span class="badge ${inv.paid?'badge-green':'badge-yellow'}">${inv.paid?'Paid':'Pending'}</span></td><td class="nowrap">${actions}</td></tr>`;
+      return`<tr class="row-link" onclick="if(!event.target.closest('button'))openInvoice('${inv.id}')"><td class="hide-m" style="font-family:'Rajdhani',sans-serif;color:var(--orange);font-weight:700">#${inv.id.slice(-5)}</td><td style="font-weight:600">${esc(inv.customer)}<div class="sub-line">${esc(inv.date)} · ${inv.items.length} item${inv.items.length>1?'s':''}${inv.vehicle?' · '+esc(inv.vehicle):''}</div></td><td class="nowrap"><span style="font-weight:700;color:var(--orange)">${fmt(inv.total)}</span>${disc}<div class="show-m" style="display:none"><span class="badge ${inv.paid?'badge-green':'badge-yellow'}">${inv.paid?'Paid':'Pending'}</span></div></td><td class="hide-m"><span class="badge ${inv.paid?'badge-green':'badge-yellow'}">${inv.paid?'Paid':'Pending'}</span></td><td class="nowrap">${actions}</td></tr>`;
     }).join('');
 }
 function openBillModal(){
   editingDraftId=null;$('bill-title').textContent='New Invoice';
   billItems=[];fillPartnerLists();$('bf-lredeem').value='';$('bf-customer').value='';$('bf-ref').value='';$('bf-phone').value='';$('bf-addr').value='';_autoFilledFor=null;updateBillLinks();$('bf-date').value=today();$('bf-part-search').value='';$('bf-disc-type').value='none';$('bf-disc-val').value='';
+  $('bf-vehicle').value='';$('bf-vmodel').value='';fillVModelList();
   renderBillItems();openModal('bill-modal');_billSnap=billSnapshot();
 }
 function billPartSearch(){
   const q=$('bf-part-search').value.toLowerCase().trim();
   const dd=$('bill-part-dropdown');
   if(!q){dd.classList.remove('open');return;}
-  const res=parts.filter(p=>p.qty>0&&tokHit(q,[p.brand,p.name,p.sku,p.location])).slice(0,8);
+  const res=parts.filter(p=>p.qty>0&&tokHit(q,[p.brand,p.name,p.sku,p.location,p.fits])).slice(0,8);
   if(!res.length){dd.classList.remove('open');return;}
   dd.innerHTML=res.map(p=>`<div class="pdi" onmousedown="addToBill('${p.id}')"><div><div style="font-weight:600;font-size:13px">${pLabel(p)}</div><div style="font-size:11px;color:var(--muted)">${esc(p.sku)} · ${p.qty} in stock${p.location?' · 📍'+esc(p.location):''}</div></div><div style="font-weight:700;color:var(--orange)">${fmt(p.sellPrice)}</div></div>`).join('');
   dd.classList.add('open');
@@ -2136,6 +2227,7 @@ function addToBill(partId){
   $('bf-part-search').value='';$('bill-part-dropdown').classList.remove('open');renderBillItems();
 }
 function renderBillItems(){
+  applyTier($('bf-customer').value,$('bf-phone').value);   // garage price shows as soon as a part is added
   // Employee cannot edit prices, owner can
   $('bill-items-list').innerHTML=billItems.map(item=>`
     <div class="bill-item-row">
@@ -2146,12 +2238,14 @@ function renderBillItems(){
       <button class="btn btn-danger btn-sm" onclick="removeBillItem('${item.partId}')">✕</button>
     </div>`).join('');
   const has=billItems.length>0;
+  renderSuggest('bf-suggest','addToBill');
+  if(!has)showMargins({subtotal:0});
   $('bill-total-section').style.display=has?'block':'none';
   $('save-pending-btn').disabled=!has;$('save-paid-btn').disabled=!has;$('save-draft-btn').disabled=!has;
   if(has)calcBillTotal();
 }
 function updateBillQty(pid,v){billItems=billItems.map(i=>i.partId===pid?{...i,qty:Math.max(1,Math.min(+v,i.maxQty))}:i);renderBillItems();}
-function updateBillPrice(pid,v){if(!isOwner())return;billItems=billItems.map(i=>i.partId===pid?{...i,price:Math.max(0,+v)}:i);renderBillItems();}
+function updateBillPrice(pid,v){if(!isOwner())return;billItems=billItems.map(i=>i.partId===pid?{...i,price:Math.max(0,+v),manual:true}:i);renderBillItems();}
 function removeBillItem(pid){billItems=billItems.filter(i=>i.partId!==pid);renderBillItems();}
 function calcBillTotal(){
   const subtotal=billItems.reduce((s,i)=>s+i.price*i.qty,0);
@@ -2185,6 +2279,7 @@ function calcBillTotal(){
   $('bf-total').textContent=fmt(total);
   updateBonusHint(total,cgstAmt,sgstAmt);
   updateLoyaltyPreview(total,cgstAmt,sgstAmt,lpts,ld);
+  showMargins({subtotal,disc,ld});
   return{subtotal,disc,dtype,dval,cgst:cgstAmt,sgst:sgstAmt,total,lpts,ld};
 }
 async function saveInvoice(paid,opt={}){
@@ -2193,10 +2288,13 @@ async function saveInvoice(paid,opt={}){
   const refRaw=$('bf-ref').value.trim();const rf=refRaw?resolvePartnerRef(refRaw):null;
   if(refRaw&&!rf){alert('Referral not found. Pick someone from the list, or clear the Referred By field.');return;}
   if(rf&&cu&&rf.id===cu.id){alert('A customer cannot refer themselves.');return;}
+  applyTier(customer,$('bf-phone').value);
   const{subtotal,disc,dtype,dval,cgst,sgst,total,lpts,ld}=calcBillTotal();
+  if(!marginGate())return false;
+  if(!paid&&!overLimitOk(garageFor(customer,$('bf-phone').value),total))return false;
   const lst=loyaltyState();
   const learn=lst.eligible?loyaltyEarn(Math.max(0,total-cgst-sgst)):0;
-  const inv={id:uid(),customer,date:$('bf-date').value||today(),items:billItems.map(i=>({...i,cost:i.cost!=null?i.cost:(parts.find(x=>x.id===i.partId)?.buyPrice||0)})),subtotal,discountType:dtype,discountVal:dval,cgst,sgst,total,paid,customerId:cu?cu.id:'',referrerId:rf?rf.id:'',phone:$('bf-phone').value.trim(),address:$('bf-addr').value.trim(),lpts:learn,lused:lpts,ldisc:ld,payMode:opt.payMode||'',by:(isOwner()?getCredentials().owner.user:getCredentials().employee.user)||''};
+  const inv={id:uid(),customer,date:$('bf-date').value||today(),items:billItems.map(i=>({...i,cost:i.cost!=null?i.cost:(parts.find(x=>x.id===i.partId)?.buyPrice||0)})),subtotal,discountType:dtype,discountVal:dval,cgst,sgst,total,paid,customerId:cu?cu.id:'',referrerId:rf?rf.id:'',phone:$('bf-phone').value.trim(),address:$('bf-addr').value.trim(),lpts:learn,lused:lpts,ldisc:ld,payMode:opt.payMode||'',by:(isOwner()?getCredentials().owner.user:getCredentials().employee.user)||'',vehicle:vehShow($('bf-vehicle').value),vmodel:$('bf-vmodel').value.trim()};
   invoices.unshift(inv);
   parts=parts.map(p=>{const item=billItems.find(i=>i.partId===p.id);return item?{...p,qty:p.qty-item.qty}:p;});
   const wasDraft=editingDraftId;editingDraftId=null;
@@ -2214,7 +2312,7 @@ function viewInvoice(id){
         <div>
           <div style="font-size:11px;color:var(--orange);font-weight:700;letter-spacing:.12em">INVOICE #${inv.id.slice(-5)}</div>
           <div style="font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;margin-top:2px">${esc(inv.customer)}</div>
-          <div style="font-size:12px;color:var(--muted)">${esc(inv.date)}</div>${invPartnerLine(inv)}
+          <div style="font-size:12px;color:var(--muted)">${esc(inv.date)}${inv.phone?' · 📞 '+esc(inv.phone):''}${inv.vehicle||inv.vmodel?' · 🏍 '+esc([inv.vmodel,inv.vehicle].filter(Boolean).join(' ')):''}</div>${invPartnerLine(inv)}
         </div>
         <div style="text-align:right">
           <div style="font-family:'Rajdhani',sans-serif;font-size:30px;font-weight:700;color:var(--orange)">${fmt(inv.total)}</div>${disc?`<div style="font-size:12px;color:var(--green)">Discount: -${inv.discountType==='pct'?inv.discountVal+'%':fmt(inv.discountVal)}</div>`:''}
@@ -2281,6 +2379,7 @@ function renderReports(){
 
 // ═══ INSIGHTS (owner only) ═══
 function renderInsights(){
+  renderPriceCheck();
   if(!isOwner())return;
   const sm=partSalesMap();
   const soldParts=parts.map(p=>({...p,rev:sm[p.id]?.rev||0,soldQty:sm[p.id]?.qty||0})).sort((a,b)=>b.rev-a.rev);
@@ -2812,13 +2911,15 @@ function updateBillLinks(){
   const cu=resolvePartnerByName($('bf-customer').value);
   const rv=$('bf-ref').value.trim();const rf=rv?resolvePartnerRef(rv):null;
   let h='';
-  if(cu)h+=`⭐ Registered customer: <b>${esc(cu.name)}</b> (${esc(cu.code)}) — this purchase counts toward their bonus<br>`;
+  const g=applyTier($('bf-customer').value,$('bf-phone').value);
+  if(g)h+=garageLine(g,0)+'<br>';
+  if(cu&&cu.pct>0)h+=`⭐ Registered customer: <b>${esc(cu.name)}</b> (${esc(cu.code)}) — this purchase counts toward their bonus<br>`;
   if(rv&&!rf)h+=`<span style="color:var(--red)">⚠ No customer found for “${esc(rv)}”</span>`;
   else if(rf&&cu&&rf.id===cu.id)h+=`<span style="color:var(--red)">⚠ A customer cannot refer themselves</span>`;
   else if(rf)h+=`🤝 Referred by <b>${esc(rf.name)}</b> (${esc(rf.code)})`;
   el.innerHTML=h;el.style.display=h?'block':'none';
   updateDraftHint();
-  if(billItems.length)calcBillTotal();else updateBonusHint(0,0,0);
+  if(billItems.length)renderBillItems();else updateBonusHint(0,0,0);
 }
 function updateBonusHint(total,cg,sg){
   const el=$('bf-bonus-hint');if(!el)return;
@@ -2859,7 +2960,7 @@ function renderPartners(){
   const sb=a=>a.reduce((s,x)=>s+x.base,0);
   $('cust-tbody').innerHTML=rows.length===0?`<tr class="empty-row"><td colspan="8">${customers.length?'No match':'No customers yet — add one to start tracking referral bonus'}</td></tr>`:
     rows.map(({c,l})=>`<tr>
-      <td><div style="font-weight:600">${esc(c.name)}</div><div style="font-size:11px;color:var(--muted);margin-top:2px"><span class="loc-tag">${esc(c.code)}</span>${c.phone?' · '+esc(c.phone):''}</div>${c.address?`<div style="font-size:11px;color:var(--muted)">📍 ${esc(c.address)}</div>`:''}</td>
+      <td><div style="font-weight:600">${esc(c.name)}</div><div style="font-size:11px;color:var(--muted);margin-top:2px"><span class="loc-tag">${esc(c.code)}</span>${c.phone?' · '+esc(c.phone):''}</div>${c.address?`<div style="font-size:11px;color:var(--muted)">📍 ${esc(c.address)}</div>`:''}${c.type==='garage'?`<div style="font-size:11px;color:var(--blue);margin-top:2px">🔧 Garage${c.off?' · '+c.off+'% off':''}${c.limit?' · limit '+fmt(c.limit):''}${(()=>{const d=custDue(c);return d>0?` · <b style="color:${c.limit&&d>c.limit?'var(--red)':'var(--yellow)'}">owes ${fmt(d)}</b>`:''})()}</div>`:''}</td>
       <td><span class="badge badge-purple">${c.pct}%</span></td>
       <td>${l.own.length} <span style="color:var(--muted);font-size:11px">· ${fmt(sb(l.own))}</span></td>
       <td>${l.refs.length} <span style="color:var(--muted);font-size:11px">· ${fmt(sb(l.refs))}</span></td>
@@ -2867,6 +2968,7 @@ function renderPartners(){
       <td>${fmt(l.paidOut)}</td>
       <td style="color:var(--green);font-weight:700">${fmt(l.balance)}</td>
       <td><div class="btn-group">
+        ${validPhone(c.phone)?`<button class="btn btn-success btn-sm" onclick="sendStatement('${c.id}')" title="Send this month's statement on WhatsApp">📄 Statement</button>`:''}
         <button class="btn btn-primary btn-sm" onclick="openShare('${c.id}')">🔗 Link</button>
         <button class="btn btn-success btn-sm" onclick="openPayout('${c.id}')">Payout</button>
         <button class="btn btn-secondary btn-sm" onclick="openCustModal('${c.id}')">Edit</button>
@@ -2881,21 +2983,24 @@ function openCustModal(id=null){
   const c=id?findPartner(id):null;
   $('cf-name').value=c?c.name:'';$('cf-phone').value=c?c.phone:'';$('cf-pct').value=c?c.pct:'';
   $('cf-code').value=c?c.code:'';$('cf-notes').value=c?c.notes:'';$('cf-addr').value=c?c.address||'':'';
+  $('cf-type').value=c&&c.type==='garage'?'garage':'';$('cf-off').value=c&&c.off?c.off:'';$('cf-limit').value=c&&c.limit?c.limit:'';custTypeUI();
   openModal('cust-modal');
 }
 async function saveCustomer(){
   if(!isOwner())return;
   const name=$('cf-name').value.trim();
   if(!name){alert('Enter a name.');return;}
-  const pct=+$('cf-pct').value;
-  if($('cf-pct').value===''||!(pct>=0&&pct<=100)){alert('Enter a bonus % between 0 and 100.');return;}
+  const pct=+$('cf-pct').value||0;
+  if(!(pct>=0&&pct<=100)){alert('Enter a bonus % between 0 and 100.');return;}
+  const type=$('cf-type').value==='garage'?'garage':'',off=type?(+$('cf-off').value||0):0,limit=type?(+$('cf-limit').value||0):0;
+  if(off<0||off>50){alert('Garage price should be between 0% and 50% off.');return;}
   let code=$('cf-code').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
   if(!code)code=genCode(name);
   if(customers.some(c=>c.code===code&&c.id!==editingCustId)){alert('That referral code is already used by another customer.');return;}
   if(customers.some(c=>c.name.trim().toLowerCase()===name.toLowerCase()&&c.id!==editingCustId)){
     alert('Another customer already has this exact name. Make it distinct (e.g. add the area) — bills match customers by name.');return;
   }
-  const rec={id:editingCustId||uid(),name,phone:$('cf-phone').value.trim(),address:$('cf-addr').value.trim(),pct,code,notes:$('cf-notes').value.trim(),
+  const rec={id:editingCustId||uid(),name,phone:$('cf-phone').value.trim(),address:$('cf-addr').value.trim(),pct,code,type,off,limit,notes:$('cf-notes').value.trim(),
     createdAt:editingCustId?(findPartner(editingCustId)?.createdAt||today()):today()};
   let relinked=false;
   if(editingCustId)customers=customers.map(c=>c.id===editingCustId?rec:c);
@@ -3153,7 +3258,7 @@ function resumeDraft(id,mergeCurrent=false){
     const ex=billItems.find(x=>x.partId===it.partId);
     const want=(ex?ex.qty:0)+it.qty,qty=Math.min(want,p.qty);
     if(qty<want)notes.push(`“${pText({brand:it.brand||(parts.find(x=>x.id===it.partId)||{}).brand},it.name)}”: only ${p.qty} in stock now (draft had ${want})`);
-    if(ex)ex.qty=qty;else billItems.push({partId:p.id,sku:p.sku,name:p.name,brand:p.brand||'',price:it.price,qty,maxQty:p.qty});
+    if(ex)ex.qty=qty;else billItems.push({partId:p.id,sku:p.sku,name:p.name,brand:p.brand||'',price:it.price,cost:p.buyPrice||0,qty,maxQty:p.qty,manual:+it.price!==+p.sellPrice});
   };
   d.items.forEach(add);carry.forEach(add);
   $('bf-lredeem').value='';fillPartnerLists();updateBillLinks();renderBillItems();
@@ -3382,7 +3487,7 @@ async function bootShop(){
   el.innerHTML=`<div class="sh-wrap">
     <div class="pt-brand">Parts Catalog</div><div class="pt-shop">${esc(SHOP.cfg.n||'')}</div>
     <div class="pt-note" style="margin-top:4px">Live availability · prices include GST · place an order and the shop will confirm it.</div>
-    <div class="sh-top"><input type="text" inputmode="search" id="sh-q" class="sh-search" placeholder="Search brand, part name or number…" autocomplete="off" oninput="SHOP.q=this.value;SHOP.shown=60;shopRender()"/><div class="sh-chips" id="sh-chips"></div><div class="sh-chips" id="sh-brands"></div></div>
+    <div class="sh-top"><input type="text" inputmode="search" id="sh-q" class="sh-search" placeholder="Search part, brand, number or vehicle…" autocomplete="off" oninput="SHOP.q=this.value;SHOP.shown=60;shopRender()"/><div class="sh-chips" id="sh-chips"></div><div class="sh-chips" id="sh-brands"></div></div>
     <div id="sh-list"><div class="sh-empty"><span class="spinner"></span> Loading…</div></div>
     <div id="sh-more" style="text-align:center"></div>
     <div id="sh-updated" class="pt-foot"></div>
@@ -3396,7 +3501,7 @@ async function shopLoad(){
     const r=await fetch(SHOP.cfg.u+'?action=catalog');
     const d=await r.json();
     if(!d.ok||!Array.isArray(d.items))throw new Error('bad');
-    SHOP.items=d.items.map(i=>({id:String(i.id),sku:String(i.sku||''),name:String(i.name||''),brand:String(i.brand||'').trim().replace(/\s+/g,' '),cat:String(i.cat||'Other'),price:+i.price||0,st:['in','low','out'].includes(i.st)?i.st:'in'}))
+    SHOP.items=d.items.map(i=>({id:String(i.id),sku:String(i.sku||''),name:String(i.name||''),brand:String(i.brand||'').trim().replace(/\s+/g,' '),cat:String(i.cat||'Other'),price:+i.price||0,fits:String(i.fits||'').slice(0,200),st:['in','low','out'].includes(i.st)?i.st:'in'}))
       .sort((a,b)=>SH_RANK[a.st]-SH_RANK[b.st]||a.name.localeCompare(b.name)||a.brand.localeCompare(b.brand));
     {const bc=new Map();SHOP.items.forEach(i=>{const k=i.brand.toLowerCase();if(k&&!bc.has(k))bc.set(k,i.brand);if(k)i.brand=bc.get(k);});}
     // drop cart lines for parts that no longer exist
@@ -3423,7 +3528,7 @@ function shopChips(){
 }
 function shopMatches(){
   const t=SHOP.q.toLowerCase().split(/\s+/).filter(Boolean);
-  return SHOP.items.filter(i=>(!SHOP.cat||i.cat===SHOP.cat)&&(!SHOP.brand||i.brand.toLowerCase()===SHOP.brand)&&t.every(w=>(i.brand+' '+i.name+' '+i.sku+' '+i.cat).toLowerCase().includes(w)));
+  return SHOP.items.filter(i=>(!SHOP.cat||i.cat===SHOP.cat)&&(!SHOP.brand||i.brand.toLowerCase()===SHOP.brand)&&t.every(w=>(i.brand+' '+i.name+' '+i.sku+' '+i.cat+' '+(i.fits||'')).toLowerCase().includes(w)));
 }
 const stBadge=s=>s==='in'?'<span class="badge badge-green">In stock</span>':s==='low'?'<span class="badge badge-yellow">Few left</span>':'<span class="badge badge-orange">Out of stock · on request</span>';
 function shopStepper(id){
@@ -3435,7 +3540,7 @@ function shopRender(){
   shopChips();
   const all=shopMatches(),vis=all.slice(0,SHOP.shown);
   $('sh-list').innerHTML=vis.length?vis.map(i=>`<div class="sh-item">
-      <div style="min-width:0;flex:1"><div class="sh-name">${pLabel(i)}</div><div class="sh-meta">${esc(i.sku)}${i.sku?' · ':''}${esc(i.cat)}</div><div style="margin-top:6px">${stBadge(i.st)}</div></div>
+      <div style="min-width:0;flex:1"><div class="sh-name">${pLabel(i)}</div><div class="sh-meta">${esc(i.sku)}${i.sku?' · ':''}${esc(i.cat)}${i.fits?' · 🏍 Fits '+esc(i.fits):''}</div><div style="margin-top:6px">${stBadge(i.st)}</div></div>
       <div style="text-align:right;flex:0 0 auto"><div class="sh-price">${fmt(i.price)}</div><div style="margin-top:7px">${shopStepper(i.id)}</div></div>
     </div>`).join(''):`<div class="sh-empty">${SHOP.items.length?'No parts match your search.<br>Can’t find it? Tell the shop — they may be able to source it.':'No parts listed yet.'}</div>`;
   $('sh-more').innerHTML=all.length>SHOP.shown?`<button class="btn btn-secondary" onclick="SHOP.shown+=60;shopRender()">Show more (${all.length-SHOP.shown} more)</button>`:'';
@@ -3618,7 +3723,7 @@ function qbOpen(){
   editingDraftId=null;billItems=[];fillPartnerLists();
   ['bf-customer','bf-ref','bf-phone','bf-addr','bf-lredeem','bf-disc-val','bf-part-search'].forEach(id=>{if($(id))$(id).value='';});
   $('bf-disc-type').value='none';$('bf-date').value=today();_autoFilledFor=null;
-  ['qb-search','qb-phone','qb-name','qb-disc'].forEach(id=>$(id).value='');$('qb-disc-type').value='flat';$('qb-more').open=false;
+  ['qb-search','qb-phone','qb-name','qb-disc','qb-vehicle','qb-vmodel','bf-vehicle','bf-vmodel'].forEach(id=>$(id).value='');$('qb-garage').style.display='none';fillVModelList();$('qb-disc-type').value='flat';$('qb-more').open=false;
   $('qb-form').style.display='block';$('qb-doneview').style.display='none';$('qb-foot').style.display='block';
   $('qb-known').style.display='none';$('qb-results').innerHTML='';
   qbPopular();qbRender();$('qb').classList.add('open');
@@ -3639,11 +3744,20 @@ function qbSearch(){
   const q=$('qb-search').value.trim();
   $('qb-popular-wrap').style.display=q?'none':'block';
   if(!q){$('qb-results').innerHTML='';return;}
-  const res=parts.filter(p=>tokHit(q.toLowerCase(),[p.brand,p.name,p.sku,p.location,p.category]))
+  const res=parts.filter(p=>tokHit(q.toLowerCase(),[p.brand,p.name,p.sku,p.location,p.category,p.fits]))
     .sort((a,b)=>(b.qty>0)-(a.qty>0)).slice(0,12);
   $('qb-results').innerHTML=res.length?res.map(qbPartCard).join(''):`<div class="qb-hint">No part found for “${esc(q)}”. Try a shorter word.</div>`;
 }
 function qbPopular(){
+  const model=($('qb-vmodel')&&$('qb-vmodel').value||'').trim();
+  if(model){
+    const fit=parts.filter(p=>p.qty>0&&p.fits&&tokHit(model.toLowerCase(),[p.fits])).slice(0,12);
+    if(fit.length){
+      $('qb-pop-title').textContent=`Fits ${model} — tap to add:`;$('qb-popular-wrap').style.display=$('qb-search').value.trim()?'none':'block';
+      $('qb-popular').innerHTML=fit.map(p=>`<button type="button" class="qb-chip" onclick="qbAdd('${p.id}')">${esc(pText(p))}</button>`).join('');return;
+    }
+  }
+  $('qb-pop-title').textContent='Most sold — tap to add:';
   const sm=partSalesMap();
   const top=Object.entries(sm).sort((a,b)=>b[1].qty-a[1].qty).map(([id])=>parts.find(p=>p.id===id)).filter(p=>p&&p.qty>0).slice(0,10);
   $('qb-popular-wrap').style.display=top.length?'block':'none';
@@ -3666,8 +3780,10 @@ function qbStep(id,d){
   it.qty=q;qbRender();
 }
 function qbRemove(id){billItems=billItems.filter(i=>i.partId!==id);qbRender();}
-function qbPrice(id,v){if(!isOwner())return;const it=billItems.find(i=>i.partId===id);if(it){it.price=Math.max(0,+v||0);qbRender();}}
+function qbPrice(id,v){if(!isOwner())return;const it=billItems.find(i=>i.partId===id);if(it){it.price=Math.max(0,+v||0);it.manual=true;qbRender();}}
+function qbCustomerChanged(){qbRender();}
 function qbRender(){
+  const g=applyTier($('qb-name').value,$('qb-phone').value);
   $('qb-items-title').style.display=billItems.length?'block':'none';
   $('qb-items').innerHTML=billItems.map(it=>`<div class="qb-line">
     <div style="flex:1;min-width:0"><div class="nm">${pLabel(it)}</div>
@@ -3675,12 +3791,15 @@ function qbRender(){
     <div class="qb-step"><button type="button" onclick="qbStep('${it.partId}',-1)" aria-label="One less">−</button><span class="q">${it.qty}</span><button type="button" onclick="qbStep('${it.partId}',1)" aria-label="One more">+</button></div>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin:-4px 4px 10px"><button class="del" type="button" onclick="qbRemove('${it.partId}')" style="background:none;border:none;color:var(--red);font-size:15px;cursor:pointer">✕ Remove</button><span class="amt" style="font-size:17px;font-weight:700;color:var(--orange)">${fmt(it.price*it.qty)}</span></div>`).join('');
+  renderSuggest('qb-suggest','qbAdd');
   qbRecalc();
+  const gl=garageLine(g,billItems.length?calcBillTotal().total:0);$('qb-garage').innerHTML=gl;$('qb-garage').style.display=gl?'block':'none';
 }
 // Copy quick-bill fields into the full form's fields, then let the normal engine total it.
 function qbSync(){
   $('bf-customer').value=$('qb-name').value.trim();
   $('bf-phone').value=$('qb-phone').value.trim();
+  $('bf-vehicle').value=$('qb-vehicle').value;$('bf-vmodel').value=$('qb-vmodel').value;
   $('bf-date').value=today();
   const dv=+$('qb-disc').value||0;
   $('bf-disc-type').value=dv>0?$('qb-disc-type').value:'none';$('bf-disc-val').value=dv>0?dv:'';
@@ -3707,15 +3826,17 @@ function qbLoyalty(){
 // Recognise a returning customer from their phone number and fill the name.
 function qbPhone(){
   const k=phoneKey($('qb-phone').value);const el=$('qb-known');
-  if(k.length!==10){el.style.display='none';qbRecalc();return;}
+  if(k.length!==10){el.style.display='none';qbRender();return;}
   const c=customers.find(x=>phoneKey(x.phone)===k);
   const last=invoices.find(i=>phoneKey(i.phone)===k&&i.customer&&i.customer!=='Walk-in');
   const name=c?c.name:last?last.customer:'';
   if(name&&!$('qb-name').value.trim())$('qb-name').value=name;
+  const lv=lastVehicleFor($('qb-phone').value);
+  if(lv){if(!$('qb-vehicle').value)$('qb-vehicle').value=lv.vehicle;if(!$('qb-vmodel').value){$('qb-vmodel').value=lv.vmodel;qbPopular();}}
   const owe=invoices.filter(i=>phoneKey(i.phone)===k&&!i.paid).reduce((s,i)=>s+i.total,0);
   if(name||owe){el.innerHTML=(name?`✓ Regular customer: <b>${esc(name)}</b>`:'')+(owe>0?` <span style="color:var(--yellow)">· Udhaar due: <b>${fmt(owe)}</b></span>`:'');el.style.display='block';}
   else el.style.display='none';
-  qbRecalc();
+  qbRender();
 }
 async function qbSave(mode){
   if(!billItems.length)return;
@@ -3725,7 +3846,8 @@ async function qbSave(mode){
   }
   if(!$('bf-customer').value)$('bf-customer').value='Walk-in';
   ['qb-cash','qb-upi','qb-credit'].forEach(id=>$(id).disabled=true);
-  await saveInvoice(mode!=='credit',{payMode:mode,quick:true});
+  const ok=await saveInvoice(mode!=='credit',{payMode:mode,quick:true});
+  if(ok===false)qbRecalc();
 }
 function qbDone(inv){
   _qbLast=inv.id;billItems=[];
@@ -3744,10 +3866,310 @@ function qbDone(inv){
 }
 // Hand the items over to the full form (referral, other date, address…)
 function qbFullForm(){
-  const items=billItems.map(i=>({...i}));const name=$('qb-name').value,ph=$('qb-phone').value;
+  const items=billItems.map(i=>({...i}));const name=$('qb-name').value,ph=$('qb-phone').value,vh=$('qb-vehicle').value,vm=$('qb-vmodel').value;
   $('qb').classList.remove('open');openBillModal();
-  billItems=items;$('bf-customer').value=name;$('bf-phone').value=ph;updateBillLinks();renderBillItems();
+  billItems=items;$('bf-customer').value=name;$('bf-phone').value=ph;$('bf-vehicle').value=vh;$('bf-vmodel').value=vm;updateBillLinks();renderBillItems();
 }
+
+// ═══ SALES & FOLLOW-UP TOOLS (all free: WhatsApp opens with the message ready, you press send) ═══
+const minMargin=()=>{const v=cfgGet('minMargin','');return v===''?10:Math.max(0,+v||0);};
+const svcDays=()=>Math.max(15,+cfgGet('svcDays','90')||90);
+const dueDays=()=>Math.max(1,+cfgGet('dueDays','30')||30);
+const shopName=()=>cfgGet('rcShop')||SHOP_NAME;
+const daysSince=d=>{if(!d)return 0;const t=new Date(String(d).slice(0,10)+'T00:00:00');if(isNaN(t))return 0;return Math.max(0,Math.round((new Date(today()+'T00:00:00')-t)/864e5));};
+const vehKey=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+const vehShow=v=>String(v||'').toUpperCase().replace(/\s+/g,' ').trim();
+function cfgJson(k){try{const o=JSON.parse(cfgGet(k,'{}'));return o&&typeof o==='object'?o:{};}catch(e){return{};}}
+function waOpen(phone,text){window.open(`https://wa.me/${waNumber(phone)}?text=${encodeURIComponent(text)}`,'_blank');}
+function shortDate(d){const t=new Date(String(d).slice(0,10)+'T00:00:00');return isNaN(t)?String(d||''):t.toLocaleDateString('en-IN',{day:'numeric',month:'short'});}
+
+// ── Settings ──
+function loadGrowthSettings(){
+  if(!$('gs-margin'))return;
+  $('gs-margin').value=cfgGet('minMargin','');$('gs-svcdays').value=cfgGet('svcDays','');$('gs-duedays').value=cfgGet('dueDays','');
+  $('gs-upi').value=cfgGet('upiId');$('gs-review').value=cfgGet('reviewLink');
+}
+async function saveGrowthSettings(){
+  if(!isOwner())return;
+  const rv=$('gs-review').value.trim();
+  if(rv&&!/^https:\/\//i.test(rv)){alert('The review link should start with https://');return;}
+  config.minMargin=$('gs-margin').value.trim();config.svcDays=$('gs-svcdays').value.trim();config.dueDays=$('gs-duedays').value.trim();
+  config.upiId=$('gs-upi').value.trim();config.reviewLink=rv;
+  renderAll();await saveConfig();
+}
+
+// ── Vehicle models list (for typing suggestions) ──
+function fillVModelList(){
+  const set=new Map();
+  const add=v=>{v=String(v||'').trim();if(v.length<2)return;const k=v.toLowerCase();if(!set.has(k))set.set(k,v);};
+  parts.forEach(p=>String(p.fits||'').split(',').forEach(add));invoices.forEach(i=>add(i.vmodel));
+  const dl=$('vmodel-list');if(dl)dl.innerHTML=[...set.values()].sort().map(v=>`<option value="${esc(v)}">`).join('');
+}
+// Last vehicle seen for a phone number (so regulars don't retype it)
+function lastVehicleFor(phone){
+  const k=phoneKey(phone);if(k.length!==10)return null;
+  const i=invoices.find(x=>phoneKey(x.phone)===k&&(x.vehicle||x.vmodel));
+  return i?{vehicle:i.vehicle||'',vmodel:i.vmodel||''}:null;
+}
+function bfPhoneFill(){
+  const v=lastVehicleFor($('bf-phone').value);
+  if(v){if(!$('bf-vehicle').value)$('bf-vehicle').value=v.vehicle;if(!$('bf-vmodel').value)$('bf-vmodel').value=v.vmodel;}
+  updateBillLinks();
+}
+
+// ── 5. Garage / mechanic accounts ──
+function garageFor(name,phone){
+  const k=phoneKey(phone);
+  const c=resolvePartnerByName(name)||(k.length===10?customers.find(x=>phoneKey(x.phone)===k):null);
+  return c&&c.type==='garage'?c:null;
+}
+function listPrice(it){const p=parts.find(x=>x.id===it.partId);return p?(+p.sellPrice||0):it.price;}
+// Garage accounts get their own price. Prices the owner typed by hand are left alone.
+function applyTier(name,phone){
+  const g=garageFor(name,phone),off=g?(+g.off||0):0;
+  billItems.forEach(it=>{if(it.manual)return;const lp=listPrice(it);it.price=off>0?r2(lp*(1-off/100)):lp;});
+  return g;
+}
+function custDue(c){const k=phoneKey(c.phone);return r2(invoices.filter(i=>!i.paid&&(i.customerId===c.id||(k.length===10&&phoneKey(i.phone)===k))).reduce((s,i)=>s+i.total,0));}
+function garageLine(g,billTotal){
+  if(!g)return'';
+  let h=`🔧 Garage account <b>${esc(g.name)}</b>${g.off>0?` — garage price (${g.off}% off) applied`:''}`;
+  if(g.limit>0){const due=custDue(g),after=due+(billTotal||0);
+    h+=`<br>Udhaar: ${fmt(due)} of ${fmt(g.limit)} limit`+(after>g.limit?` <b style="color:var(--red)">· on udhaar this bill goes ${fmt(after-g.limit)} over the limit</b>`:'');}
+  return h;
+}
+function overLimitOk(g,total){
+  if(!g||!(g.limit>0))return true;
+  const due=custDue(g);if(due+total<=g.limit)return true;
+  return confirm(`${g.name} already owes ${fmt(due)}. With this bill on udhaar they will owe ${fmt(due+total)} — over their ${fmt(g.limit)} credit limit.\n\nOK = give udhaar anyway\nCancel = go back`);
+}
+function custTypeUI(){$('cf-garage-row').style.display=$('cf-type').value==='garage'?'grid':'none';}
+// Monthly statement on WhatsApp: this month's bills + anything still unpaid from before
+function sendStatement(id){
+  const c=findPartner(id);if(!c)return;
+  if(!validPhone(c.phone)){alert('Add a 10-digit mobile number for '+c.name+' first (Edit).');return;}
+  const k=phoneKey(c.phone),mon=today().slice(0,7);
+  const mine=invoices.filter(i=>i.customerId===c.id||phoneKey(i.phone)===k);
+  const month=mine.filter(i=>(i.date||'').slice(0,7)===mon);
+  const older=mine.filter(i=>!i.paid&&(i.date||'').slice(0,7)<mon);
+  const mName=new Date(today()+'T00:00:00').toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+  const ln=i=>`${shortDate(i.date)}  #${i.id.slice(-5).toUpperCase()}  ${fmt(i.total)}  ${i.paid?'Paid':'*Due*'}`;
+  const tot=r2(month.reduce((s,i)=>s+i.total,0)),paid=r2(month.filter(i=>i.paid).reduce((s,i)=>s+i.total,0)),due=custDue(c);
+  let t=`*${shopName()}*\nStatement for *${c.name}* — ${mName}\n\n`;
+  t+=month.length?month.map(ln).join('\n'):'No bills this month.';
+  t+=`\n\nThis month: ${fmt(tot)} (${month.length} bill${month.length===1?'':'s'})\nPaid: ${fmt(paid)}`;
+  if(older.length)t+=`\n\nEarlier unpaid bills:\n`+older.map(ln).join('\n');
+  t+=`\n\n*Total balance due: ${fmt(due)}*`;
+  if(due>0&&cfgGet('upiId'))t+=`\nPay by UPI: ${cfgGet('upiId')}`;
+  t+=`\n\nThank you for your business!`;
+  waOpen(c.phone,t);
+}
+
+// ── 4. Margin protection ──
+function marginIssues(t){
+  if(!billItems.length)return[];
+  const sub=+t.subtotal||0;if(sub<=0)return[];
+  const ratio=Math.max(0,sub-(t.disc||0)-(t.ld||0))/sub,mm=minMargin();
+  return billItems.map(it=>{const cost=+itemCost(it)||0;if(cost<=0)return null;const eff=it.price*ratio;const m=eff>0?(eff-cost)/eff*100:-100;
+    return m<mm-0.001?{it,eff,cost,m,loss:eff<cost-0.001}:null;}).filter(Boolean);
+}
+function marginHTML(list){
+  if(!list.length)return'';
+  const loss=list.some(x=>x.loss),mm=minMargin();
+  if(!isOwner())return `${loss?'⛔ Selling <b>below cost</b>':'⚠ Below the shop\'s minimum profit'} on: ${list.map(x=>'<b>'+esc(pText(x.it))+'</b>').join(', ')}. ${loss?'Remove the discount or ask the owner.':'Check before giving more discount.'}`;
+  return `${loss?'⛔ <b>Loss on this bill</b>':`⚠ Below your ${mm}% minimum margin`}:<br>`+list.map(x=>`• ${esc(pText(x.it))}: selling at ${fmt(x.eff)}, cost ${fmt(x.cost)} → <b>${x.m.toFixed(0)}%</b>${x.loss?' (loss '+fmt((x.cost-x.eff)*x.it.qty)+')':''}`).join('<br>');
+}
+function showMargins(t){
+  const list=marginIssues(t),h=marginHTML(list),loss=list.some(x=>x.loss);
+  ['bf-margin','qb-margin'].forEach(id=>{const el=$(id);if(!el)return;el.innerHTML=h;el.style.display=h?'block':'none';el.classList.toggle('loss',loss);});
+}
+// Called before a bill is saved. false = don't save.
+function marginGate(){
+  const list=marginIssues(calcBillTotal());if(!list.length)return true;
+  const names=list.map(x=>'• '+pText(x.it)).join('\n');
+  if(list.some(x=>x.loss)){
+    if(!isOwner()){alert('This bill sells below cost on:\n\n'+names+'\n\nReduce the discount, or ask the owner.');return false;}
+    return confirm('⛔ This bill sells BELOW COST on:\n\n'+names+'\n\nOK = save anyway\nCancel = go back');
+  }
+  return confirm(`⚠ Profit is below your ${minMargin()}% minimum on:\n\n${names}\n\nOK = save anyway\nCancel = go back`);
+}
+// Parts whose selling price no longer gives the minimum margin (e.g. buying price went up)
+function priceCheckList(){
+  const mm=minMargin(),hist={};
+  purchases.forEach(pu=>{(hist[pu.partId]=hist[pu.partId]||[]).push(pu);});
+  return parts.filter(p=>p.buyPrice>0&&p.sellPrice>0).map(p=>{
+    const m=(p.sellPrice-p.buyPrice)/p.sellPrice*100,h=hist[p.id]||[];const last=h[h.length-1],prev=h[h.length-2];
+    const sug=Math.ceil(p.buyPrice/(1-Math.min(mm,90)/100));
+    return{p,m,sug,rose:!!(last&&prev&&last.unitCost>prev.unitCost),prev};
+  }).filter(x=>x.m<mm-0.001).sort((a,b)=>a.m-b.m);
+}
+function renderPriceCheck(){
+  const el=$('ins-price');if(!el)return;
+  const l=priceCheckList();
+  $('ins-price-sub').textContent=`parts selling below your ${minMargin()}% minimum margin`;
+  el.innerHTML=!l.length?'<div style="color:var(--muted);font-size:13px">✓ Every part sells at or above your minimum margin</div>':
+    `<div class="table-wrap"><table><thead><tr><th>Part</th><th>Buy</th><th>Sell</th><th>Margin</th><th>Suggested</th><th></th></tr></thead><tbody>${l.slice(0,30).map(x=>`<tr>
+      <td style="font-weight:600">${pLabel(x.p)}${x.rose?`<div class="sub-line" style="color:var(--yellow)">Buying price went up: ${fmt(x.prev.unitCost)} → ${fmt(x.p.buyPrice)}</div>`:''}</td>
+      <td>${fmt(x.p.buyPrice)}</td><td>${fmt(x.p.sellPrice)}</td>
+      <td style="font-weight:700;color:${x.m<0?'var(--red)':'var(--yellow)'}">${x.m.toFixed(0)}%</td>
+      <td style="color:var(--green);font-weight:700">${fmt(x.sug)}</td>
+      <td class="nowrap"><button class="btn btn-primary btn-sm" onclick="setSellPrice('${x.p.id}',${x.sug})">Set ${fmt(x.sug)}</button> <button class="btn btn-secondary btn-icon" onclick="openPartModal('${x.p.id}')" title="Edit">✎</button></td></tr>`).join('')}</tbody></table></div>`;
+}
+async function setSellPrice(id,v){if(!isOwner())return;parts=parts.map(p=>p.id===id?{...p,sellPrice:+v}:p);renderAll();await saveParts();}
+
+// ── 3. "Customers also buy" ──
+let _pairs=null,_pairsN=-1;
+function pairMap(){
+  if(_pairs&&_pairsN===invoices.length)return _pairs;
+  const m={};
+  invoices.forEach(inv=>{const ids=[...new Set(inv.items.map(i=>i.partId))];if(ids.length<2||ids.length>15)return;
+    ids.forEach(a=>ids.forEach(b=>{if(a!==b){const r=m[a]||(m[a]={});r[b]=(r[b]||0)+1;}}));});
+  _pairs=m;_pairsN=invoices.length;return m;
+}
+function alsoBuy(){
+  const m=pairMap(),inBill=new Set(billItems.map(i=>i.partId)),score={};
+  billItems.forEach(it=>Object.entries(m[it.partId]||{}).forEach(([b,n])=>{if(!inBill.has(b))score[b]=(score[b]||0)+n;}));
+  return Object.entries(score).filter(([,n])=>n>=2).sort((a,b)=>b[1]-a[1]).map(([id])=>parts.find(p=>p.id===id)).filter(p=>p&&p.qty>0).slice(0,5);
+}
+function renderSuggest(box,addFn){
+  const el=$(box);if(!el)return;const l=billItems.length?alsoBuy():[];
+  if(!l.length){el.style.display='none';el.innerHTML='';return;}
+  el.innerHTML=`<div class="sugg-title">💡 Customers who buy this usually also take — tap to add:</div><div class="qb-chips">${l.map(p=>`<button type="button" class="qb-chip" onclick="${addFn}('${p.id}')">＋ ${esc(pText(p))} <b style="color:var(--orange)">${fmt(p.sellPrice)}</b></button>`).join('')}</div>`;
+  el.style.display='block';
+}
+
+// ── 2. Tell customers when a part they asked for arrives ──
+function reqMatchesPart(r,p){
+  const t=normName(r.part);if(!t)return false;
+  if(normName(p.sku)===t||normName(p.name)===t||normName(pText(p))===t)return true;
+  const q=tokKey(r.part),pt=new Set(tokKey((p.brand||'')+' '+p.name));
+  return q.length>0&&q.every(w=>pt.has(w));
+}
+function waitingFor(p){return requests.filter(r=>r.status!=='done'&&reqMatchesPart(r,p));}
+let _notifyPart=null;
+function showWaiting(partId){
+  const p=parts.find(x=>x.id===partId);if(!p)return false;
+  const w=waitingFor(p);if(!w.length)return false;
+  _notifyPart=partId;
+  $('notify-body').innerHTML=`<p style="font-size:13px;color:var(--subtle);line-height:1.6;margin-bottom:12px">You just added stock of <b style="color:var(--text)">${esc(pText(p))}</b>. ${w.length} customer${w.length>1?'s':''} asked for it — tell them now, before they buy elsewhere.</p>`+
+    w.map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div><div style="font-weight:600">${esc(r.name||'Customer')}</div><div class="sub-line">${r.phone?esc(r.phone)+' · ':''}asked ${esc(shortDate(r.date))}${r.qty>1?' · qty '+r.qty:''}</div></div>
+      <div class="nowrap">${r.phone?`<button class="btn btn-success btn-sm" onclick="tellRequest('${r.id}')">💬 Tell</button>`:''} <button class="btn btn-secondary btn-sm" onclick="tellRequest('${r.id}',true)">Done</button></div></div>`).join('')+
+    `<div style="font-size:11px;color:var(--muted);margin-top:10px">Telling a customer marks their request as done. You can reopen it in Part Requests.</div>`;
+  openModal('notify-modal');return true;
+}
+async function tellRequest(id,silent){
+  if(!silent)notifyRequest(id);
+  requests=requests.map(r=>r.id===id?{...r,status:'done',note:((r.note?r.note+' · ':'')+'told '+today()).slice(0,200)}:r);
+  renderAll();if(!showWaiting(_notifyPart))closeModal('notify-modal');
+  await saveRequests();
+}
+
+// ── 1 + 6. Follow-ups: udhaar collection and service reminders ──
+let fuTab='dues';
+function setFuTab(t){fuTab=t;['dues','service'].forEach(x=>$('futab-'+x).classList.toggle('active',x===t));renderFollowups();}
+const invPersonKey=i=>{const k=phoneKey(i.phone);return k.length===10?'p'+k:'n'+normName(i.customer);};
+function duesList(){
+  const g=new Map();
+  invoices.filter(i=>!i.paid&&i.total>0).forEach(i=>{
+    const k=invPersonKey(i);let e=g.get(k);
+    if(!e){e={key:k,name:i.customer||'Walk-in',phone:'',bills:[],total:0,oldest:i.date};g.set(k,e);}
+    e.bills.push(i);e.total=r2(e.total+i.total);
+    if(i.date&&(!e.oldest||i.date<e.oldest))e.oldest=i.date;
+    if(!e.phone&&validPhone(i.phone))e.phone=i.phone;
+  });
+  const rem=cfgJson('remDues');
+  return [...g.values()].map(e=>{
+    if(!e.phone){const c=resolvePartnerByName(e.name);if(c&&validPhone(c.phone))e.phone=c.phone;}
+    return{...e,days:daysSince(e.oldest),reminded:rem[e.key]||''};
+  }).sort((a,b)=>b.days-a.days||b.total-a.total);
+}
+function serviceList(){
+  const gar=customers.filter(c=>c.type==='garage');
+  const gIds=new Set(gar.map(c=>c.id)),gPh=new Set(gar.map(c=>phoneKey(c.phone)).filter(k=>k.length===10));
+  const last=new Map(),phoneLast=new Map();
+  invoices.forEach(i=>{
+    if(!validPhone(i.phone))return;const pk=phoneKey(i.phone);
+    if(gIds.has(i.customerId)||gPh.has(pk))return;                   // garages are handled with statements, not reminders
+    if((i.date||'')>(phoneLast.get(pk)||''))phoneLast.set(pk,i.date||'');
+    const k=vehKey(i.vehicle)||('p'+pk);const cur=last.get(k);
+    if(!cur||(i.date||'')>(cur.date||''))last.set(k,i);
+  });
+  const rem=cfgJson('remSvc'),d=svcDays();
+  return [...last.entries()].map(([k,i])=>({key:k,inv:i,days:daysSince(i.date),reminded:rem[k]||''}))
+    .filter(x=>x.days>=d&&!(x.reminded&&x.reminded>=x.inv.date)&&(x.key[0]!=='p'||phoneLast.get(phoneKey(x.inv.phone))===x.inv.date))
+    .sort((a,b)=>a.days-b.days);
+}
+function followupCounts(){
+  const dd=dueDays();
+  return{overdue:duesList().filter(e=>e.days>=dd).length,service:serviceList().length};
+}
+function renderFollowupBadge(){
+  const c=followupCounts(),n=c.overdue+c.service;
+  const b=$('fu-badge');if(b){b.style.display=n?'inline':'none';b.textContent=n;}
+  const m=$('mmenu-fu-count');if(m)m.textContent=n?`(${n})`:'';
+}
+function renderFollowups(){
+  if(!$('fu-tbody'))return;
+  const dues=duesList(),svc=serviceList(),dd=dueDays();
+  const totalDue=r2(dues.reduce((s,e)=>s+e.total,0)),od=dues.filter(e=>e.days>=dd);
+  $('fu-stats').innerHTML=[
+    {label:'Udhaar to collect',val:fmt(totalDue),sub:dues.length+' customer'+(dues.length===1?'':'s'),color:'var(--yellow)',go:"setFuTab('dues')"},
+    {label:`Overdue (${dd}+ days)`,val:fmt(od.reduce((s,e)=>s+e.total,0)),sub:od.length+' customer'+(od.length===1?'':'s'),color:od.length?'var(--red)':'var(--green)',go:"setFuTab('dues')"},
+    {label:'Service due',val:svc.length,sub:`no visit in ${svcDays()}+ days`,color:'var(--blue)',go:"setFuTab('service')"},
+    {label:'Reminded today',val:Object.values(cfgJson('remDues')).concat(Object.values(cfgJson('remSvc'))).filter(d=>d===today()).length,sub:'WhatsApp reminders',color:'var(--green)',go:''},
+  ].map(s=>`<div class="stat-card${s.go?' clickable':''}" ${s.go?`onclick="${s.go}"`:''} style="--accent:${s.color}"><div class="stat-label">${s.label}</div><div class="stat-val" style="color:${s.color}">${s.val}</div><div class="stat-sub">${s.sub}</div></div>`).join('');
+  const q=($('fu-search').value||'').trim().toLowerCase();
+  if(fuTab==='dues'){
+    $('fu-hint').innerHTML=`Oldest first. <b>💬 Remind</b> opens WhatsApp with the amount${cfgGet('upiId')?' and your UPI ID':' (add your UPI ID in Settings to include it)'}. <b>✓ Paid</b> marks all their pending bills paid.`;
+    $('fu-thead').innerHTML='<th>Customer</th><th>Due</th><th>Oldest bill</th><th class="hide-m">Reminded</th><th></th>';
+    const rows=dues.filter(e=>tokHit(q,[e.name,e.phone]));
+    $('fu-tbody').innerHTML=!rows.length?`<tr class="empty-row"><td colspan="5">${dues.length?'No match':'🎉 Nobody owes you money right now'}</td></tr>`:
+      rows.map(e=>`<tr>
+        <td style="font-weight:600">${esc(e.name)}<div class="sub-line">${e.phone?esc(e.phone)+' · ':''}${e.bills.length} bill${e.bills.length>1?'s':''}</div></td>
+        <td class="nowrap" style="font-weight:700;color:var(--orange)">${fmt(e.total)}</td>
+        <td class="nowrap">${esc(shortDate(e.oldest))}<div class="sub-line" style="color:${e.days>=dd?'var(--red)':'var(--muted)'};font-weight:${e.days>=dd?700:400}">${e.days} day${e.days===1?'':'s'}</div></td>
+        <td class="hide-m" style="font-size:12px;color:var(--muted)">${e.reminded?esc(shortDate(e.reminded)):'—'}</td>
+        <td class="nowrap">${e.phone?`<button class="btn btn-success btn-sm" onclick="remindDue('${esc(e.key)}')">💬 Remind</button> `:'<span class="sub-line">no phone</span> '}<button class="btn btn-secondary btn-sm" onclick="markDuesPaid('${esc(e.key)}')">✓ Paid</button></td></tr>`).join('');
+  }else{
+    $('fu-hint').innerHTML=`Customers whose last visit was ${svcDays()}+ days ago (change in Settings). <b>💬 Remind</b> sends a friendly service reminder; they leave this list until they visit again. Garage accounts are not included.`;
+    $('fu-thead').innerHTML='<th>Customer</th><th>Vehicle</th><th>Last visit</th><th class="hide-m">Last bought</th><th></th>';
+    const rows=svc.filter(x=>tokHit(q,[x.inv.customer,x.inv.phone,x.inv.vehicle,x.inv.vmodel]));
+    $('fu-tbody').innerHTML=!rows.length?`<tr class="empty-row"><td colspan="5">${svc.length?'No match':'No service reminders due. Customers appear here '+svcDays()+' days after their last visit (needs their phone number on the bill).'}</td></tr>`:
+      rows.map(x=>{const i=x.inv;return`<tr>
+        <td style="font-weight:600">${esc(i.customer||'Customer')}<div class="sub-line">${esc(i.phone)}</div></td>
+        <td>${i.vehicle||i.vmodel?`${esc(i.vmodel||'')}${i.vehicle?`<div class="sub-line mono">${esc(vehShow(i.vehicle))}</div>`:''}`:'<span style="color:var(--muted)">—</span>'}</td>
+        <td class="nowrap">${esc(shortDate(i.date))}<div class="sub-line">${Math.round(x.days/30)||1} month${Math.round(x.days/30)>1?'s':''} ago</div></td>
+        <td class="hide-m" style="font-size:12px;color:var(--muted);max-width:220px">${esc(i.items.slice(0,3).map(it=>pText({brand:it.brand},it.name)).join(', '))}</td>
+        <td class="nowrap"><button class="btn btn-success btn-sm" onclick="remindService('${esc(x.key)}')">💬 Remind</button> <button class="btn btn-secondary btn-sm" onclick="skipService('${esc(x.key)}')" title="Hide until their next visit">Skip</button></td></tr>`;}).join('');
+  }
+  renderFollowupBadge();
+}
+async function markRem(cfgKey,k){const o=cfgJson(cfgKey);o[k]=today();
+  const cut=new Date(Date.now()-400*864e5).toISOString().slice(0,10);Object.keys(o).forEach(x=>{if(o[x]<cut)delete o[x];});   // keep the list small
+  config[cfgKey]=JSON.stringify(o);renderFollowups();await saveConfig();}
+function remindDue(k){
+  const e=duesList().find(x=>x.key===k);if(!e||!e.phone)return;
+  const lines=e.bills.slice().sort((a,b)=>(a.date||'').localeCompare(b.date||'')).map(i=>`• ${shortDate(i.date)} — Bill #${i.id.slice(-5).toUpperCase()} — ${fmt(i.total)}`).join('\n');
+  let t=`Hi ${e.name&&e.name!=='Walk-in'?e.name:''}🙏\nA gentle reminder from *${shopName()}*: *${fmt(e.total)}* is pending.\n\n${lines}`;
+  if(cfgGet('upiId'))t+=`\n\nYou can pay by UPI to: *${cfgGet('upiId')}*`;
+  t+=`\n\nPlease ignore if already paid. Thank you!`;
+  waOpen(e.phone,t);markRem('remDues',k);
+}
+async function markDuesPaid(k){
+  const e=duesList().find(x=>x.key===k);if(!e)return;
+  if(!confirm(`Mark all ${e.bills.length} pending bill${e.bills.length>1?'s':''} of ${e.name} (${fmt(e.total)}) as PAID?`))return;
+  const ids=new Set(e.bills.map(i=>i.id));
+  invoices=invoices.map(i=>ids.has(i.id)?{...i,paid:true}:i);renderAll();await saveInvoices();
+}
+function remindService(k){
+  const x=serviceList().find(y=>y.key===k);if(!x)return;const i=x.inv;
+  const m=Math.max(1,Math.round(x.days/30));
+  const veh=[i.vmodel,i.vehicle?vehShow(i.vehicle):''].filter(Boolean).join(' ');
+  const t=`Hi ${i.customer&&i.customer!=='Walk-in'?i.customer:''}🙏\nIt's been about ${m} month${m>1?'s':''} since your ${veh||'vehicle'} last got parts from *${shopName()}*.\n\nTime for a check-up? Engine oil, filters, brakes and chain should be checked regularly. We have the parts in stock — reply here and we'll keep them ready for you.`;
+  waOpen(i.phone,t);markRem('remSvc',k);
+}
+function skipService(k){markRem('remSvc',k);}
 
 // ═══ RECEIPT PRINTING ═══
 // Works with any printer the phone can print to (Android/iPhone print menu, or a Bluetooth
@@ -3767,6 +4189,7 @@ function receiptHTML(inv){
     <hr/>
     <div>Bill #${esc(inv.id.slice(-5).toUpperCase())}<span style="float:right">${esc(inv.date)}${inv.date===today()?' '+time:''}</span></div>
     <div>${esc(inv.customer)}${inv.phone?' · '+esc(inv.phone):''}</div>
+    ${inv.vehicle||inv.vmodel?`<div>Vehicle: ${esc([inv.vmodel,inv.vehicle].filter(Boolean).join(' · '))}</div>`:''}
     <hr/>
     <table>${inv.items.map(i=>`<tr><td colspan="2" class="b">${esc(pText({brand:i.brand},i.name))}</td></tr>`+line(`&nbsp;${i.qty} × ${fmt(i.price)}`,fmt(i.price*i.qty))).join('')}</table>
     <hr/>
@@ -3801,9 +4224,10 @@ function waBill(id){
   const inv=invoices.find(i=>i.id===id);if(!inv)return;
   const shop=cfgGet('rcShop')||SHOP_NAME;
   const mode={cash:'Paid by cash',upi:'Paid by UPI',credit:'Udhaar — balance due'}[inv.payMode]||(inv.paid?'Paid':'Pending');
-  const t=`*${shop}*\nBill #${inv.id.slice(-5).toUpperCase()} · ${inv.date}\n\n`+
+  const t=`*${shop}*\nBill #${inv.id.slice(-5).toUpperCase()} · ${inv.date}${inv.vehicle||inv.vmodel?'\nVehicle: '+[inv.vmodel,inv.vehicle].filter(Boolean).join(' · '):''}\n\n`+
     inv.items.map(i=>`${pText({brand:i.brand},i.name)}\n  ${i.qty} × ${fmt(i.price)} = ${fmt(i.price*i.qty)}`).join('\n')+
-    `\n\n*Total: ${fmt(inv.total)}*\n${mode}`+(inv.lpts>0?`\n⭐ You earned ${inv.lpts} loyalty points`:'')+`\n\n${cfgGet('rcFooter')||'Thank you! Visit again.'}`;
+    `\n\n*Total: ${fmt(inv.total)}*\n${mode}`+(inv.lpts>0?`\n⭐ You earned ${inv.lpts} loyalty points`:'')+`\n\n${cfgGet('rcFooter')||'Thank you! Visit again.'}`+
+    (cfgGet('reviewLink')?`\n\n⭐ Happy with us? Please give us a quick Google review — it really helps:\n${cfgGet('reviewLink')}`:'');
   window.open(`https://wa.me/${waNumber(inv.phone)}?text=${encodeURIComponent(t)}`,'_blank');
 }
 function loadReceiptSettings(){
@@ -3941,6 +4365,7 @@ function readCatalog_() {
       brand: String(row[H.brand] || '').trim(),
       cat: String(row[H.category] || 'Other'),
       price: Math.round(sell * (1 + gst / 100) * 100) / 100,   // price the customer actually pays
+      fits: H.fits === undefined ? '' : String(row[H.fits] || '').trim(),   // vehicle models, for searching by vehicle
       st: qty <= 0 ? 'out' : (qty <= min ? 'low' : 'in')
     });
   }
