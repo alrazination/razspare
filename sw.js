@@ -1,4 +1,4 @@
-const VERSION = 'spares-pro-v16';
+const VERSION = 'spares-pro-v17';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
